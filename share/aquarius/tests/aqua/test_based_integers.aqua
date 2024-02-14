@@ -1,0 +1,25 @@
+class
+   Test_Based_Integers
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-based-integers"
+      end
+      
+   Execute
+      local
+         X : Integer
+      do
+         X := 16#FFD2#;
+         Success := X = 8#177_722#;
+         if not Success then
+            Fail_Message := "Expected 16#FFD2# = 8#177_722# = 65_490, but found " & X.To_String
+         end
+      end
+       
+end 

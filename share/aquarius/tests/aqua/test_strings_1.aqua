@@ -1,0 +1,35 @@
+class
+   Test_Strings_1
+   
+inherit
+   Unit_Test
+      
+feature
+
+   S1 : String
+      do
+         Result := "1"
+      end
+      
+   S2 : String
+      do
+         Result := "0"
+      end
+      
+   Name : String
+      do
+         Result := "test-strings-1"
+      end
+      
+   Execute
+      local
+         S : String
+      do
+         S := S1 & S2
+         Success := S = "10"
+         if not Success then
+            Fail_Message := "Expected S = 10; found " & S
+         end
+      end
+       
+end 

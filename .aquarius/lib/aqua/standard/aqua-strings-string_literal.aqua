@@ -1,0 +1,30 @@
+class
+   Aqua.Strings.String_Literal
+   
+feature { String }
+
+   Get (Index : System.Word_32) : Word_32
+      require
+         Positive_Index : Index >= 1 
+         Index_In_Range : Index <= Length
+      do
+         Result := Map.Get_Relative_Word_32 (Index * 4)
+      end
+      
+feature { None }
+
+   Create_From_Address (Addr : System.Address)
+      local
+         Mem   : System.Memory.Mem
+         Index : System.Word_32
+      do
+         Location := Addr
+         Length := Mem.Get_Word_32 (Addr)
+         create Map.Create_Map (Location, Location + 4 * (Length + 1))
+      end
+      
+   Location  : System.Address
+   Length    : Word_32
+   Map       : System.Memory.Map
+      
+end

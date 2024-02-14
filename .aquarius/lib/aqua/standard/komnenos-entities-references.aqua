@@ -1,0 +1,15 @@
+note
+   Behaviour: Aqua_Primitive
+   
+class Komnenos.Entities.References
+
+feature
+
+   Cross_Reference
+     (Referenced_Item : Komnenos.Entity
+      Referrer        : Komnenos.Entity
+      Tree            : Aquarius.Trees.Program_Tree
+      Reference_Type  : String)      
+   external "aqua" alias "komnenos__cross_reference"
+
+end

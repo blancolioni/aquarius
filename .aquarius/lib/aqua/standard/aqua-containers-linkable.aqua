@@ -1,0 +1,41 @@
+class Aqua.Containers.Linkable[G]
+
+inherit
+
+   Aqua.Containers.Cell[G]
+   
+feature
+
+   Next : detachable Linkable[G]
+   
+feature
+
+   Put_Next (Other : G)
+      do
+         create Next
+         Next.Put (Other)
+      ensure
+         Have_Next: Next /= Void
+         Chained: Next.Element = Other
+      end
+      
+   Remove_Next
+      do
+         Next := Void
+      ensure
+         Not_Chained: Next = Void
+      end
+      
+feature { Aqua.Containers.Linked_List_Iterator }
+    
+    Delete_Next
+       do
+          Next := Next.Next
+       end
+
+    Join (Other : Linkable [G])
+       do
+          Next := Other
+       end
+    
+end

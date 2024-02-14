@@ -1,0 +1,44 @@
+class
+   Test_Boolean_Implies
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-boolean-implies"
+      end
+      
+   Execute
+      local
+         A, B, C, D : Boolean
+      do
+         A := False implies False
+         B := False implies True
+         C := True implies False
+         D := True implies True
+         Success := A
+         Success := Success and B
+         Success := Success and not C
+         Success := Success and D
+
+         if not Success then
+           Fail_Message := "Incorrect results:"
+           if not A then
+              Fail_Message := Fail_Message & " F=>F was false"
+           end
+           if not B then
+              Fail_Message := Fail_Message & " F=>T was false"
+           end
+           if C then
+              Fail_Message := Fail_Message & " T=>F was true"
+           end
+           if not D then
+              Fail_Message := Fail_Message & " T=>T was false"
+           end
+        end
+     end
+      
+end 

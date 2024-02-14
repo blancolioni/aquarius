@@ -1,0 +1,31 @@
+name = "aquarius_io"
+description = "Aquarius IO operations"
+version = "0.1.0-dev"
+
+authors = ["Fraser Wilson"]
+maintainers = ["Fraser Wilson <fraser@thewhitelion.eu>"]
+maintainers-logins = ["blancolioni"]
+licenses = "GPL-3.0-or-later"
+website = ""
+tags = []
+
+[[depends-on]]
+wl_lib = "*"
+aquarius_base = "*"
+aquarius_trees = "*"
+aquarius_syntax = "*"
+aquarius_programs = "*"
+
+[[pins]]
+wl_lib = { path = "../../wl_lib" }
+aquarius_base = { path = "../aquarius_base" }
+aquarius_trees = { path = "../aquarius_trees" }
+aquarius_syntax = { path = "../aquarius_syntax" }
+aquarius_programs = { path = "../aquarius_programs" }
+
+[build-switches]
+"*".ada_version = "ada2022"
+Development.Runtime_Checks = "Everything"
+"*".Style_Checks = "yes"
+development.contracts = "yes"
+"*".compile_checks = "errors"

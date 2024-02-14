@@ -1,0 +1,56 @@
+note
+   description:
+      "Containers whose items are accessible through keys"
+
+deferred class 
+   Aqua.Containers.Map [Key_Type, Element_Type]
+
+inherit
+   Aqua.Containers.Container [Element_Type]
+
+feature  --  Query
+
+   Contains_Key (Key : Key_Type) : Boolean
+      deferred
+      ensure
+         Result implies not Is_Empty
+      end
+      
+feature
+
+   Element alias "[]" (Key : Key_Type) : Element_Type
+      require
+         Contains_Key : Contains_Key (Key)
+      deferred
+      end
+
+   Insert (Key : Key_Type; Element : Element_Type)
+      require
+         Not_Already_Inserted: not Contains_Key (Key)
+      deferred
+      ensure
+         Not_Empty: not Is_Empty
+         Contains_Key: Contains_Key (Key)
+         Contains_Element: Contains (Element)
+         Correct_Mapping: Current.Element (Key) = Element
+      end
+      
+   Delete (Key : Key_Type)
+      require
+         Contains_Key: Contains_Key (Key)
+      deferred
+      ensure
+         Key_Deleted: not Contains_Key (key)
+      end
+      
+   Replace (K : Key_Type; E : Element_Type)
+       require
+          Contains_Key: Contains_Key (K)
+       do
+          Delete (K)
+          Insert (K, E)
+       ensure
+          Still_Contains_Key: Contains (K)
+          Correct_Mapping: Current.Element (K) = Element
+      
+end

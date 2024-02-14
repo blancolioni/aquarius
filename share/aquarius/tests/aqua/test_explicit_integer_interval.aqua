@@ -1,0 +1,29 @@
+class
+   Test_Explicit_Integer_Interval
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-explicit-integer-interval"
+      end
+      
+   Execute
+      local
+         Sum : Integer
+         Int : Aqua.Interval[Integer]
+      do
+         create Int.Make (1, 4)
+         across Int as X loop
+            Sum := Sum + X
+         end
+         Success := Sum = 10
+         if not Success then
+            Fail_Message := "Expected sum = 10; found " & Sum.To_String
+         end
+      end
+      
+end 

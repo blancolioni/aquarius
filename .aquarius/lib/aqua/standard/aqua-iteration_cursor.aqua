@@ -1,0 +1,29 @@
+note
+   Description: "External iteration cursor used by across...loop...end."
+   Library: "Aqua standard library"
+   
+deferred class
+   Aqua.Iteration_Cursor [Element_Type]
+   
+feature  --  Access
+
+   Element : Element_Type
+      require
+         Valid_Position: not After
+      deferred
+      end
+      
+feature  --  Cursor movement
+
+   Next
+      require
+         Valid_Position: not After
+      deferred
+      end
+      
+feature  --  Status
+   After : Boolean
+      deferred
+      end
+
+end

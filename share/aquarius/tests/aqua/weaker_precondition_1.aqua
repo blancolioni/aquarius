@@ -1,0 +1,10 @@
+deferred class
+   Weaker_Precondition_1
+   
+feature
+   Value (X : Integer) : Integer
+      require
+         X < 12
+      deferred
+      end
+end

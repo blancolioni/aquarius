@@ -1,0 +1,14 @@
+deferred class
+   Aqua.Bounded
+   
+feature
+
+   Minimum : like Current
+      deferred
+      end
+      
+   Maximum : like Current
+      deferred
+      end
+   
+end

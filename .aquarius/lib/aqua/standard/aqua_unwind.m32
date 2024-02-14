@@ -1,0 +1,7 @@
+.text
+_aqua_unwind:
+    mov fp, sp
+    mov (sp)+, fp
+    trap 15
+
+    

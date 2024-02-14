@@ -1,0 +1,27 @@
+class
+   Test_String_Equal
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-string_equal"
+      end
+      
+   Execute
+      local
+         X : String
+         Y : String
+      do
+         X := "10"
+         Y := "1" & "0"
+         Success := X = Y
+         if not Success then
+            Fail_Message := "Identical strings not equal"
+         end
+      end
+       
+end 

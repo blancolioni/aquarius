@@ -1,0 +1,23 @@
+deferred class Aqua.Containers.Linear [Element]
+
+inherit
+   Aqua.Containers.Traversable [Element] redefine Start end
+   
+feature
+
+   Start : Aqua.Containers.Linear_Iterator [Element]
+      deferred
+      end
+      
+   Contains (E : Element) : Boolean
+      do
+         across Current as Item
+         until Result
+         loop
+            if Item = E then
+               Result := True
+            end
+         end
+      end
+   
+end

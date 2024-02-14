@@ -1,0 +1,36 @@
+class
+   Test_Inner_Implicit_Create
+   
+inherit
+   Unit_Test
+      
+feature
+
+   L : Test_List_Holder
+   
+   Name : String
+      do
+         Result := "test-inner-implicit-create"
+      end
+      
+   Execute
+      local
+         Sum : Integer
+      do
+         Sum := 1024
+         across L.List as Item loop
+            Sum := Sum + Item
+         end
+         
+         Success := Sum = 1024
+         if not Success then
+            Fail_Message := "Expected sum = 1024 but found " & Sum.To_String
+         else
+            Success := L.Buffer = 0
+            if not Success then
+               Fail_Message := "Expected buffer = 0 but found " & L.Buffer.To_String
+            end
+         end
+      end
+      
+end 

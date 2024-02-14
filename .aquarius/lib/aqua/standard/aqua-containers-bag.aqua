@@ -1,0 +1,30 @@
+note
+   description:
+   		"Collections of items, where each item may occur zero or more times, and the number of occurrences is meaningful."
+        
+deferred class
+   Aqua.Containers.Bag [G]
+   
+   
+inherit
+   Aqua.Containers.Collection [G]
+   
+feature  --  Measurement
+
+   Occurrences : Integer
+      deferred
+      ensure
+         Non_Negative_Occurrences: Result >= 0
+      end
+   
+feature  --  Element change
+   
+   Insert (Element : G)
+      require
+         Can_Include: Can_Include
+      deferred
+      ensure
+         Item_Inserted: Contains (Element)
+      end
+      
+end

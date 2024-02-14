@@ -1,0 +1,143 @@
+class Aqua.Containers.Linked_List[G]
+   inherit Aqua.Containers.Forward_Iterable[G]
+           Aqua.Containers.Sequence [G]
+              
+feature{Aqua.Containers.Linked_List_Iterator}
+
+   First_Cell : detachable Aqua.Containers.Linkable[G]
+   Last_Cell  : detachable Aqua.Containers.Linkable[G]
+   
+feature
+
+   Can_Include : Boolean
+      do
+         Result := True
+      end
+      
+   Can_Delete : Boolean
+      do
+         Result := True
+      end
+      
+   Clear
+      do
+         First_Cell := Void
+         Last_Cell  := Void
+      ensure
+         Is_Empty
+      end
+
+   Contains (Element : G) : Boolean
+      do
+         across Current as Item
+         until Result
+         loop
+            Result := Item = Element
+         end
+      end
+      
+    Delete (Element : G)
+       local
+          It : Linked_List_Iterator [G]
+          Found : Boolean
+       do
+          from
+             It := New_Cursor
+          until
+             It.After or Found
+          loop
+             if It.Element = Element then
+                It.Delete
+                Found := True
+             else
+                It.Next
+             end
+          end
+       end
+       
+    Delete_First
+       do
+          First_Cell := First_Cell.Next
+       end
+       
+    Delete_All (Element : G)
+       local
+          It : Linked_List_Iterator [G]
+       do
+          from
+             It := New_Cursor
+          until
+             It.After
+          loop
+             if It.Element = Element then
+                It.Delete
+             else
+                It.Next
+             end
+          end
+       end
+       
+   Is_Empty : Boolean
+      do
+         Result := First_Cell = Void
+      ensure
+         Definition_Of_Is_Empty: Result = (First_Cell = Void)
+      end
+
+   New_Cursor : Linked_List_Iterator[G]
+      do
+         create Result.Make (Current)
+      end
+      
+   First_Element : G
+      require
+         Not_Empty: not Is_Empty
+      do
+         Result := First_Cell.Element
+      end
+      
+   Last_Element : G
+--      require
+--         Not_Empty: not Is_Empty
+      do
+         Result := Last_Cell.Element
+      end
+      
+   Append (New_Item : G)
+      do
+         if Is_Empty then
+            create First_Cell
+            Last_Cell := First_Cell
+            Last_Cell.Put (New_Item)
+         else
+            Last_Cell.Put_Next (New_Item)
+            Last_Cell := Last_Cell.Next
+         end
+      ensure
+         Appended_To_End: Last_Element = New_Item
+      end
+   
+   Include (New_Item : G)
+      do
+         Append (New_Item)
+      end
+      
+   Insert (New_Item : G)
+      do
+         Append (New_Item)
+      end
+      
+   Occurrences (Element : G) : Integer
+      do
+         across Current as E
+         loop
+            if E = Element then
+               Result := Result + 1
+            end
+         end
+      end
+         
+invariant
+   Last_Cell_Definition: Last_Cell = Void or else Last_Cell.Next = Void
+   Cells_Consistent: (First_Cell = Void) = (Last_Cell = Void)
+end

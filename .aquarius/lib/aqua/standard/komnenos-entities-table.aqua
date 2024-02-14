@@ -1,0 +1,14 @@
+note
+   Behaviour: Aqua_Primitive
+   
+class Komnenos.Entities.Table
+
+feature
+
+   Find
+     (Table_Name  : String
+      Entity_Name : String
+      Class_Name  : String) : detachable Komnenos.Entity
+   external "aqua" alias "komnenos__get_entity"
+   
+end

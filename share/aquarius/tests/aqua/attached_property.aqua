@@ -1,0 +1,8 @@
+class
+   Attached_Property
+   
+feature
+
+   Table : Aqua.Containers.Linked_List[Integer]
+   
+end

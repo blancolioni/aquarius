@@ -1,0 +1,35 @@
+class A
+
+feature
+
+  e : Integer do
+    Result := 1
+  end
+  
+  f : Integer do
+    Result := 2
+  end
+
+  g (X : Integer) : Integer do
+    Result := X
+  end
+  
+  prop_a : integer
+  
+end
+
+--  A__vm:
+--     .word A__e
+--     .word A__f
+--     .word A__g
+--
+--  A__e:
+--     mov 1, r0
+--     rts
+--  A__f:
+--     mov 2, r0
+--     rts
+--  A__g:
+--     mov 8(fp), r0
+--     rts
+

@@ -1,0 +1,9 @@
+expanded class
+   System.Address_To_Object_Conversions[Object_Type]
+   
+feature
+
+   To_Object (A : System.Address) : Object_Type external "intrinsic" alias "return-argument"
+   To_Address (O : Object_Type) : System.Address external "intrinsic" alias "return-argument"
+   
+end

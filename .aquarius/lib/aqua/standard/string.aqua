@@ -1,0 +1,260 @@
+class 
+   String
+
+inherit
+   Any redefine Equal, Not_Equal end
+   
+create
+    Create_With_Size, Create_From_String_Literal,
+    Create_With_Length, Create_From_String,
+    Create_Empty_String
+    
+feature
+
+   Create_Empty_String
+      do
+         Create_With_Length (0)
+      end
+      
+   Create_With_Length (Initial_Length : Integer)
+      local
+         Size : System.Word_32
+      do
+         Size.Convert_From (Initial_Length)
+         Create_With_Size (Size)
+      end
+
+   Create_From_String (S : String)
+      require
+         attached S
+      local
+         Index : Integer
+      do
+         Create_With_Length (S.Length)
+         from
+            Index := 1
+         until
+            Index > S.Length
+         loop
+            Replace_Element (Index, S.Element (Index))
+            Index := Index + 1
+         end
+      end
+      
+   Equal (Other : like Current) : Boolean
+      local
+         Index : Integer
+      do
+         if Other.Length = Length then
+            Result := True
+            from
+               Index := 1
+            until
+               not Result or else Index > Length
+            loop
+               if Element (Index) /= Other.Element (Index) then
+                  Result := False
+               end
+               Index := Index + 1
+            end
+         end
+      end
+      
+   Not_Equal alias "/=" (Other : like Current) : Boolean
+      do
+         Result := not Equal (Other)
+      end
+      
+   To_Lower : String
+      local
+         Index : Integer
+      do
+         create Result.Create_From_String (Current)
+         from
+            Index := 1
+         until
+            Index > Length
+         loop
+            Result.Replace_Element (Index, Current.Element (Index).To_Lower_Case)
+            Index := Index + 1
+         end
+      end
+   
+   To_Integer : Integer
+      local
+         Index : Integer
+         Code  : Integer
+         Item  : Integer
+         Base  : Integer
+         Ch    : Character
+      do
+         Base := 10
+         
+         from
+            Result := 0
+            Index  := 1
+         until
+            Index > Length
+         loop
+            Ch := Current.Element (Index)
+            if Ch = '#' then
+               if Index < Length then
+                  Base := Result
+                  Result := 0
+               end
+            elsif Ch = '_' then
+               --  ignore
+            else               
+               Code.Convert_From (Ch.UTF_32_Code)
+               if Code >= 48 and then Code < 58 and then Code < Base + 48 then
+                  Item := Code - 48
+               elsif Code > 64 and then Code <= Base + 54 then
+                  Item := Code - 55
+               elsif Code > 96 and then Code <= Base + 86 then
+                  Item := Code - 87
+               else
+                  --  Put_Line ("bad base " & Base.To_String & " character: '" & Current.Slice (Index, Index) & "' " & Code.To_String)
+                  Item := 99999999  --  oh dear
+               end
+               Result := Result * Base + Item
+            end
+            Index := Index + 1
+         end         
+      end
+
+   Index_Of (Ch : Character; Start_Index : Integer) : Integer
+      require
+         Start_Large_Enough : Start_Index >= 1
+         Start_Small_Enough : Start_Index <= Length + 1
+      do
+         from
+            Result := Start_Index
+         until
+            Result > Length or else Element (Result) = Ch
+         loop
+            Result := Result + 1
+         end
+         if Result > Length then
+            Result := 0
+         end
+         
+      ensure
+         Valid_Result: Result = 0 or (Start_Index <= Result and Result <= Length)
+--         Zero_If_Absent: (Result = 0) = not Substring (Start_Index, Length).Contains (Ch)
+--         Found_If_Present: Substring (Start_Index, Length).Contains (Ch) implies Element (Result) = Ch
+--         None_Before: Substring (Start_Index, Length).Contains (Ch) implies not Substring (Start_Index, Result - 1).Contains (Ch)
+      end
+      
+   Slice (Start_Index, End_Index : Integer) : String
+      require
+         Start_Large_Enough : Start_Index > 0
+         Start_Small_Enough : Start_Index <= Length + 1
+         End_Large_Enough : End_Index >= 0
+         End_Small_Enough : End_Index <= Length
+      local
+         Index : Integer
+      do
+         create Result.Create_With_Length (End_Index - Start_Index + 1)
+         from
+            Index := Start_Index
+         until
+            Index > End_Index
+         loop
+            Result.Replace_Element (Index - Start_Index + 1, Element (Index))
+            Index := Index + 1
+         end
+      end
+      
+   Join alias "&" (Right : String) : String
+   
+      do
+         create Result.Create_With_Size (Block.Count + Right.Block.Count)
+         Block.Copy (Result.Block, 0)
+         Right.Block.Copy (Result.Block, Block.Count)
+      end
+      
+   Replace_Character (Search_Character, Replacement_Character : Character) : String
+      local
+         Index : Integer
+      do
+         create Result.Create_From_String (Current)
+         from
+            Index := 1
+         until
+            Index > Length
+         loop
+            if Result.Element (Index) = Search_Character then
+               Result.Replace_Element (Index, Replacement_Character)
+            end
+            Index := Index + 1
+         end
+      end
+      
+feature
+
+   Length : Integer
+      do
+         Result.Convert_From (Block.Count)
+      end
+
+   Element (Index : Integer) : Character
+      require
+         Positive_Index : Index >= 1
+         Index_In_Range : Index <= Length
+      local
+         I : System.Word_32
+         W : System.Word_32
+      do    
+         I.Convert_From (Index)
+         I := I - 1
+         W := Block.Get (I)
+         Result.Create_From_UTF_32 (W)
+      end
+         
+   Replace_Element (Index : Integer; With_Character : Character)
+      require
+         Positive_Index : Index >= 1
+         Index_In_Range : Index <= Length
+      local
+         I : System.Word_32
+      do    
+         I.Convert_From (Index)
+         I := I - 1
+         Block.Put (I, With_Character.UTF_32_Code)
+      end
+   
+feature { None }  --  string literals
+
+   Create_From_String_Literal (Addr : System.Address)
+      do
+         create Block.Make_From_Base_With_Length (Addr)
+      end
+      
+feature { None }
+
+   Create_With_Size (Size : System.Word_32)
+      do
+         create Block.Allocate_Count (Size)
+      end
+      
+feature { None }
+
+   Write_To_Memory (Start : System.Address)
+      local
+         Target : System.Memory.Block_32
+         Count  : System.Word_32
+      do
+         Count.Convert_From (Length)
+         create Target.Make_From_Base_And_Bound (Start, Start.Offset_Words (Count + 1))
+         Target.Put (0, Count)
+         Block.Copy (Target, 1)
+      end
+
+feature { System.Drivers.Meta_Driver }
+
+   Block : detachable System.Memory.Block_32
+   
+feature { None }
+
+   Can_Change : Boolean
+end

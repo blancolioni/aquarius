@@ -1,0 +1,21 @@
+note
+   description: "Data structures of the most general kind, used to hold zero or more items."
+   
+deferred class 
+   Aqua.Containers.Container [G]
+
+feature  --  Access
+
+   Contains (Element : G) : Boolean
+      deferred
+      ensure
+         Not_Found_In_Empty: Result implies not Is_Empty
+      end
+
+feature  --  Status
+
+   Is_Empty : Boolean
+      deferred
+      end
+      
+end

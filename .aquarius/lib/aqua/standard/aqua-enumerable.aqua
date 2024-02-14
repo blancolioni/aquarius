@@ -1,0 +1,26 @@
+deferred class
+   Aqua.Enumerable
+   
+feature
+
+   Next : like Current
+      require
+         Has_Next : Has_Next
+      deferred
+      end
+      
+   Previous : like Current
+      require
+         Has_Previous : Has_Previous
+      deferred
+      end
+      
+   Has_Next : Boolean
+      deferred
+      end
+      
+   Has_Previous : Boolean
+      deferred
+      end
+      
+end

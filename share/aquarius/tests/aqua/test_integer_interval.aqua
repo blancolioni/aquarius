@@ -1,0 +1,27 @@
+class
+   Test_Integer_Interval
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-integer-interval"
+      end
+      
+   Execute
+      local
+         Sum : Integer
+      do
+         across 1 .. 4 as X loop
+            Sum := Sum + X
+         end
+         Success := Sum = 10
+         if not Success then
+            Fail_Message := "Expected sum = 10; found " & Sum.To_String
+         end
+      end
+      
+end 

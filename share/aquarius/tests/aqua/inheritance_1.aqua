@@ -1,0 +1,10 @@
+deferred class
+   Inheritance_1
+   
+feature
+   
+   Value : Integer
+      deferred
+      end
+      
+end

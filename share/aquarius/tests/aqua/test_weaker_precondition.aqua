@@ -1,0 +1,35 @@
+class
+   Test_Weaker_Precondition
+   
+inherit
+   Unit_Test
+   Weaker_Precondition_1 redefine Value end
+   
+feature
+
+   Failed : Boolean
+   
+   Value (X : Integer) : Integer
+      require else
+         X > 20
+      do
+         Result := X
+      end
+         
+   Name : String
+      do
+         Result := "test-weaker-precondition"
+      end
+      
+   Execute
+      do
+         if not Failed then 
+            Success := Value (10) = 10
+         end
+      rescue
+         Failed := True
+         Fail_Message := "Expected success based on a weaker precondition"
+         retry
+      end
+       
+end 

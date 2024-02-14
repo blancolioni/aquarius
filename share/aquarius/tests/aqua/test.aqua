@@ -1,0 +1,125 @@
+class
+   Test
+inherit
+   Aqua.Text_IO
+   
+feature
+
+   Test_List : Aqua.Containers.Linked_List [Unit_Test]
+   
+   Create_Test_List
+      local
+         T : Unit_Test
+      do
+         create { Test_Class_Load } T
+         Test_List.Append (T)
+         create { Test_String_Equal  } T
+         Test_List.Append (T)
+         create { Test_Strings_1 } T
+         Test_List.Append (T)
+         create { Test_Strings_2 } T
+         Test_List.Append (T)
+         create { Test_Manual_Iterator } T
+         Test_List.Append (T)
+         create { Test_Simple_Loop } T
+         Test_List.Append (T)
+         create { Test_Integer_Bounds } T
+         Test_List.Append (T)
+         create { Test_Property_Redefinition } T
+         Test_List.Append (T)
+         create { Test_Based_Integers } T
+         Test_List.Append (T)
+         create { Test_Based_Integer_Strings } T
+         Test_List.Append (T)
+         create { Test_Integer_Enum } T
+         Test_List.Append (T)
+--         create { Test_Explicit_Integer_Interval } T
+--         Test_List.Append (T)
+--         create { Test_Explicit_Interval } T
+--         Test_List.Append (T)
+         create { Test_Inner_Implicit_Create } T
+         Test_List.Append (T)
+         create { Test_String_List } T
+         Test_List.Append (T)
+         create { Test_Indirect_Inheritance } T
+         Test_List.Append (T)
+--         create { Test_List_Inheritance } T
+--         Test_List.Append (T)
+--         create { Test_Rescue } T
+--         Test_List.Append (T)
+         create { Test_Boolean_Implies } T
+         Test_List.Append (T)
+--         create { Test_Weaker_Precondition } T
+--         Test_List.Append (T)
+         create { Test_Simple_Tuples } T
+         Test_List.Append (T)
+         create { Test_Diamond_Inheritance } T
+         Test_List.Append (T)
+         create { Test_Descendent_Create } T
+         Test_List.Append (T)
+         create { Test_Inherited_Attached } T
+         Test_List.Append (T)
+      end
+
+   Make
+      local
+         Number_Of_Tests : Integer
+         Passed_Tests    : Integer
+         Failed_Tests    : Integer
+         Pass_Ratio      : Integer
+         Test_Value      : Unit_Test
+         Test_Name       : String
+         A : Ackermann
+      do
+         Put_Line ("Initialising ...")
+         Create_Test_List
+         Put_Line ("Running tests ...")
+         across Test_List as T loop
+            Number_Of_Tests := Number_Of_Tests + 1
+            Test_Value := T
+            Test_Name := Test_Value.Name
+            Put (Test_Name)
+            Set_Col (30)
+            Test_Value.Execute
+            if Test_Value.Success then
+               Put_Line ("PASS")
+               Passed_Tests := Passed_Tests + 1
+            else
+               Put_Line ("FAIL: " & Test_Value.Fail_Message)
+               Failed_Tests := Failed_Tests + 1
+            end
+         end
+         
+         Pass_Ratio := Passed_Tests * 100 / Number_Of_Tests
+         
+         Put ("Tests: ")
+         Put (Number_Of_Tests.To_String)
+         Put ("; failed: ")
+         Put (Failed_Tests.To_String)
+         Put ("; passed: ")
+         Put (Passed_Tests.To_String)
+         Put (" (" & Pass_Ratio.To_String & "%)")
+         New_Line
+         
+         create A
+         Put_Line ("A(2, 1) = " & A.fn (2, 1).To_String);
+         Put_Line ("A(2, 2) = " & A.fn (2, 2).To_String);
+         Put_Line ("A(2, 3) = " & A.fn (2, 3).To_String);
+         Put_Line ("A(3, 1) = " & A.fn (3, 1).To_String);
+         Put_Line ("A(3, 2) = " & A.fn (3, 2).To_String);
+         Put_Line ("A(3, 3) = " & A.fn (3, 3).To_String);
+         Put_Line ("A(3, 4) = " & A.fn (3, 4).To_String);
+      end
+
+feature {None}
+
+   N_Items (N : Integer; Item : String) : String
+      do
+         if N = 1 then
+            Result := N.To_String & " " & Item
+         else
+            Result := N.To_String & " " & Item & "s"
+         end
+      end
+      
+end

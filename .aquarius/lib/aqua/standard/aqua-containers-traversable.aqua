@@ -1,0 +1,12 @@
+note
+   description: 
+		"Structures for which there exists a traversal policy that will visit every element exactly once."
+        
+deferred class 
+   Aqua.Containers.Traversable [G]
+
+inherit
+   Aqua.Containers.Container [G]
+   Aqua.Iterable
+            
+end

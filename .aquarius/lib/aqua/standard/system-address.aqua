@@ -1,0 +1,36 @@
+expanded class 
+   System.Address
+inherit
+   Aqua.Integral 
+   
+feature
+
+   Offset_Words (Count : Word_32) : Address external "intrinsic"
+
+   Word_Count (Bound : System.Address) : Word_32
+      require
+         Non_Negative: Bound.Value >= Value
+      do
+         Result := (Bound.Value - Value) / 4                         
+      end
+   
+   Make_With_Integer_Literal (Literal : Aqua.Integer_Literal)
+     do
+        Value.Make_With_Integer_Literal (Literal)
+     end
+     
+   Convert_From (Other : Aqua.Integral)
+      do
+         Value.Convert_From (Other)
+      end
+      
+   To_String : String
+      do
+         Result := Value.To_String
+      end 
+      
+feature { None }
+
+   Value : Word_32
+   
+end

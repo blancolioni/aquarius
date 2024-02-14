@@ -1,0 +1,31 @@
+class
+   Aqua.Interval[Interval_Type -> Aqua.Enumerable]
+   
+inherit
+   Aqua.Iterable [Interval_Type]
+      redefine New_Cursor end
+   
+create
+   Make
+   
+feature
+   Make (Min_Value, Max_Value : Interval_Type)
+      do
+         Minimum := Min_Value
+         Maximum := Max_Value
+      end
+      
+feature
+
+
+   New_Cursor : Aqua.Iteration_Cursor [Interval_Type]
+     do
+        create { Aqua.Interval_Iterator [Interval_Type] } Result.Make (Current)
+     end
+   
+feature
+
+   Minimum : Interval_Type
+   Maximum : Interval_Type
+   
+end

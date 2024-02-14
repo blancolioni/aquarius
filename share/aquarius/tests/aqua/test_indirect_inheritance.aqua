@@ -1,0 +1,28 @@
+class
+   Test_Indirect_Inheritance
+   
+inherit
+   Unit_Test
+   Inheritance_2
+   
+feature
+
+   Value : Integer
+      do
+         Result := 10
+      end
+         
+   Name : String
+      do
+         Result := "test-indirect-inheritance"
+      end
+      
+   Execute
+      do
+         Success := Value = 10
+         if not Success then
+            Fail_Message := "Expected Value = 10; found " & Value.To_String
+         end
+      end
+       
+end 

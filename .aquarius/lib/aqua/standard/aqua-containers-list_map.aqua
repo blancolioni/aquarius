@@ -1,0 +1,77 @@
+class 
+   Aqua.Containers.List_Map [Key_Type, Element_Type]
+   
+inherit 
+   Aqua.Containers.Linked_List [(Key_Type, Element_Type)]
+   Aqua.Containers.Map [Key_Type, Element_Type]
+      redefine Contains_Key, Element, Insert, Delete, Replace end
+              
+feature
+
+   Contains_Key (K : Key_Type) : Boolean
+      do
+         Result := Internal_Find (K) /= Void
+      end
+   
+   Element (K : Key_Type) : Element_Type
+      do
+         Result := Internal_Find (K)
+      end
+      
+   Insert (K : Key_Type; E : Element_Type)
+      do
+         Append ((K, E))
+      end
+      
+   Delete (K : Key_Type)
+      local
+         It : Aqua.Containers.Linked_List_Iterator [(Key_Type, Element_Type)]
+         Found : Boolean
+      do
+         from
+            It := New_Cursor
+         invariant
+            not It.After
+         until
+            Found
+         loop
+            if It.Element.First = K then
+               It.Delete
+               Found := True
+            else
+               It.Next
+            end
+         end
+      end
+      
+    Replace (K : Key_Type; E : Element_Type)
+       local
+          Found : Boolean
+       do
+          across Current as Item 
+          until Found
+          loop
+             if Item.First = K then
+                Found := True
+                Item.Set_Second (E)
+             end
+          end
+       end
+
+feature { None }
+
+   Internal_Find (K : Key_Type) : detachable Element_Type
+      local
+         Found : Boolean
+      do
+         across Current as Item
+         until Found
+         loop
+            if Item.First = K then
+               Found := True
+               Result := Item.Second
+            end
+         end
+      end
+
+end

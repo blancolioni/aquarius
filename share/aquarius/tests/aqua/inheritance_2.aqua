@@ -1,0 +1,7 @@
+deferred class
+   Inheritance_2
+   
+inherit
+   Inheritance_1
+   
+end

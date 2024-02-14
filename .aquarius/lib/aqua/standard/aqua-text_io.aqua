@@ -1,0 +1,63 @@
+class Aqua.Text_IO
+
+feature
+
+   Put_Char (Ch : Character)
+      local
+         Writer : System.Drivers.Text_Writer
+      do
+         Writer.Put (ch)
+      end
+      
+   Put (S : String)
+      local
+         Index : Integer
+      do
+         from
+            Index := 1
+         invariant
+            Index >= 1 and then Index <= S.Length
+         until
+            Index > S.Length
+         loop
+            Put_Char (S.Element (Index))
+            Index := Index + 1
+         end
+      end
+      
+   Put_Line (S : String)
+      do
+         Put (S)
+         New_Line
+      end
+      
+   New_Line
+      local
+         Ch : Character
+      do
+         Ch.Create_From_UTF_32 (10)
+         Put_Char (Ch)
+      end
+      
+   Set_Output (Path : String)
+      local
+         Writer : System.Drivers.Text_Writer
+      do
+         Writer.Set_Output (Path)
+      end
+   
+   Set_Col (Col : Integer) 
+      local
+         Writer : System.Drivers.Text_Writer
+      do
+         Writer.Set_Col (Col)
+      end
+   
+   Col : Integer
+      local
+         Writer : System.Drivers.Text_Writer
+      do
+         Result := Writer.Col
+      end
+
+end

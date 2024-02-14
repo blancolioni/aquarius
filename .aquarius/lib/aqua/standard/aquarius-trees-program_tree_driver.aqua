@@ -1,0 +1,210 @@
+note
+   Routine_Update: Never
+   
+expanded class 
+
+   Aquarius.Trees.Program_Tree_Driver
+      
+feature
+
+   Name : String
+      do
+         Set_Tree_Driver (1)
+         Result := Get_String
+      end
+      
+   Text : String
+      do
+         Set_Tree_Driver (2)
+         Result := Get_String
+      end
+      
+   Standard_Text : String
+      do
+         Set_Tree_Driver (3)
+         Result := Get_String
+      end
+      
+   Concatenated_Image : String
+      do
+         Set_Tree_Driver (4)
+         Result := Get_String
+      end
+
+   Full_File_Name : String
+      do
+         Set_Tree_Driver (9)
+         Result := Get_String
+      end
+      
+   File_Name : String
+      do
+         Set_Tree_Driver (10)
+         Result := Get_String
+      end
+      
+   Start_Line : Integer
+      do
+         Set_Tree_Driver (11)
+         Result := Get_Integer
+      end
+      
+   End_Line : Integer
+      do
+         Set_Tree_Driver (12)
+         Result := Get_Integer
+      end
+      
+   Start_Column : Integer
+      do
+         Set_Tree_Driver (13)
+         Result := Get_Integer
+      end
+      
+   End_Column : Integer
+      do
+         Set_Tree_Driver (14)
+         Result := Get_Integer
+      end
+      
+   Start_Position : Integer
+      do
+         Set_Tree_Driver (15)
+         Result := Get_Integer
+      end
+      
+   End_Position : Integer
+      do
+         Set_Tree_Driver (16)
+         Result := Get_Integer
+      end
+      
+   Error (Message : String)
+      do
+         Send_String (5, Message)
+      end
+
+   Get_Property (Name : String) : System.Address
+      local
+         Mem : System.Memory.Mem
+      do
+         Send_String (6, Name)
+         Result := Mem.Get_Address (Argument_Address)
+      end
+         
+   Has_Property (Name : String) : Boolean
+      local
+         Mem : System.Memory.Mem
+      do
+         Send_String (7, Name)
+         Result := Mem.Get_Address (Argument_Address) /= 0
+      end
+         
+         
+   Set_Property (Name  : String
+                 Value : System.Address)
+      local
+         Mem : System.Memory.Mem
+      do
+         Mem.Put_Address (Argument_Address, Value)
+         Send_String (8, Name)
+      end
+         
+   Create_Entity (Defining_Name_Tree   : Aquarius.Trees.Program_Tree
+                  Name, Qualified_Name : String
+                  Class_Name           : String
+                  Top_Level            : Boolean) : Komnenos.Entity
+      local
+         Mem  : System.Memory.Mem
+         Text : String
+      do
+         Text := Name & "/" & Qualified_Name & "/" & Class_Name & "/" & Defining_Name_Tree.Start_Location_Image
+         Text.Write_To_Memory (Text_Address)
+         if Top_Level then
+            Mem.Put_Word_32 (Argument_Address, 1)
+         end
+         Set_Tree_Driver (17)
+      end
+         
+   
+   Find_Entity (Entity_Name    : String
+                Class_Name     : String) : Komnenos.Entity
+      do end
+   
+   
+   Cross_Reference (Referrer_Entity   : Komnenos.Entity
+                    Referenced_Entity : Komnenos.Entity
+                    Reference_Type    : String)
+      do end
+   
+feature
+
+   Make_From_Index (Index : System.Word_32)
+      do
+         External_Tree_Index := Index
+      end
+
+   Send_String (Command : System.Word_32
+                Text    : String)
+      do
+         Text.Write_To_Memory (Text_Address)
+         Set_Tree_Driver (Command)
+      end
+      
+   Get_Integer : Integer
+      local
+         Mem : System.Memory.Mem
+         W : System.Word_32
+      do
+         W := Mem.Get_Word_32 (Argument_Address)
+         Result.Convert_From (W)
+      end
+      
+   Get_String : String
+      local
+         S : String
+      do
+         create S.Create_From_String_Literal (Text_Address)
+         create Result.Create_From_String (S)
+      end
+      
+   Set_Tree_Driver (Command : System.Word_32)
+      local
+         Mem : System.Memory.Mem
+      do
+         Mem.Put_Word_32 (Current_Tree_Address, External_Tree_Index)
+         Mem.Put_Word_32 (Command_Address, Command)
+      end
+
+feature { None }
+
+   Base : System.Address
+      local
+         Meta : System.Drivers.Meta_Driver
+      once
+         Result := Meta.Install_Driver ("aquarius-program-tree")
+      end
+      
+   Current_Tree_Address : System.Address
+      once
+         Result := Base
+      end
+      
+   Command_Address : System.Address
+      once
+         Result := Base.Offset_Words (1)
+      end
+
+   Argument_Address : System.Address
+      once
+         Result := Base.Offset_Words (2)
+      end
+
+   Text_Address : System.Address
+      once
+         Result := Base.Offset_Words (3)
+      end
+
+   External_Tree_Index : System.Word_32
+   
+end

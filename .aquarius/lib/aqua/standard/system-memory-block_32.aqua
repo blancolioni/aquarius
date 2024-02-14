@@ -1,0 +1,71 @@
+class 
+   System.Memory.Block_32
+
+create
+   Make_From_Base_And_Bound, Make_From_Base_With_Length, Allocate_Count
+   
+feature
+   Make_From_Base_And_Bound (Map_Base, Map_Bound : System.Address)
+      do
+         Base := Map_Base
+         Bound := Map_Bound
+         Count := Map_Base.Word_Count (Map_Bound)
+      end
+      
+   Make_From_Base_With_Length (Map_Base : System.Address)
+      local
+         Length : System.Word_32
+         Mem    : System.Memory.Mem
+      do
+         Length := Mem.Get_Word_32 (Map_Base)
+         Make_From_Base_And_Bound (Map_Base.Offset_Words (1), Map_Base.Offset_Words (Length + 1))
+      end
+      
+   Allocate_Count (Request : System.Word_32)
+      local
+         Mem : System.Memory.Mem
+      do
+         Count := Request
+         Base := Mem.Allocate (Count * 4)
+         Bound := Base.Offset_Words (Count)
+      end
+         
+   Copy (To_Block : Block_32
+         Start    : Word_32)
+      local
+         Src : System.Word_32
+         Dst : System.Word_32
+         X   : System.Word_32
+      do
+         from
+            Src := 0
+            Dst := Start
+         until
+            Src >= Count
+         loop
+            X := Get (Src)
+            To_Block.Put (Dst, X)
+            Src := Src + 1
+            Dst := Dst + 1
+         end
+      end
+         
+feature
+   Base    : System.Address
+   Bound   : System.Address
+   Count   : Word_32
+   
+feature  --  get/put
+
+   Put (Offset : System.Word_32; Value : System.Word_32) external "intrinsic" alias "system-memory-block_32-put"
+
+   Get (Offset : System.Word_32) : System.Word_32 external "intrinsic" alias  "system-memory-block_32-get"
+--      local
+--         Mem  : System.Memory.Mem
+--         Addr : System.Address
+--      do
+--         Addr := Base.Offset_Words (Offset)
+--         Result := Mem.Get_Word_32 (Addr)
+--      end
+
+end

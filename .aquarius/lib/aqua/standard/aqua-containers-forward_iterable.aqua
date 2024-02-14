@@ -1,0 +1,8 @@
+deferred class 
+   Aqua.Containers.Forward_Iterable [Element_Type]
+
+inherit Aqua.Containers.Cell [Element_Type]
+        Aqua.Iterable [Element_Type]
+        
+           
+end

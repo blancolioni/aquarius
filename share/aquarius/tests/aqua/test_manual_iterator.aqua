@@ -1,0 +1,44 @@
+class
+   Test_Manual_Iterator
+   
+inherit
+   Unit_Test
+   Aqua.Text_IO
+   
+feature
+
+   Name : String
+      do
+         Result := "test-manual-iterator"
+      end
+      
+   Execute
+      local
+         Vs : Aqua.Containers.Linked_List[Integer]
+         Sum : Integer   
+         It  : Aqua.Iteration_Cursor[Integer]
+      do
+         create Vs
+         Vs.Append (1)
+         Vs.Append (2)
+         Vs.Append (3)
+         Vs.Append (4)
+         Sum := 0
+         
+         from
+            It := Vs.New_Cursor
+         until
+            It.After
+         loop
+            Sum := Sum + It.Element
+            It.Next
+         end
+         
+         Success := Sum = 10
+         if not Success then
+            Fail_Message := "Expected Sum = 10; found " & Sum.To_String
+         end
+      end
+      
+       
+end 

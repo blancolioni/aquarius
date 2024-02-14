@@ -1,0 +1,28 @@
+top_level ::= json_value
+case_sensitive = false
+
+identifier ::= !\l[\w_]*!
+integer    ::= !\d+!
+string     ::= !\x22[^\x22]*\x22!
+delimiter  ::= delimiters "{},=:"
+
+json_value ::= primitive_value | array_value | object_value
+
+primitive_value ::= null_value
+                  | boolean_value
+		  | integer_value
+		  | string_value
+
+null_value ::= 'null'
+
+boolean_value ::= 'true' | 'false'
+
+integer_value ::= integer
+
+string_value ::= string
+
+array_value ::= '[' { json_value / ',' } ']'
+
+object_value ::= '{' { component_value / ',' } '}'
+
+component_value ::= string ':' json_value

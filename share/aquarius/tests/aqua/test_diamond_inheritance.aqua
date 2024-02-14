@@ -1,0 +1,37 @@
+class
+   Test_Diamond_Inheritance
+   
+inherit
+   Unit_Test
+   Aqua.Text_IO
+   
+feature
+
+   A : Diamond_A
+   B : Diamond_B
+   C : Diamond_C
+   D : Diamond_D
+
+   Value : Integer
+      do
+         Result := 10
+      end
+         
+   Name : String
+      do
+         Result := "test-diamond-inheritance"
+      end
+      
+   Execute
+      local
+         Value : String
+      do
+         create D
+         Value := D.a1 & " " & D.a2 & " " & D.a3 & " " & D.a4
+         Success := Value = "D.a1 B.a2 D.a3 C.a4"
+         if not Success then
+            Fail_Message := "Expected Value = D.a1 B.a2 D.a3 C.a4; found " & Value
+         end
+      end
+       
+end 

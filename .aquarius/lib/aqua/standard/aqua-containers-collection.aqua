@@ -1,0 +1,52 @@
+note
+   description: "General container data structures, characterized by the membership properties of their items."
+   
+deferred class 
+   Aqua.Containers.Collection [G]
+
+inherit
+   Aqua.Containers.Container [G]
+   
+feature  --  Status
+
+   Can_Delete : Boolean
+      deferred
+      end
+
+   Can_Include : Boolean
+      deferred
+      end
+      
+feature  --  Element update
+
+    Include (Element : G)
+       require
+          Can_Include : Can_Include
+       deferred
+       ensure
+          Contains (Element)
+       end
+       
+    Delete (Element : G)
+       require
+          Can_Delete : Can_Delete
+       deferred
+       end
+       
+    Delete_All (Element : G)
+       require
+          Can_Delete : Can_Delete
+       deferred
+       ensure
+          No_More_Occurances: not Contains (Element)
+       end
+       
+    Clear
+       require
+          Can_Delete
+       deferred
+       ensure
+          Cleared: Is_Empty
+       end
+       
+end

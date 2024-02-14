@@ -1,0 +1,30 @@
+class B
+inherit A redefine f end
+
+feature
+  h : Integer do
+     Result := e
+  end h
+  
+  f : Integer do
+    Result := 12
+  end f
+  
+end A
+
+--  B__vt:
+--    .word B__A__vt
+--    .word B__h
+--
+--  B__A__parent:
+--    .word B__vt
+--  B__A__vt:
+--    .word B__f
+--    .word A__g
+--
+--  B__f:
+--    mov vt, -(sp)
+--    mov -4(vt), vt
+--    call 4(vt)
+--    mov (sp)+, vt
+--    rts

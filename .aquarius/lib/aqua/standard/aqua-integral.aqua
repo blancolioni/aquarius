@@ -1,0 +1,18 @@
+deferred class
+   Aqua.Integral
+
+inherit
+   Aqua.Enumerable
+   
+feature
+
+   Make_With_Integer_Literal
+     (Literal : Aqua.Integer_Literal)
+     deferred
+     end
+     
+   Convert_From (Other : Aqua.Integral)
+      deferred
+      end
+      
+end

@@ -1,0 +1,42 @@
+expanded class 
+   System.Drivers.CPU
+   
+feature
+
+   Trace (Enabled : Boolean)
+     do
+        if Enabled then
+           Command (1, 1)
+        else
+           Command (1, 0)
+        end
+     end       
+
+feature { None }
+
+   Base : System.Address
+      local
+         Meta : System.Drivers.Meta_Driver
+      once
+         Result := Meta.Install_Driver ("aqua-cpu-handler")
+      end
+      
+   Cmd : System.Address
+      once
+         Result := Base
+      end
+      
+   Code : System.Address
+      once
+         Result := Base.Offset_Words (1)
+      end
+      
+   Command (Cmd_Index, Arg_Value : System.Word_32)
+      local
+         Mem  : System.Memory.Mem
+      do
+         Mem.Put_Word_32 (Code, Arg_Value)
+         Mem.Put_Word_32 (Cmd, Cmd_Index)
+      end
+
+end

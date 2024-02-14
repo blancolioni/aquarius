@@ -1,0 +1,37 @@
+class
+   Test_Rescue
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-rescue"
+      end
+      
+   Execute
+      local
+         Retrying : Boolean
+      do
+         if Retrying then
+            Calculate (1)
+            Success := True
+         else
+            Calculate (0)
+            Success := False
+            Fail_Message := "Rescue clause did not retry"
+         end 
+      rescue
+         Retrying := True
+         retry
+      end
+      
+   Calculate (V : Integer)
+      require
+         V = 1
+      do
+      end
+      
+end 

@@ -1,0 +1,38 @@
+expanded class 
+   Character
+
+feature
+
+   To_Upper_Case : Character
+      local
+         Handling : System.Drivers.Character_Handling
+      do
+         Result := Handling.To_Upper_Case (Current)
+      end
+      
+   To_Lower_Case : Character
+      local
+         Handling : System.Drivers.Character_Handling
+      do
+         Result := Handling.To_Lower_Case (Current)
+      end
+      
+   Is_White_Space : Boolean
+      local
+         Handling : System.Drivers.Character_Handling
+      do
+         Result := Handling.Is_White_Space (Current)
+      end
+   
+feature
+   
+   Create_From_UTF_32 (Code : System.Word_32)
+      do
+         UTF_32_Code := Code
+      end
+   
+feature
+
+   UTF_32_Code : System.Word_32
+
+end

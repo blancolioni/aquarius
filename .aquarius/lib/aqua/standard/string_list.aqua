@@ -1,0 +1,16 @@
+class String_List
+   inherit
+      Aqua.Containers.Linked_List[String]
+      
+feature
+   Interpolate (Separator : String) : String
+      do
+         Result := ""
+         across Current as Item loop
+            if Result /= "" then
+               Result := Result & Separator
+            end
+            Result := Result & Item
+         end
+      end
+end

@@ -1,0 +1,83 @@
+class
+   Aqua.Containers.Linked_List_Iterator [G] 
+   
+inherit
+   Aqua.Containers.Forward_Iterator[G]
+   Aqua.Update_Iteration_Cursor [G]
+      
+create
+   Make
+      
+feature{Aqua.Containers.Linked_List}
+
+   Make (List : Aqua.Containers.Linked_List[G]) 
+      do
+         Current_List := List
+         Current_Linkable := Current_List.First_Cell
+      end
+   
+feature  --  Element update
+
+   Delete
+      local
+         New_Linkable : Aqua.Containers.Linkable[G]
+      do
+         New_Linkable := Current_Linkable.Next
+         if attached Previous_Linkable then
+            Previous_Linkable.Delete_Next
+         else
+            Current_List.Delete_First
+         end
+         Current_Linkable := New_Linkable
+      end
+      
+   Insert (Element : G)
+      do
+         if attached Previous_Linkable then
+            Previous_Linkable.Put_Next (Element)
+            Previous_Linkable.Next.Join (Current_Linkable)
+         else
+            create Previous_Linkable
+            Previous_Linkable.Put (Element)
+            Previous_Linkable.Join (Current_Linkable)
+         end
+      end
+
+feature
+
+   Element : G
+      local
+         Linkable : Aqua.Containers.Linkable[G]
+      do
+         Linkable := Current_Linkable
+         Result := Linkable.Element
+      end
+      
+   Next
+      do
+         Previous_Linkable := Current_Linkable
+         Current_Linkable := Current_Linkable.Next
+      end
+
+   At_Start : Boolean
+      do
+         Result := Current_Linkable /= Void and then Current_Linkable = Current_List.First_Cell
+      end
+      
+   At_End : Boolean
+      do
+         Result := Current_Linkable /= Void and then Current_Linkable = Current_List.Last_Cell
+      end
+      
+   After : Boolean
+      do
+         Result := Current_Linkable = Void
+      end
+   
+feature{None}
+
+   Previous_Linkable : detachable Aqua.Containers.Linkable[G]
+   Current_Linkable  : detachable Aqua.Containers.Linkable[G]
+   Current_List      : Aqua.Containers.Linked_List[G]
+   
+end

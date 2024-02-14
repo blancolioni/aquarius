@@ -1,0 +1,29 @@
+class
+   Test_Based_Integer_Strings
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-based-integer-strings"
+      end
+      
+   Execute
+      local
+         S : String
+         T : String
+         X : Integer
+      do
+         S := "16#FFD2#"
+         T := "2#1111_1111_1101_0010#"         
+         X := T.To_Integer
+         Success := X = 16#FFD2# and then X = S.To_Integer
+         if not Success then
+            Fail_Message := "Expected 16#FFD2# = 65_490 = 2#‭1111_1111_1101_0010‬#, but found " & X.To_String
+         end
+      end
+       
+end 

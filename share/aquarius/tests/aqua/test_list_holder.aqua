@@ -1,0 +1,9 @@
+class
+   Test_List_Holder
+   
+feature
+
+   Buffer : Integer
+   List   : Aqua.Containers.Linked_List[Integer]
+   
+end

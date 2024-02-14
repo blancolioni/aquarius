@@ -1,0 +1,9 @@
+deferred class Aqua.Containers.Backward_Iterator [Element]
+   inherit Cell [Element]
+   
+feature
+
+   Previous : Forward_Iterator [Element]
+      deferred
+      
+end

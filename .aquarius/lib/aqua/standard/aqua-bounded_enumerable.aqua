@@ -1,0 +1,23 @@
+deferred class
+   Aqua.Bounded_Enumerable
+   
+inherit
+   Aqua.Bounded
+   Aqua.Enumerable
+      redefine Has_Previous, Has_Next end
+      
+feature
+
+   Has_Next : Boolean
+      do
+         Result := Current /= Maximum
+      end
+      
+   Has_Previous : Boolean
+      do
+         Result := Current /= Minimum
+      end
+      
+end
+
+   

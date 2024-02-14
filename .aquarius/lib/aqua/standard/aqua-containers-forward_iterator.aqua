@@ -1,0 +1,45 @@
+deferred class 
+   Aqua.Containers.Forward_Iterator [Element_Type]
+
+inherit
+   Aqua.Iteration_Cursor [Element_Type]
+   
+feature
+
+   Element : Element_Type
+      require
+         not After
+      deferred
+      
+      end
+      
+   Next
+      deferred
+      
+      ensure
+         Next_Of_Last_Element: old At_End implies After
+      end
+      
+   At_Start : Boolean
+      deferred
+      ensure
+         After_Is_Not_At_Start: Result implies not After
+      end
+      
+   At_End : Boolean
+      deferred
+      ensure
+         After_Is_Not_At_End: Result implies not After
+      end
+      
+   After : Boolean
+      deferred
+      ensure
+         After_Is_Not_At_Start_Or_End: Result implies not (At_Start or At_End)
+      end
+
+invariant
+   Consistent_Properties:
+      (At_Start or At_End) implies not After
+      
+end

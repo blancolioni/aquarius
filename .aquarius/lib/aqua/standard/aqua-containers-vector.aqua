@@ -1,0 +1,59 @@
+class Aqua.Containers.Vector[Index_Type -> Integral, Element]
+   inherit 
+      Container[Element]
+         redefine Length, First_Element, Last_Element, Is_Empty end 
+      Sequence[Element]
+         redefine Append end
+      Forward_Iterable[Element]
+         redefine First end
+      Indexable[Index_Type, Element] redefine Get, Put, Length, Low_Bound, High_Bound end
+feature{Aqua.Containers.Vector_Iterator}
+
+   Internal_Vector : Aqua_Array[G]
+   
+feature
+
+   Length : Natural
+      do
+         Result := Internal_Vector.Length
+      end
+      
+   Low_Bound : Index_Type
+   High_Bound : Integer_Type
+   
+   Is_Empty : Boolean
+      do
+         Result := Length = 0
+      end
+
+   First : Vector_Iterator [G]
+      do
+         create Result.Make (Current)
+      end
+      
+   First_Element : G
+      do
+         Result := Internal_Vector.Get (1)
+      end
+      
+   Last_Element : G
+      do
+         Result := Internal_Vector.Get (Internal_Vector.Length)
+      end
+      
+   Append (New_Item : G)
+      do
+         Internal_Vector.Append (New_Item)
+      end
+      
+   Get (Index : Index_Type)
+      do
+         Result := Internal_Vector.Get (Index + 1 - Low_Bound)
+      end
+   
+   Put (Index : Index_Type;
+        Value : Element)
+      do
+         Internal_Vector.Set (Index + 1 - Low_Bound, Value)
+      end         
+end

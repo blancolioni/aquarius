@@ -1,0 +1,22 @@
+name = "aquarius_trees"
+description = "Aquarius trees"
+version = "0.1.0-dev"
+
+authors = ["Fraser Wilson"]
+maintainers = ["Fraser Wilson <fraser@thewhitelion.eu>"]
+maintainers-logins = ["blancolioni"]
+licenses = "GPL-3.0-or-later"
+website = ""
+tags = []
+
+[[depends-on]]
+aquarius_base = "*"
+[[pins]]
+aquarius_base = { path = "../aquarius_base" }
+
+[build-switches]
+"*".ada_version = "ada2022"
+Development.Runtime_Checks = "Everything"
+"*".Style_Checks = "yes"
+development.contracts = "yes"
+"*".compile_checks = "errors"

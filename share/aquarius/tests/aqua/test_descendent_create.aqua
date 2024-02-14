@@ -1,0 +1,26 @@
+class
+   Test_Descendent_Create
+   
+inherit
+   Unit_Test
+   
+feature
+
+   Item : Test_Descendent_Ancestor
+   
+   Name : String
+      do
+         Result := "test-descendent-create"
+      end
+      
+   Execute
+      local
+      do
+         create { Test_Descendent } Item.Make ("test-descendent-create")
+         Success := Item.Message = "test-descendent-create"
+         if not Success then
+            Fail_Message := "Expected message 'test-descendent-create' but found '" & Item.Message & "'"
+         end
+      end
+       
+end 

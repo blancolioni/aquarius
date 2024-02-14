@@ -1,0 +1,10 @@
+class 
+   System.Storage
+
+feature
+
+   Location : System.Address
+   
+   Allocate (Size : Integer) external "aqua"
+   
+end

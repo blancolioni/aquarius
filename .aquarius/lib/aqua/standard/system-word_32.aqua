@@ -1,0 +1,61 @@
+note
+   Behavior          : Aqua_Internal_Class
+   Aqua_Modular_Type : 32
+   Frame_Size        : 1
+   
+expanded class 
+   System.Word_32
+
+inherit
+   Aqua.Algebra.Additive redefine Subtract, Equal end
+   Aqua.Algebra.Multiplicative redefine Equal end
+   Aqua.Integral redefine Equal end
+   Aqua.Comparable redefine Equal end
+      
+feature
+
+   Zero : Word_32 external "intrinsic"
+   One  : Word_32 external "intrinsic"
+   
+   Add      (Right : Word_32) : Word_32 external "intrinsic"
+   Subtract (Right : Word_32) : Word_32 external "intrinsic"
+   Multiply (Right : Word_32) : Word_32 external "intrinsic"
+   Divide   (Right : Word_32) : Word_32 external "intrinsic"
+   Modulus  (Right : Word_32) : Word_32 external "intrinsic"
+   
+   Make_With_Integer_Literal (Literal : Aqua.Integer_Literal) external "intrinsic" alias "replace-current"
+   Convert_From (Other : Aqua.Integral) external "intrinsic" alias "replace-current"
+         
+   GE (Right : Word_32) : Boolean external "intrinsic"
+   LE (Right : Word_32) : Boolean external "intrinsic"
+   GT (Right : Word_32) : Boolean external "intrinsic"
+   LT (Right : Word_32) : Boolean external "intrinsic"
+
+   Equal (Right : Word_32) : Boolean external "intrinsic"
+   
+   To_String : String
+      local
+         It    : Word_32
+         Index : Integer
+         Ch    : Character
+         Code  : System.Word_32
+      do
+        create Result.Create_With_Length (8)
+        from
+           It := Current
+           Index := 8
+        until
+           Index = 0
+        loop
+           Code := It mod 16
+           It := It / 16
+           if Code < 10 then
+              Ch.Create_From_UTF_32 (Code + 48)
+           else
+              Ch.Create_From_UTF_32 (Code + 55)
+           end
+           Result.Replace_Element (Index, Ch)
+           Index := Index - 1
+        end
+     end
+end

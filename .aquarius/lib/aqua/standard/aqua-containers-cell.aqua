@@ -1,0 +1,14 @@
+class Aqua.Containers.Cell[G]
+
+feature
+
+   Element : G
+   
+   Put (V : G) 
+      do
+         Element := V
+      ensure
+         Element_Put: Element = V
+      end
+
+end

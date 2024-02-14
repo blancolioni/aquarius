@@ -1,0 +1,5 @@
+deferred class Aqua.Containers.Linear_Iterator [Element]
+inherit
+   Aqua.Containers.Traversable_Iterator[Element]
+   
+end

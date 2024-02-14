@@ -1,0 +1,10 @@
+class
+   Smoke_Test
+inherit
+   Aqua.Text_IO
+feature
+   Make
+   do
+      Put_Line ("Smoke test successful")
+   end
+end

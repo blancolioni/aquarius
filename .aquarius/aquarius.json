@@ -1,0 +1,22 @@
+{
+    "version": "0.1.0-dev",
+    "extensions": {
+		"json": {
+			"name": "JSON file",
+			"plugin": "json"
+		}
+    },
+    "install": {
+		"paths": {
+			"standard": "lib/aqua",
+			"assembly": "tmp/asm",
+			"grammar": "grammar",
+			"generated": "tmp/gen",
+			"object": "tmp/obj"
+		},
+		"tools": {
+			"as": "e:/git/aqua/aqua_as/bin/aqua_as.exe"
+		}
+    }
+}
+    

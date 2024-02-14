@@ -1,0 +1,67 @@
+expanded class 
+   System.Drivers.Text_Writer
+   
+feature
+
+   Put (Ch : Character)
+      local
+         Mem : System.Memory.Mem
+      do
+         Mem.Put_Word_32 (Character_Addr, Ch.UTF_32_Code)
+      end
+
+    Col : Integer
+      local
+         Mem : System.Memory.Mem
+      do
+         Result.Convert_From (Mem.Get_Word_32 (Col_Addr))
+      end
+      
+    Set_Col (Value : Integer)
+       local
+          Mem : System.Memory.Mem
+          Col_32 : System.Word_32
+       do
+          Col_32.Convert_From (Value)
+          Mem.Put_Word_32 (Col_Addr, Col_32)
+       end
+       
+    Set_Output (Name : String)
+       local
+          Mem : System.Memory.Mem
+       do
+          Name.Write_To_Memory (Name_Addr)
+          Mem.Put_Word_32 (Output_Addr, 1)
+       end
+       
+feature { None }
+
+   Base : System.Address
+      local
+         Meta : System.Drivers.Meta_Driver
+      once
+         Result := 16#FFFF_F000#  --  Meta.Install_Driver ("aqua-text-writer")
+      end
+      
+   Character_Addr : System.Address
+      once
+         Result := Base
+      end
+      
+   Col_Addr : System.Address
+      once
+         Result := Base.Offset_Words (1)
+      end
+
+   Output_Addr : System.Address
+      once
+         Result := Base.Offset_Words (2)
+      end
+      
+   Name_Addr : System.Address
+      once
+         Result := Base.Offset_Words (3)
+      end
+      
+
+end

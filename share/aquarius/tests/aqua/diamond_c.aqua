@@ -1,0 +1,31 @@
+class
+   Diamond_C
+   
+inherit
+   Diamond_A redefine a3, a4 end
+   
+feature
+
+   p4 : Integer
+   
+   a3 : String
+      do
+         Result := "C.a3"
+      end
+      
+   a4 : String
+      do
+         Result := "C.a4"
+      end
+      
+   c1 : String
+      do
+         Result := "C.c1"
+      end
+
+   c2 : String
+      do
+         Result := "C.c2"
+      end
+      
+end

@@ -1,0 +1,30 @@
+class
+   Diamond_A
+   
+feature
+
+   p1 : Integer
+   p2 : Integer
+   
+   a1 : String
+      do
+         Result := "A.a1"
+      end
+      
+   a2 : String
+      do
+         Result := "A.a2"
+      end
+
+      
+   a3 : String
+      do
+         Result := "A.a3"
+      end
+      
+   a4 : String
+      do
+         Result := "A.a4"
+      end
+
+end

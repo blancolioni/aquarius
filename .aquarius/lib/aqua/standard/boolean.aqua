@@ -1,0 +1,19 @@
+note
+   Aqua_Size_Bits : 1
+   
+expanded class Boolean
+
+feature
+
+   Boolean_Equal alias "=" (Right : like Current) : Boolean external "intrinsic" alias "equal"
+   Boolean_Not_Equal alias "/=" (Right : like Current) : Boolean external "intrinsic" alias "not_equal"
+   
+   Boolean_And alias "and" (Other : Boolean) : Boolean external "intrinsic" alias "and"
+   Boolean_Or alias "or" (Other : Boolean) : Boolean external "intrinsic" alias "or"
+   Boolean_And_Then alias "andthen" (Other : Boolean) : Boolean external "intrinsic" alias "nop"
+   Boolean_Or_Else alias "orelse" (Other : Boolean) : Boolean external "intrinsic" alias "nop"
+   Boolean_Implies alias "implies" (Other : Boolean) : Boolean external "intrinsic" alias "implies"
+   Boolean_Xor alias "xor" (Other : Boolean) : Boolean external "intrinsic" alias "xor"
+   Boolean_Not alias "not" : Boolean external "intrinsic" alias "not"
+   
+end

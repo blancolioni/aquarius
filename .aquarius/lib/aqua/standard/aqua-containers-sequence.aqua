@@ -1,0 +1,45 @@
+note
+   description:
+   		"Finite sequences: structures where existing items are arranged and accessed sequentially, and new ones can be added at the end."
+        
+deferred class
+   Aqua.Containers.Sequence [G]
+   
+inherit
+   Aqua.Containers.Bag
+   
+feature  --  Query
+
+   First_Element : G
+      require
+         Not_Empty: not Is_Empty
+      deferred
+      end
+      
+   Last_Element : G
+      require
+         Not_Empty: not Is_Empty
+      deferred
+      end
+      
+feature  --  Deletion
+
+   Delete_First
+      require
+         Can_Delete: Can_Delete
+         Not_Empty: not Is_Empty
+      deferred
+      end
+      
+feature  --  Element change
+
+   Append (Element : G)
+      require
+         Can_Include: Can_Include
+      deferred
+      ensure
+         Item_Inserted: Contains (Element)
+         Item_Appended: Last_Element = Element
+      end
+
+end

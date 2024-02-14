@@ -1,0 +1,16 @@
+note
+   Description: "Structure that can be iterated over using across...loop...end."
+   Library: "Aqua standard library"
+   
+deferred class
+   Aqua.Iterable [Element_Type]
+   
+feature
+
+   New_Cursor : Aqua.Iteration_Cursor [Element_Type]
+     deferred
+     ensure
+        Result_Attached: Result /= Void
+     end
+     
+end

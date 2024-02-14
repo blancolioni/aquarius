@@ -1,0 +1,17 @@
+class Any
+
+create
+   default_create
+   
+feature
+
+   default_create do end
+   
+   default_rescue do end
+   
+   Void : None
+   
+   Equal alias "=" (Other : like Current) : Boolean external "intrinsic"
+   Not_Equal alias "/=" (Other : like Current) : Boolean external "intrinsic"
+
+end

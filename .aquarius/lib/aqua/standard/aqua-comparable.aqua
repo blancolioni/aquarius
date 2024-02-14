@@ -1,0 +1,25 @@
+deferred class
+   Aqua.Comparable
+
+inherit
+   Aqua.Algebra.Eq
+   
+feature
+
+   GE alias ">=" (Right : like Current) : Boolean
+      deferred
+      end
+      
+   LE alias "<=" (Right : like Current) : Boolean
+      deferred
+      end
+      
+   GT alias ">" (Right : like Current) : Boolean
+      deferred
+      end
+      
+   LT alias "<" (Right : like Current) : Boolean
+      deferred
+      end
+
+end

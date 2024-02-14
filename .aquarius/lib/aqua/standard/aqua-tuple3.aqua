@@ -1,0 +1,25 @@
+class
+   Aqua.Tuple3 [A, B, C]
+   
+inherit
+   Aqua.Tuple2 [A, B]
+   
+create
+   Make_Tuple3
+   
+feature
+   
+   Make_Tuple3 (V_1 : A; V_2 : B; V_2 : C)
+      do
+         Make_Tuple2 (V_1, V_2)
+         Element_3 := V_3
+      end
+   
+   Element_3 : C
+      
+   Set_Element_3 (Value : C)
+      do
+         Element_3 := Value
+      end
+      
+end

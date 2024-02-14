@@ -1,0 +1,23 @@
+note
+   Description: "Iteration cursor with update"
+   Library: "Aqua standard library"
+   
+deferred class
+   Aqua.Update_Iteration_Cursor [G]
+   
+inherit
+   Aqua.Iteration_Cursor [G]
+   
+feature  --  Update
+
+   Delete
+      require
+         Have_Element: not After
+      deferred
+      end
+      
+   Insert (Element : G)
+      deferred
+      end
+      
+end

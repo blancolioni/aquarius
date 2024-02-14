@@ -1,0 +1,33 @@
+class
+   Test_String_List
+   
+inherit
+   Unit_Test
+   Aqua.Text_IO
+
+feature
+
+   Name : String
+      do
+         Result := "test-string-list"
+      end
+      
+   Execute
+      local
+         List  : String_List
+         Image : String
+      do
+         create List
+         List.Append ("x")
+         List.Append ("yy")
+         List.Append ("zzz")
+         Image := List.Interpolate (".")
+         
+         Success := Image = "x.yy.zzz"
+         
+         if not Success then
+            Fail_Message := "Expected x.yy.zzz but found " & Image
+         end
+      end
+       
+end 

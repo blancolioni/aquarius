@@ -1,0 +1,15 @@
+{
+    "version": "0.1.0-dev",
+    "extensions": {
+	"json": {
+	    "name": "JSON file",
+	    "plugin": "json"
+	}
+    },
+    "install": {
+	"paths": {
+	    "grammar": "grammar"
+        }
+    }
+}
+    

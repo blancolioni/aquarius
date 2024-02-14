@@ -1,0 +1,502 @@
+top_level ::= class_declaration
+case_sensitive = false
+
+identifier         ::= !\l[\w]*!
+integer            ::= standard ada_numeric_literal
+real               ::= ![0-9]+\.[0-9]+([eE][0-9]+)?!
+character_constant ::= !\'[.]\'!
+string_constant     ::= standard ada_string_literal
+
+line_comment = "--"
+
+format '[' space_before no_space_after
+format ']' no_space_before space_after
+format '(' space_before no_space_after
+format ')' no_space_before space_after
+format ';' no_space_before new_line_after
+format ':' space_before space_after
+format ',' no_space_before space_after
+format '.' no_space_before no_space_after
+
+format 'end' new_line_before
+format 'local' new_line_before
+
+format note_list indented_child
+format inherit_list indented_child
+format feature_adaptation indented_child
+format feature_declaration_list indented_child
+format new_export_list indented_child
+format attribute indented_child
+format deferred new_line_after
+format assertion_clause indented_child
+format entity_declaration_list indented_child
+format compound indented_child
+format instruction new_line_before
+format until_expression indented_child
+
+format feature_declaration new_line_before
+
+class_declaration ::=
+   [ notes ]
+   class_header
+   [ inheritance ]
+   [ creators ]
+   [ features ]
+   [ invariant ]
+   'end' [ ';' ]
+
+notes ::= 'note' note_list
+
+note_list ::= < note_entry [';'] >
+
+note_entry ::= note_name ':' note_value
+
+note_name ::= identifier
+
+note_value ::= < note_item / ',' >
+
+note_item ::= identifier | manifest_constant
+
+class_header ::=
+         [ header_mark ] 'class' class_name [ formal_generics ]
+	 
+header_mark ::=
+         'deferred'
+      |  'expanded'
+      |  'frozen'
+
+class_name ::= < identifier / '.' >
+
+features ::=
+         < feature_clause >
+	 
+feature_clause ::=
+         'feature' [ clients ] feature_declaration_list
+         
+feature_declaration_list ::=
+   < feature_declaration [';'] >
+
+feature_declaration ::=
+         new_feature_list declaration_body
+	 
+declaration_body ::=
+         [ formal_arguments ] [ type_mark ] [ feature_value ]
+	 
+type_mark ::=
+         ':' type
+
+feature_value ::= explicit_value | routine
+	 
+explicit_value ::=
+         '=' manifest_constant
+	 
+new_feature_list ::=
+         < new_feature / ',' >
+	 
+new_feature ::=
+         [ 'frozen' ] extended_feature_name
+	 
+routine ::=
+         [ precondition ] [ local_declarations ] feature_body [ postcondition ] [ rescue ] 'end'
+         
+feature_body ::=
+         deferred
+      |  effective_routine
+      
+extended_feature_name ::=
+         feature_name [ feature_alias ]
+
+feature_name ::=
+         identifier
+	 
+feature_alias ::= 'alias' string_constant [ 'convert' ]
+
+inheritance ::=
+         < 'inherit' inherit_list >
+	 
+inherit_list ::=
+         < inherited [ ';' ] >
+inherited ::=
+         class_type [ feature_adaptation ]
+	 
+feature_adaptation ::=
+         [ new_exports ] [ undefine ] [ redefine ] [ rename ] [ select ] 'end'
+	 
+rename ::=
+         'rename' rename_list
+	 
+rename_list ::=
+         < rename_pair / ',' >
+	 
+rename_pair ::=
+         feature_name 'as' extended_feature_name
+	 
+clients ::=
+         '{' class_list '}'
+	 
+class_list ::=
+         < class_name / ',' >
+	 
+new_exports ::=
+         'export' new_export_list
+	 
+new_export_list ::=
+         < new_export_item [ ';' ] >
+	 
+new_export_item ::=
+         clients feature_set
+	 
+feature_set ::=
+         feature_list
+      |  'all'
+      
+feature_list ::=
+         < feature_name / ',' >
+	 
+formal_arguments ::=
+         '(' entity_declaration_list ')'
+	 
+entity_declaration_list ::=
+         < entity_declaration_group [ ';' ] >
+	 
+entity_declaration_group ::=
+         identifier_list type_mark [ ':=' expression ]
+	 
+identifier_list ::=
+         < identifier / ',' >
+	 
+deferred ::=
+         'deferred'
+	 
+effective_routine ::= internal | external
+
+internal ::=
+         routine_mark compound
+	 
+external ::= 
+         'external' external_language [ external_name ]
+         
+external_language ::= string_constant
+
+external_name ::= 'alias' string_constant
+
+routine_mark ::=
+         'do'
+      |  once
+      
+once ::=
+         'once' [ '(' key_list ')' ]
+key_list ::=
+         < string_constant / ',' >
+	 
+local_declarations ::=
+         'local' [ entity_declaration_list ]
+
+local_entity_declaration_list ::= entity_declaration_list
+
+compound ::=
+         { instruction [ ';' ] }
+	 
+instruction ::=
+         creation_instruction
+      |  call
+      |  assignment
+      |  conditional
+      |  multi_branch
+      |  loop
+      |  debug
+      |  precursor
+      |  check
+      |  retry
+      
+precondition ::=
+         'require' [ 'else' ] assertion
+	 
+postcondition ::=
+         'ensure' [ 'then' ] assertion [ only ]
+	 
+invariant ::=
+         'invariant' assertion
+	 
+assertion ::=
+         < assertion_clause [ ';' ] >
+	 
+assertion_clause ::=
+         [ tag_mark ] unlabeled_assertion_clause
+	 
+unlabeled_assertion_clause ::=
+         boolean_expression
+
+boolean_expression ::= expression
+
+tag_mark ::=
+         tag ':'
+	 
+tag ::=
+         identifier
+	 
+old ::=
+         'old' primary
+	 
+only ::=
+         'only' [ feature_list ]
+	 
+check ::=
+         'check' assertion [ notes ] 'end'
+	 
+variant ::=
+         'variant' [ tag_mark ] expression
+	 
+precursor ::=
+         < precursor_element / '.' >
+	 
+precursor_element ::= 
+        identifier [ parent_qualification ] [ actuals ] 
+        
+parent_qualification ::=
+         '{' class_name '}'
+	 
+redefine ::=
+         'redefine' feature_list
+	 
+undefine ::=
+         'undefine' feature_list
+	 
+type ::=
+         class_type
+      |  anchored
+      |  tuple_type
+      
+class_type ::=
+         [ attachment_mark ] class_name [ actual_generics ]
+	 
+tuple_type ::=
+  '(' < type / ',' > ')'
+  
+attachment_mark ::=
+         'detachable'
+      |  'attached'
+      
+anchored ::=
+         [ attachment_mark ] 'like' anchor
+	 
+anchor ::=
+         feature_name
+      
+actual_generics ::=
+         '[' type_list ']'
+	 
+type_list ::=
+         < type / ',' >
+	 
+formal_generics ::=
+         '[' formal_generic_list ']'
+	 
+formal_generic_list ::=
+         < formal_generic / ',' >
+	 
+formal_generic ::=
+         [ 'frozen' ] formal_generic_name [ constraint ]
+	 
+formal_generic_name ::=
+         [ 'detachable' ] identifier
+	 
+constraint ::=
+         '->' constraining_types [ constraint_creators ]
+	 
+constraining_types ::=
+         single_constraint
+      |  multiple_constraint
+      
+single_constraint ::=
+         type [ renaming ]
+	 
+renaming ::=
+         rename 'end'
+	 
+multiple_constraint ::=
+         '{' constraint_list '}'
+	 
+constraint_list ::=
+         < single_constraint / ',' >
+	 
+constraint_creators ::=
+         'create' feature_list 'end'
+	 
+select ::=
+         'select' feature_list
+	 
+conditional ::=
+   'if' boolean_expression 'then' compound
+      { 'elsif' boolean_expression 'then' compound }
+      [ 'else' compound ]
+   'end'
+
+multi_branch ::=
+         'case' expression [ when_part_list ] 'end' 'case'
+	 
+when_part_list ::=
+         < when_part >
+	 
+when_part ::=
+         'when' choices '=>' compound
+	 
+choices ::=
+         < choice / '|' >
+	 
+choice ::=
+         constant
+      |  manifest_type
+      |  constant_interval
+      |  type_interval
+      | 'others'
+      
+constant_interval ::=
+         constant '..' constant
+	 
+type_interval ::=
+         manifest_type '..' manifest_type
+	 
+loop ::=
+         iteration [initialization] [ invariant ] [exit_condition] loop_body [ variant ] 'end'
+       | initialization [ invariant ] [exit_condition] loop_body [ variant ] 'end'
+       
+iteration ::= 'across' expression 'as' identifier
+    
+initialization ::=
+         'from' compound
+         
+exit_condition ::=
+         'until' until_expression
+
+until_expression ::= boolean_expression
+
+loop_body ::=
+         'loop' compound
+         
+debug ::=
+         'debug' [ '(' key_list ')' ] compound 'end'
+
+attribute ::=
+         'attribute' compound
+
+variable ::= identifier
+      
+creators ::=
+         < creation_clause >
+         
+creation_clause ::=
+         'create' [ clients ] creation_procedure_list
+         
+creation_procedure_list ::=
+         < creation_procedure / ',' >
+         
+creation_procedure ::=
+         feature_name
+         
+creation_instruction ::=
+         'create' [ explicit_creation_type ] creation_call
+         
+explicit_creation_type ::=
+         '{' type '}'
+         
+creation_call ::=
+         variable [ explicit_creation_call ]
+         
+explicit_creation_call ::=
+         '.' identifier [ actuals ]
+	 
+assignment ::=
+         variable ':=' expression
+	 
+call ::= non_object_call
+      
+non_object_call ::=
+         '{' type '}' '.' identifier [ actuals ]
+	 
+actuals ::=
+         '(' actual_list ')'
+actual_list ::=
+         < expression / ',' >
+object_test ::=
+         '{' identifier ':' type '}' expression
+rescue ::=
+         'rescue' compound
+retry ::=
+         'retry'
+         
+expression ::= operator_expression
+             | attachment_test
+             
+operator_expression ::= relation { boolean_operator relation }
+
+attachment_test ::= 'attached' expression [ 'as' identifier ]
+   
+member_of ::= 'in' | 'not' 'in'
+
+relation ::=
+	range_expression [ relational_operator range_expression ]
+
+range_expression ::= simple_expression [ range_operator simple_expression ]
+
+simple_expression ::=
+    [ unary_adding_operator ] term { binary_adding_operator term }
+
+term ::= factor { multiplying_operator factor }
+
+factor ::= [ unary_primary_operator ] primary
+
+primary ::= manifest_constant
+         | precursor
+	     | '(' < expression / ',' > ')'
+	     | old
+         | object_test
+	 
+boolean_operator ::=
+	'and' | 'and' 'then' | 'or' | 'or' 'else' | 'xor' | 'implies'
+
+relational_operator ::= '=' | '/=' | '<' | '<=' | '>' | '>='
+
+range_operator ::= '..'
+
+binary_adding_operator ::= '+' | '-' | '&'
+
+unary_adding_operator ::= '+' | '-'
+
+unary_primary_operator ::= 'abs' | 'not'
+
+multiplying_operator ::= '*' | '/' | 'mod' | 'rem'
+
+constant ::=
+         manifest_constant
+      |  constant_attribute
+
+constant_attribute ::= identifier
+
+manifest_constant ::=
+         [ manifest_type ] manifest_value
+	 
+manifest_type ::=
+         '{' type '}'
+	 
+manifest_value ::=
+         boolean_constant
+      |  character_constant
+      |  integer_constant
+      |  real_constant
+      |  string_constant
+      |  manifest_type
+      
+sign ::=
+         '+'
+      |  '-'
+      
+integer_constant ::=
+         [ sign ] integer
+	 
+boolean_constant ::=
+         'true'
+      |  'false'
+      
+real_constant ::=
+         [ sign ] real

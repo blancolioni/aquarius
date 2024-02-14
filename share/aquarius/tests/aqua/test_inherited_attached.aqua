@@ -1,0 +1,37 @@
+class
+   Test_Inherited_Attached
+   
+inherit
+   Unit_Test
+   Attached_Property
+   
+feature
+
+   Name : String
+      do
+         Result := "test-inherited-attached"
+      end
+      
+   Execute
+      local
+         Empty_Total : Integer
+         Total       : Integer
+      do
+         across Table as Item loop
+            Empty_Total := Empty_Total + Item
+         end
+         
+         Table.Append (1)
+         Table.Append (2)
+         Table.Append (3)
+         Table.Append (4)
+         across Table as Item loop
+            Total := Total + Item
+         end
+         Success := Total = 10
+         if not Success then
+            Fail_Message := "Expected a total of 10 but found " & Total.To_String
+         end
+      end
+       
+end 

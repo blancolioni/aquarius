@@ -1,0 +1,12 @@
+deferred class
+   Aqua.Algebra.Numeric
+   
+inherit
+   Aqua.Algebra.Additive redefine Zero end
+
+feature
+
+   Zero : Numeric external "intrinsic"
+     
+end
+   

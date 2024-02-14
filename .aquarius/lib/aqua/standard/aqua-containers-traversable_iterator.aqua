@@ -1,0 +1,41 @@
+deferred class Aqua.Containers.Traversable_Iterator [Element]
+
+feature
+
+   Item : Element
+      require
+         not Off_End
+      deferred
+      end
+      
+   Next
+      require
+         not Off_End
+      deferred
+      ensure
+         Next_Of_Last_Element: old At_End implies Off_End
+      end
+
+   At_Start : Boolean
+      deferred
+      ensure
+         Result implies not Off_End
+      end
+      
+   At_End : Boolean
+      deferred
+      ensure
+         Result implies not Off_End
+      end
+      
+   Off_End : Boolean
+      deferred
+      ensure
+         Result implies not (At_Start or At_End)
+      end
+
+invariant
+   Consistent_Properties:
+      (At_Start or At_End) implies not Off_End
+      
+end

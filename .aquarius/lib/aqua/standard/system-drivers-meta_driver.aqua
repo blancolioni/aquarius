@@ -1,0 +1,16 @@
+expanded class
+   System.Drivers.Meta_Driver
+   
+feature
+
+   Install_Driver (Identifier : String) : System.Address
+      local
+         Mem : System.Memory.Mem
+      do
+         Mem.Put_Word_32 (16#FFFF_F1244#, Identifier.Block.Count)
+         Mem.Put_Address (16#FFFF_F1248#, Identifier.Block.Base)
+         Mem.Put_Word_32 (16#FFFF_F1240#, 1)
+         Result := Mem.Get_Address (16#FFFF_F1240#)
+      end
+      
+end

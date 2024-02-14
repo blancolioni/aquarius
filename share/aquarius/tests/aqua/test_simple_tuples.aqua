@@ -1,0 +1,28 @@
+class
+   Test_Simple_Tuples
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-simple-tuples"
+      end
+      
+   Execute
+      local
+         T  : (Integer, Integer)
+      do
+         T := (4, 6)
+         Success := T.First = 4
+         Success := Success and then T.Second = 6
+         
+         if not Success then
+            Fail_Message := "Tuple queries did not match initialisation"
+         end
+      end
+      
+       
+end 

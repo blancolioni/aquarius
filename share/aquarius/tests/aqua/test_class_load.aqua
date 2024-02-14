@@ -1,0 +1,19 @@
+class
+   Test_Class_Load
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-class-load"
+      end
+      
+   Execute
+      do
+         Success := True
+      end
+      
+end 

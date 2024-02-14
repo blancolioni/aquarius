@@ -1,0 +1,91 @@
+class 
+
+   Aquarius.Trees.Program_Tree
+   
+feature { None }
+
+   Tree : Aquarius.Trees.Program_Tree_Driver
+
+   Have_Tree : Boolean
+   
+feature
+
+   Set_Tree (Driver : Aquarius.Trees.Program_Tree_Driver)
+      do
+         Tree := Driver
+         Have_Tree := True
+      end
+      
+feature
+
+   Node_Name : String
+      require
+         Tree_Set : Have_Tree
+      do
+         Result := Tree.Name
+      end
+      
+   Node_Text : String
+      require
+         Tree_Set : Have_Tree
+      do
+         Result := Tree.Text
+      end
+      
+   Standard_Text : String
+      require
+         Tree_Set : Have_Tree
+      do
+         Result := Tree.Standard_Text
+      end
+      
+   Concatenated_Image : String
+      require
+         Tree_Set : Have_Tree
+      do
+         Result := Tree.Concatenated_Image
+      end
+
+   Start_Location_Image : String
+      require
+         Tree_Set : Have_Tree
+      do
+         Result := Tree.File_Name & ":" & Tree.Start_Line.To_String & ":" & Tree.Start_Column.To_String
+      end
+      
+   Error (Message : String)
+      require
+         Tree_Set : Have_Tree
+      do
+         Tree.Error (Message)
+      end
+
+   Create_Entity (Defining_Name_Tree   : Aquarius.Trees.Program_Tree
+                  Name, Qualified_Name : String
+                  Class_Name           : String
+                  Top_Level            : Boolean) : Komnenos.Entity
+      require
+         Tree_Set : Have_Tree
+      do
+         Result := Tree.Create_Entity (Defining_Name_Tree, Name, Qualified_Name, Class_Name, Top_Level)
+      end
+   
+   Find_Entity (Entity_Name    : String
+                Class_Name     : String) : Komnenos.Entity
+      require
+         Tree_Set : Have_Tree
+      do
+         Result := tree.Find_Entity (Entity_Name, Class_Name)
+      end
+   
+   
+   Cross_Reference (Referrer_Entity   : Komnenos.Entity
+                    Referenced_Entity : Komnenos.Entity
+                    Reference_Type    : String)
+      require
+         Tree_Set : Have_Tree
+      do
+         Tree.Cross_Reference (Referrer_Entity, Referenced_Entity, Reference_Type)
+      end
+      
+end

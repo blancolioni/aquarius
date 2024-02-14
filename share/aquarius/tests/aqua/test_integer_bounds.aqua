@@ -1,0 +1,24 @@
+class
+   Test_Integer_Bounds
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-integer-bounds"
+      end
+      
+   Execute
+      local
+         X : Integer
+      do
+         Success := X.Maximum = 2147483647
+         if not Success then
+            Fail_Message := "Expected maximum integer to be 2147483647, but found " & X.Maximum.To_String
+         end
+      end
+       
+end 

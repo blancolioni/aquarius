@@ -1,0 +1,16 @@
+expanded class
+   Aqua.Integer_Literal
+
+feature
+
+   Make_With_Integer_Literal
+     (Literal : Aqua.Integer_Literal)
+   do
+      Internal := Literal.Internal
+   end
+     
+feature { None }
+
+   Internal : System.Internal_Frame_Word
+   
+end

@@ -1,0 +1,33 @@
+class
+   Test_List_Inheritance
+   
+inherit
+   Unit_Test
+   Aqua.Containers.Linked_List[Integer]
+   
+feature
+
+   Name : String
+      do
+         Result := "test-list-inheritance"
+      end
+      
+   Execute
+      local
+         Sum : Integer
+      do
+         Append (1)
+         Append (2)
+         Append (3)
+         Append (4)
+         across Current as X loop
+            Sum := Sum + X
+         end
+         
+         Success := Sum = 10
+         if not Success then
+            Fail_Message := "Expected Value = 10; found " & Sum.To_String
+         end
+      end
+       
+end 

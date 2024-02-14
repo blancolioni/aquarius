@@ -1,0 +1,27 @@
+class 
+   Test_Property_Redefinition
+
+inherit
+   Unit_Test     
+   Diamond_A 
+      redefine a1 end
+   
+feature
+
+   Name : String
+      do
+         Result := "test-property-redefinition"
+      end
+      
+   Execute
+      do
+         a1 := "test-property-redefinition"
+         Success := a1 = "test-property-redefinition"
+         if not Success then
+            Fail_Message := "Incorrect value in redefined attribute: " & a1
+         end
+      end
+      
+   a1 : String
+   
+end

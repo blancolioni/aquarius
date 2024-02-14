@@ -1,0 +1,35 @@
+class
+   Test_Simple_Loop
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-simple-loop"
+      end
+      
+   Execute
+      local
+         Vs : Aqua.Containers.Linked_List[Integer]
+         Sum : Integer   
+      do
+         create Vs
+         Vs.Append (1)
+         Vs.Append (2)
+         Vs.Append (3)
+         Vs.Append (4)
+         Sum := 0
+         across Vs as V loop
+            Sum := Sum + V
+         end
+         Success := Sum = 10
+         if not Success then
+            Fail_Message := "Expected Sum = 10; found " & Sum.To_String
+         end
+      end
+      
+       
+end 

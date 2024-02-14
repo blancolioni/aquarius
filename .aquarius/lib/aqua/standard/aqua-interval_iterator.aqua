@@ -1,0 +1,40 @@
+class
+   Aqua.Interval_Iterator [Interval_Type]
+   
+inherit
+   Aqua.Iteration_Cursor [Interval_Type]
+      redefine After, Element, Next end
+      
+create
+   Make
+   
+feature
+
+   Element : Interval_Type
+
+feature
+
+   After : Boolean
+      
+   Next
+      do
+         if Element = Interval.Maximum then
+            After := True
+         else
+            --  Element := Element.Next
+         end
+      end
+      
+feature { Aqua.Interval }
+
+   Make (For_Interval : Aqua.Interval)
+      do
+         Interval := For_Interval
+         Element := Interval.Minimum
+      end
+
+feature { None }
+
+   Interval : Aqua.Interval         
+   
+end

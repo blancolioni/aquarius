@@ -1,0 +1,17 @@
+deferred class
+   Unit_Test
+   
+feature
+
+   Name : String
+      deferred
+      end
+      
+   Execute
+      deferred
+      end
+      
+   Success : Boolean
+   Fail_Message : String
+   
+end

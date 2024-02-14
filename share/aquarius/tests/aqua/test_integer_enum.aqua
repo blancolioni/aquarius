@@ -1,0 +1,35 @@
+class
+   Test_Integer_Enum
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-integer-enum"
+      end
+      
+   Execute
+      local
+         X : Integer
+         Sum : Integer
+      do
+         X := X.Next
+         Sum := Sum + X
+         X := X.Next
+         Sum := Sum + X
+         X := X.Next
+         Sum := Sum + X
+         X := X.Next
+         Sum := Sum + X
+         
+         Success := Sum = 10
+         
+         if not Success then
+            Fail_Message := "Expected sum to be 10, but found " & Sum.To_String
+         end
+      end
+       
+end 

@@ -1,0 +1,17 @@
+class
+   Test_Descendent
+
+inherit
+   Test_Descendent_Ancestor
+   
+create
+   Make
+   
+feature
+
+   Make (Msg : String)
+      do
+         Message := Msg
+      end
+   
+end 

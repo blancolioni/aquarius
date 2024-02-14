@@ -1,0 +1,32 @@
+class
+   Test_Strings_2
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-strings-2"
+      end
+      
+   Execute
+      local
+         S : String
+         L : Aqua.Containers.Linked_List[String]
+      do
+         L.Append ("x")
+         L.Append ("y")
+         L.Append ("z")
+
+         across L as It loop
+            S := S & ":" & It
+         end
+         Success := S = ":x:y:z"
+         if not Success then
+            Fail_Message := "Expected S = 'x:y:z:'; found " & S
+         end
+      end
+       
+end 

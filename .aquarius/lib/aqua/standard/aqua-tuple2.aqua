@@ -1,0 +1,51 @@
+class
+   Aqua.Tuple2 [A, B]
+   
+inherit
+   Aqua.Tuple
+   
+create
+   Make_Tuple2
+   
+feature
+   
+   Make_Tuple2 (V_1 : A; V_2 : B)
+      do
+         Element_1 := V_1
+         Element_2 := V_2
+      end
+   
+   First : A
+     do
+        Result := Element_1
+     end
+     
+   Second : B
+     do
+        Result := Element_2
+     end
+   
+   Set_First (Value : A)
+      do
+         Set_Element_1 (Value)
+      end
+      
+   Set_Second (Value : B)
+      do
+         Set_Element_2 (Value)
+      end
+      
+   Element_1 : A
+   Element_2 : B
+      
+   Set_Element_1 (Value : A)
+      do
+         Element_1 := Value
+      end
+      
+   Set_Element_2 (Value : B)
+      do
+         Element_2 := Value
+      end
+      
+end
