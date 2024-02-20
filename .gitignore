@@ -3,4 +3,7 @@
 /alire/
 /config/
 /.aquarius/tmp
+/share/aqua_vm/asm
+/share/aqua_vm/obj
 *~
+*.lst
