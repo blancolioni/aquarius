@@ -539,10 +539,12 @@ package body Ack.Classes is
             begin
                Table_Layout.Append
                  (Layout_Entry'
-                    (Entry_Name, No_Name, Base.Object_Start, null, null));
+                    (Entry_Name, No_Name,
+                     Base.Object_Start - Layout.Object_Start,
+                     null, null));
                Put_Log
                  (Table_Log, Offset,
-                  Image  (Base.Object_Start)
+                  Image  (Base.Object_Start - Layout.Object_Start)
                   & ": start " & Layout.Class.Declared_Name
                   & "/" & Base.Class.Declared_Name);
                Entry_Name := No_Name;
