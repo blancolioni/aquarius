@@ -312,12 +312,15 @@ package body Ack.Features is
       Class   : not null access constant Ack.Classes.Class_Entity_Record'Class;
       Unit    : in out Tagatha.Code.Instance'Class)
    is
-      pragma Unreferenced (Class);
+      --  pragma Unreferenced (Class);
       Arg_Count    : constant Natural :=
                        1 + Natural (Feature.Arguments.Length);
       Result_Count : constant Natural :=
                        (if Feature.Value_Type /= null
-                        then 1 else 0);
+                        then 1
+                        elsif Class.Expanded
+                        then 1
+                        else 0);
       Once_Flag_Label  : constant String :=
                            Feature.Link_Name & "$once_flag";
       Once_Value_Label : constant String :=
