@@ -1,0 +1,18 @@
+class
+   Single_Test
+
+inherit
+   Aqua.Text_IO
+
+feature
+   Make
+      local
+         T : Test_Simple_Loop;
+      do
+         create T
+         T.Execute
+         if not T.Success then
+            Put_Line (T.Fail_Message)
+         end
+      end
+end

@@ -3,7 +3,6 @@ class
    
 inherit
    Unit_Test
-   Aqua.Text_IO
 
 feature
 
