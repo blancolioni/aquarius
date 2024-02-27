@@ -59,6 +59,43 @@ package body Ack.Compile is
         ("aqua_as " & Assembly_Path & " -o " & Object_Path);
    end Assemble;
 
+   procedure Check_Assembly_Package
+     (Package_Name : String;
+      Assembled    : out Boolean)
+   is
+      use Ada.Directories;
+      use type Ada.Calendar.Time;
+      Source_Path : constant String :=
+                      Ada.Directories.Compose
+                        (Aquarius.Configuration.Aqua_Standard_Assembly_Path,
+                         Package_Name,
+                         "s");
+      Source_Modification_Time : constant Ada.Calendar.Time :=
+                                   Ada.Directories.Modification_Time
+                                     (Source_Path);
+      Object_Path              : constant String :=
+                      Aquarius.Configuration.Object_File_Path (Package_Name);
+   begin
+      if not Ada.Directories.Exists (Source_Path) then
+         raise Constraint_Error
+           with "no such standard assembly: " & Package_Name;
+      end if;
+
+      Assembled := False;
+
+      if not Exists (Object_Path)
+        or else Modification_Time (Object_Path)
+        < Source_Modification_Time
+      then
+         Ada.Directories.Copy_File
+           (Source_Path,
+            Aquarius.Configuration.Assembly_File_Path (Package_Name));
+         Generate_Object_Code (Package_Name, False);
+         Assembled := True;
+      end if;
+
+   end Check_Assembly_Package;
+
    -------------------
    -- Compile_Class --
    -------------------

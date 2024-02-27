@@ -26,6 +26,13 @@ package Ack.Compile is
    procedure Load_Root_Class
      (Source_Path : String);
 
+   procedure Check_Assembly_Package
+     (Package_Name : String;
+      Assembled    : out Boolean);
+   --  Check if Package_Name needs to be assembled.
+   --  Package_Name - the name of the package, without extension
+   --  Assembled    - set to true if assembly was required, otherwise false
+
 private
 
    type Compilation_Result is tagged
