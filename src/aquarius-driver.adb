@@ -13,6 +13,8 @@ with Aquarius.Programs;
 with Kosei;
 
 procedure Aquarius.Driver is
+   Trace_Server : constant Boolean := False;
+   Test_Name    : constant String := "test";
 begin
    Aquarius.Library.Initialize;
    Ada.Text_IO.Put_Line
@@ -35,17 +37,26 @@ begin
    end;
 
    Ack.Compile.Load_Root_Class
-     (Source_Path => "./share/aquarius/tests/aqua/test.aqua");
+     (Source_Path => "./share/aquarius/tests/aqua/" & Test_Name & ".aqua");
 
    Aquarius.Plugins.Manager.Loaded_Plugin_Report;
+
+   declare
+      Assembled : Boolean;
+   begin
+      Ack.Compile.Check_Assembly_Package ("system-os", Assembled);
+      if Assembled then
+         Ada.Text_IO.Put_Line ("built System.OS");
+      end if;
+   end;
 
    declare
       Server : constant Aqua.Server.Reference :=
                  Aqua.Server.Create ("./share/aqua_vm/aqua.config",
                                      "./.aquarius/tmp/obj");
    begin
-      Server.Load ("./.aquarius/tmp/obj/test.o");
-      Server.Run (Trace => False);
+      Server.Load ("./.aquarius/tmp/obj/" & Test_Name & ".o");
+      Server.Run (Trace => Trace_Server);
    end;
 
 end Aquarius.Driver;
