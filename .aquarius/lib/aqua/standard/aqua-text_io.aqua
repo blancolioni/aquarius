@@ -7,6 +7,11 @@ feature
          Writer : System.Drivers.Text_Writer
       do
          Writer.Put (ch)
+         if ch.UTF_32_Code = 10 then
+            Col := 0
+         else
+            Col := Col + 1
+         end
       end
       
    Put (S : String)
@@ -46,18 +51,16 @@ feature
          Writer.Set_Output (Path)
       end
    
-   Set_Col (Col : Integer) 
-      local
-         Writer : System.Drivers.Text_Writer
+   Set_Col (New_Column : Integer)
       do
-         Writer.Set_Col (Col)
+         if Col > New_Column then
+            New_Line
+         end
+         from until Col = New_Column loop
+            Put_Char (' ')
+         end
       end
    
    Col : Integer
-      local
-         Writer : System.Drivers.Text_Writer
-      do
-         Result := Writer.Col
-      end
 
 end
