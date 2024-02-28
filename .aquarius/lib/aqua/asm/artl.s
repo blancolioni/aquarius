@@ -13,6 +13,7 @@ start:
     set %3, %0
     set %4, %1
     pushj %2, main
+    setl %255,0
     trap 0, 0, 0
 
 1   pushj %255, 2f

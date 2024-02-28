@@ -462,9 +462,11 @@ package body Ack.Generate is
    -- Generate_Exit --
    -------------------
 
-   procedure Generate_Exit (Unit : in out Tagatha.Code.Instance'Class) is
+   procedure Generate_Exit
+     (Unit    : in out Tagatha.Code.Instance'Class)
+   is
    begin
-      Unit.Call ("system.os.halt", 0, 0);
+      Unit.Call ("system.os.halt", 1, 0);
    end Generate_Exit;
 
    -------------------------

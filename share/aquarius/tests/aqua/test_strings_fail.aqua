@@ -1,0 +1,29 @@
+class
+   Test_Strings_Fail
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-strings-fail"
+      end
+      
+   Execute
+      local
+         S1 : String
+         S2 : String
+         S : String
+      do
+         S1 := "1"
+         S2 := "2"
+         S := S1 & S2
+         Success := S.Element (4) = '1'
+         if not Success then
+            Fail_Message := "Expected S = 10; found " & S
+         end
+      end
+       
+end 

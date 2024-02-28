@@ -202,18 +202,20 @@ package body Ack.Features is
             if Tagatha.Code.Has_Label (Fail_Label) then
                Unit.Branch (Fail_Label);
             else
-               Push_String_Constant
-                 (Unit,
-                  Get_Program (Clause.Node).Show_Location
-                  & ": assertion failure in precondition of "
-                  & Feature.Declared_Name
-                  & (if Clause.Tag = No_Name then ""
-                    else ": " & To_String (Clause.Tag)));
-
                if Feature.Rescue_Node in Real_Node_Id then
                   Unit.Branch (Feature.Rescue_Label);
                else
-                  Ack.Generate.Generate_Exit (Unit);
+                  declare
+                     Message : constant String :=
+                                 Get_Program (Clause.Node).Show_Location
+                               & ": assertion failure in precondition of "
+                                 & Feature.Declared_Name
+                                 & (if Clause.Tag = No_Name then ""
+                                    else ": " & To_String (Clause.Tag));
+                  begin
+                     Push_String_Constant (Unit, Message);
+                     Ack.Generate.Generate_Exit (Unit);
+                  end;
                end if;
             end if;
 

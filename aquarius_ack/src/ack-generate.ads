@@ -18,6 +18,6 @@ package Ack.Generate is
       Expression : Node_Id);
 
    procedure Generate_Exit
-     (Unit : in out Tagatha.Code.Instance'Class);
+     (Unit    : in out Tagatha.Code.Instance'Class);
 
 end Ack.Generate;

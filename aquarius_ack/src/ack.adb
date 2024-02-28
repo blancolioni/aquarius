@@ -458,7 +458,7 @@ package body Ack is
         (Name    => Label,
          Extern  => False,
          Content => Tagatha.General_Content,
-         Address => False);
+         Address => True);
    end Push_String_Constant;
 
    ---------------------
