@@ -735,10 +735,11 @@ package body Ack.Generate is
                   Arg_Count => (if Right = No_Node then 1 else 2),
                   Push      => Push'Access);
             else
-               Generate_Expression (Unit, Context, Left);
                if Right /= No_Node then
                   Generate_Expression (Unit, Context, Right);
                end if;
+
+               Generate_Expression (Unit, Context, Left);
 
                Entity.Push_Entity
                  (Have_Current => True,
