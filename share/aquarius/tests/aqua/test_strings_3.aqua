@@ -1,26 +1,32 @@
 class
-   Test_Strings_1
+   Test_Strings_3
    
 inherit
    Unit_Test
       
 feature
 
+   S1 : String
+      do
+         Result := "1"
+      end
+      
+   S2 : String
+      do
+         Result := "0"
+      end
+      
    Name : String
       do
-         Result := "test-strings-1"
+         Result := "test-strings-3"
       end
       
    Execute
       local
-         S1 : String
-         S2 : String
          S : String
       do
-         S1 := "1"
-         S2 := "2"
          S := S1 & S2
-         Success := S = "12"
+         Success := S = "10"
          if not Success then
             Fail_Message := "Expected S = 10; found " & S
          end

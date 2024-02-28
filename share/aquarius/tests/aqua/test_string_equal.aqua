@@ -20,7 +20,7 @@ feature
          Y := "1" & "0"
          Success := X = Y
          if not Success then
-            Fail_Message := "Identical strings not equal"
+            Fail_Message := "expected equal strings " & X & " and " & Y
          end
       end
        

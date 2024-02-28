@@ -1,0 +1,28 @@
+class
+   Test_Argument_Order
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-argument-order"
+      end
+      
+   Call (X, Y : Integer) : Boolean
+      do
+         Result := X < Y
+      end
+
+   Execute
+      do
+         Success := Call (1, 2)
+
+         if not Success then
+            Fail_Message := "incorrect argument order"
+         end
+      end
+       
+end 
