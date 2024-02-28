@@ -1,7 +1,7 @@
 class String_List
    inherit
       Aqua.Containers.Linked_List[String]
-      
+
 feature
    Interpolate (Separator : String) : String
       do

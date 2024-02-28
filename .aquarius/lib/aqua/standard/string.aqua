@@ -166,7 +166,6 @@ feature
       end
       
    Join alias "&" (Right : String) : String
-   
       do
          create Result.Create_With_Size (Block.Count + Right.Block.Count)
          Block.Copy (Result.Block, 0)
