@@ -1,0 +1,56 @@
+top_level ::= package
+case_sensitive = false
+
+identifier         ::= standard ada_identifier
+numeric_literal    ::= standard ada_numeric_literal
+character_literal  ::= standard ada_character_literal
+string_literal     ::= standard backslash_escaped_string
+delimiter          ::= delimiters "(),;[]^."
+
+line_comment = "--"
+
+package ::= interface_declaration
+
+interface_declaration ::= 
+  'interface' defining_interface_name [ inherited_interface_list ] 'is'
+     declaration_list
+  'end' identifier ';'
+
+defining_interface_name ::= identifier
+
+inherited_interface_list ::= ':' < identifier / ',' >
+
+declaration_list ::= { declaration ';' }
+
+declaration ::= procedure_declaration
+              | function_declaration
+              | type_declaration
+              | constant_declaration
+
+procedure_declaration ::= 
+   'procedure' defining_procedure_name [ formal_argument_list ]
+
+function_declaration ::= 
+   'function' defining_function_name [ formal_argument_list ] 'return' type
+
+defining_procedure_name ::= identifier
+defining_function_name ::= identifier
+
+formal_argument_list ::= '(' < formal_argument / ';' > ')'
+
+formal_argument ::= < identifier / ',' > ':' [ data_direction ] type
+
+data_direction ::= 'in' | 'out' | 'in' 'out'
+
+type_declaration ::= 'type' identifier 'is' type_definition
+
+type_definition ::= enumerated_type_definition
+
+enumerated_type_definition ::= '(' < identifier / ',' > ')'
+
+constant_declaration ::= identifier '=' literal
+
+literal ::= numeric_literal
+
+type ::= identifier
+       | 'interface' identifier

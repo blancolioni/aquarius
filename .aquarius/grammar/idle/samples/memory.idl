@@ -1,0 +1,35 @@
+interface Memory is
+
+   type Page_Access_Type is (Read, Write, Execute);
+   
+   function New_Process
+     (Process     : interface Kernel_Process)
+     return interface Process;
+   
+   procedure Register_Process
+     (Process     : interface Process;
+      Exec_Base   : Word;
+      Exec_Bound  : Word;
+      Text_Base   : Word;
+      Text_Bound  : Word;
+      Data_Base   : Word;
+      Data_Bound  : Word;
+      Stack_Base  : Word;
+      Stack_Bound : Word;
+      Environment : Storage_Array);
+      
+   procedure Page_Fault
+     (Faulting_Object : Object_Id;
+      Virtual_Page    : Word;
+      Physical_Page   : Word;
+      Action          : Page_Access_Type);
+   
+   procedure Take_Physical_Memory
+     (Size   : Word;
+      Start  : out Word;
+      Amount : out Word);
+     
+   procedure Checkpoint
+     (Append_Page : Capability);
+	 
+end Memory;

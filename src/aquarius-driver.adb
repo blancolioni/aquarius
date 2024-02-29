@@ -36,6 +36,17 @@ begin
       Ada.Text_IO.Put_Line (Program.Image);
    end;
 
+   declare
+      Grammar : constant Aquarius.Grammars.Aquarius_Grammar :=
+                  Aquarius.Grammars.Manager.Get_Grammar ("idle");
+      Program : constant Aquarius.Programs.Program_Tree :=
+                  Aquarius.Loader.Load_From_File
+                    (Grammar,
+                     "./.aquarius/grammar/idle/samples/memory.idl");
+   begin
+      Ada.Text_IO.Put_Line (Program.Image);
+   end;
+
    Ack.Compile.Load_Root_Class
      (Source_Path => "./share/aquarius/tests/aqua/" & Test_Name & ".aqua");
 

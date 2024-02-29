@@ -4,6 +4,10 @@
 		"json": {
 			"name": "JSON file",
 			"plugin": "json"
+		},
+		"idl": {
+			"name": "IDLE interface definition",
+			"plugin": "idle"
 		}
     },
     "install": {
