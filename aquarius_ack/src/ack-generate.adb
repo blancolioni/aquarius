@@ -353,7 +353,6 @@ package body Ack.Generate is
             end if;
 
             Else_Label := Unit.Next_Label;
-            Unit.Operate (Tagatha.Op_Test);
             Unit.Branch (Tagatha.Z, Else_Label);
          end if;
          Generate_Compound (Unit, Context, Compound);
@@ -637,7 +636,6 @@ package body Ack.Generate is
 
       if Exit_Condition_Node /= No_Node then
          Generate_Expression (Unit, Context, Expression (Exit_Condition_Node));
-         Unit.Operate (Tagatha.Op_Test);
          Unit.Branch (Tagatha.NZ, Out_Label);
       end if;
 
@@ -685,7 +683,6 @@ package body Ack.Generate is
             Leave : constant Tagatha.Code.Label := Unit.Next_Label;
          begin
             Generate_Expression (Unit, Context, Left);
-            Unit.Operate (Tagatha.Op_Test);
             if Is_Andthen then
                Unit.Branch (Tagatha.NZ, Maybe);
             else
@@ -850,7 +847,6 @@ package body Ack.Generate is
             begin
                Unit.Duplicate;
                Unit.Dereference;
-               Unit.Operate (Tagatha.Op_Test);
                Unit.Branch (Tagatha.NZ, Label);
                Unit.Begin_Block;
                if not E_Type.Has_Default_Creation_Routine then

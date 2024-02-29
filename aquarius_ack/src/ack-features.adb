@@ -196,7 +196,6 @@ package body Ack.Features is
                           Unit.Next_Label;
          begin
             Ack.Generate.Generate_Expression (Unit, Feature, Clause.Node);
-            --  Unit.Operate (Tagatha.Op_Test);
             Unit.Branch (Tagatha.NZ, Out_Label);
 
             if Tagatha.Code.Has_Label (Fail_Label) then
@@ -473,7 +472,6 @@ package body Ack.Features is
                begin
                   Ack.Generate.Generate_Expression
                     (Unit, Feature, Clause.Node);
-                  --  Unit.Operate (Tagatha.Op_Test);
                   Unit.Branch (Tagatha.NZ, Out_Label);
                   Push_String_Constant
                     (Unit,

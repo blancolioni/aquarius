@@ -282,7 +282,6 @@ package body Ack.Generate.Primitives is
       Out_Label : constant Tagatha.Code.Label := Unit.Next_Label;
    begin
       Unit.Swap;
-      Unit.Operate (Tagatha.Op_Test);
       Unit.Branch (Tagatha.Z, False_Label);
       Unit.Drop;
       Unit.Push_Constant (Tagatha.Int_32'(1));
