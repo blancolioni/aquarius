@@ -13,12 +13,18 @@ feature
       do
          create { Test_Class_Load } T
          Test_List.Append (T)
+         create { Test_Argument_Order  } T
+         Test_List.Append (T)
          create { Test_String_Equal  } T
          Test_List.Append (T)
          create { Test_Strings_1 } T
          Test_List.Append (T)
          create { Test_Strings_2 } T
          Test_List.Append (T)
+         create { Test_Strings_3 } T
+         Test_List.Append (T)
+--         create { Test_Strings_Fail } T
+--         Test_List.Append (T)
          create { Test_Manual_Iterator } T
          Test_List.Append (T)
          create { Test_Simple_Loop } T
