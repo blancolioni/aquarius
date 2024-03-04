@@ -12,7 +12,7 @@ tags = []
 [[depends-on]]
 aqua_vm = "*"
 tagatha = "*"
-aquarius = "*"
+aquarius_base = "*"
 aquarius_io = "*"
 aquarius_trees = "*"
 aquarius_syntax = "*"

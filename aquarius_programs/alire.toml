@@ -27,4 +27,4 @@ development.contracts = "yes"
 "*".compile_checks = "errors"
 
 [[depends-on]]
-wl_lib = "~0.1.1-dev"
+wl_lib = "~0.1.3"

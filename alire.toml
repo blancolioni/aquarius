@@ -42,3 +42,6 @@ Development.Runtime_Checks = "Everything"
 "*".Style_Checks = "yes"
 development.contracts = "yes"
 "*".compile_checks = "errors"
+
+[[depends-on]]
+parse_args = "~0.9.0"

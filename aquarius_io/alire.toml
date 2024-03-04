@@ -10,14 +10,12 @@ website = ""
 tags = []
 
 [[depends-on]]
-wl_lib = "*"
 aquarius_base = "*"
 aquarius_trees = "*"
 aquarius_syntax = "*"
 aquarius_programs = "*"
 
 [[pins]]
-wl_lib = { path = "../../wl_lib" }
 aquarius_base = { path = "../aquarius_base" }
 aquarius_trees = { path = "../aquarius_trees" }
 aquarius_syntax = { path = "../aquarius_syntax" }
