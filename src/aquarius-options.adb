@@ -13,6 +13,10 @@ package body Aquarius.Options is
 
    Source_File_Vector : String_Vectors.Vector;
 
+   ----------
+   -- Load --
+   ----------
+
    function Load return Boolean is
    begin
 

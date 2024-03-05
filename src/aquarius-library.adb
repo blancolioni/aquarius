@@ -1,10 +1,14 @@
 with Ada.Directories;
 with Ada.Environment_Variables;
 with Ada.Text_IO;
+
+with Ack.Compile;
 with Ack.Loader;
+
 with Aquarius.Grammars.Manager;
 with Aquarius.Loader;
 with Aquarius.Programs;
+
 with Kosei.Json;
 
 package body Aquarius.Library is
@@ -83,6 +87,15 @@ package body Aquarius.Library is
            (Config_Path, "aquarius.json"));
 
       Ack.Loader.Set_Loader (Load_Aqua_Class'Access);
+
+      declare
+         Assembled : Boolean;
+      begin
+         Ack.Compile.Check_Assembly_Package ("system-os", Assembled);
+         if Assembled then
+            Ada.Text_IO.Put_Line ("built System.OS");
+         end if;
+      end;
 
    end Initialize;
 

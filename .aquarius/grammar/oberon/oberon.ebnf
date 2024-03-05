@@ -1,0 +1,134 @@
+top_level ::= module
+case_sensitive = true
+
+ident         ::= standard ada_identifier
+CharConstant  ::= !('[.]')|(\d+X)!
+integer       ::= !(\d+)|([0-9a-fA-F]+H)!
+string        ::= standard backslash_escaped_string
+delimiter     ::= delimiters "(),;[]^."
+
+block_comment_start = "(*"
+ block_comment_end   = "*)"
+
+format ';' no_space_before new_line_after
+format '(' space_before no_space_after
+format ')' no_space_before space_after
+format ',' no_space_before space_after
+format '.' no_space_before no_space_after
+
+format ConstantDeclaration indented_child
+format TypeDeclaration indented_child
+format VariableDeclaration indented_child
+format statement indented_child
+format 'END' new_line_before
+
+qualident ::= [ident '.'] ident
+identdef ::= ident ['*']
+
+designator ::= ident { designatorFollower }
+designatorFollower ::= '.' ident
+                     | '[' ExpList ']'
+                     | '^'
+
+ExpList ::= < expression / ',' >
+
+ConstantDeclaration ::= identdef '=' ConstExpression
+ConstExpression ::= expression
+
+TypeDeclaration ::= identdef '=' type
+type ::= qualident | ArrayType | RecordType | PointerType | ProcedureType
+
+ArrayType ::= 'ARRAY' < length / ',' > 'OF' type
+length ::= ConstExpression
+
+RecordType ::= 'RECORD' [ '(' BaseType ')' ] FieldListSequence 'END'
+BaseType ::= qualident
+FieldListSequence ::= < FieldList / ';' >
+FieldList ::= [ IdentList ':' type ]
+IdentList ::= < identdef / ',' >
+
+PointerType ::= 'POINTER' 'TO' type
+
+ProcedureType ::= 'PROCEDURE' [ FormalParameters ]
+
+VariableDeclaration ::= IdentList ':' type
+
+expression ::= SimpleExpression [relation SimpleExpression]
+relation ::= '=' | '#' | '<' | '<=' | '>' | '>=' | 'IN' | 'IS'
+SimpleExpression ::= [ plusOrMinus ] term { AddOperator term }
+plusOrMinus ::= '+' | '-'
+
+AddOperator ::= '+' | '-' | 'OR' 
+term ::= factor { MulOperator factor }
+MulOperator ::= '*' | '/' | 'DIV' | 'MOD' | '&' 
+factor ::= integer | CharConstant | string | 'NIL' | set |
+           designator [ActualParameters] | '(' expression ')' | '~' factor
+set ::= '{' [element {',' element}] '}'
+element ::= expression ['..' expression]
+ActualParameters ::= '(' [ExpList] ')' 
+
+statement ::= assignment | ProcedureCall
+              | IfStatement | CaseStatement 
+              | WhileStatement | RepeatStatement | ForStatement
+
+
+assignment ::= designator ':=' expression
+
+ProcedureCall ::= designator [ActualParameters]
+
+StatementSequence ::= < OptionalStatement / ';' >
+
+OptionalStatement ::= [ statement ]
+
+IfStatement ::= 'IF' expression 'THEN' StatementSequence
+              {'ELSIF' expression 'THEN' StatementSequence}
+              ['ELSE' StatementSequence]
+              'END'
+
+CaseStatement ::= 'CASE' expression 'OF' case {'|' case} 'END'
+Case ::= [CaseLabelList ':' StatementSequence]
+CaseLabelList ::= < LabelRange / ',' >
+LabelRange ::= label [ '..' label ]
+label ::= integer | string | qualident
+
+WhileStatement ::= 'WHILE' expression 'DO'
+                      StatementSequence 
+                   { 'ELSIF' expression 'DO' StatementSequence }
+                   'END'
+
+RepeatStatement ::= 'REPEAT' StatementSequence 'UNTIL' expression
+
+ForStatement ::= 'FOR' ident ':=' expression 'TO' expression [ 'BY' ConstExpression ] 'DO'
+                    StatementSequence
+                 'END'
+
+ProcedureDeclaration ::= ProcedureHeading ';' ProcedureBody ident
+ProcedureHeading ::= 'PROCEDURE' identdef [FormalParameters]
+ProcedureBody ::= DeclarationSequence ['BEGIN' StatementSequence] [ 'RETURN' expression ]'END'
+DeclarationSequence ::= BasicDeclarationSequence ProcedureDeclarationSequence
+
+BasicDeclarationSequence ::= { BasicDeclaration }
+
+BasicDeclaration ::= 'CONST' ConstantDeclarationSequence
+                   | 'TYPE' TypeDeclarationSequence 
+                   | 'VAR' VariableDeclarationSequence
+
+ConstantDeclarationSequence ::= { ConstantDeclaration ';' }
+
+TypeDeclarationSequence ::= { TypeDeclaration ';' }
+
+VariableDeclarationSequence ::= { VariableDeclaration ';' }
+
+ProcedureDeclarationSequence ::= { ProcedureDeclaration ';' }
+
+FormalParameters ::= '(' { FPSection / ';' } ')' [':' qualident]
+FPSection ::= ['VAR'] < ident / ',' > ':' FormalType
+FormalType ::= {'ARRAY' 'OF'} qualident
+
+Module ::= 'MODULE' ident ';' 
+             [ImportList]
+             DeclarationSequence
+             ['BEGIN' StatementSequence] 
+             'END' ident '.'
+ImportList ::= 'IMPORT' < import / ',' > ';'
+Import ::= ident [':=' ident]

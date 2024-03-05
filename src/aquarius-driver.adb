@@ -7,8 +7,10 @@ with Aqua.Server;
 
 with Aquarius.Grammars.Manager;
 with Aquarius.Library;
+with Aquarius.Loader;
 with Aquarius.Options;
 with Aquarius.Plugins.Manager;
+with Aquarius.Programs;
 with Aquarius.Version;
 
 procedure Aquarius.Driver is
@@ -25,15 +27,6 @@ begin
 
    Aquarius.Plugins.Manager.Load
      (Aquarius.Grammars.Manager.Get_Grammar ("ebnf"));
-
-   declare
-      Assembled : Boolean;
-   begin
-      Ack.Compile.Check_Assembly_Package ("system-os", Assembled);
-      if Assembled then
-         Ada.Text_IO.Put_Line ("built System.OS");
-      end if;
-   end;
 
    declare
       Start_Class : constant String := Aquarius.Options.Start_Class;
@@ -58,6 +51,23 @@ begin
          return;
       end if;
    end;
+
+   if Aquarius.Options.Source_File_Count > 0 then
+      for I in 1 .. Aquarius.Options.Source_File_Count loop
+         declare
+            Path : constant String := Aquarius.Options.Source_File (I);
+            Grammar : constant Aquarius.Grammars.Aquarius_Grammar :=
+                        Aquarius.Grammars.Manager.Get_Grammar_For_File
+                          (File_Name => Path);
+            Program : constant Aquarius.Programs.Program_Tree :=
+                  Aquarius.Loader.Load_From_File
+                          (Grammar, Path);
+         begin
+            Ada.Text_IO.Put_Line (Program.Image);
+         end;
+      end loop;
+      return;
+   end if;
 
    Ada.Text_IO.Put_Line (Aquarius.Version.Version_String);
 

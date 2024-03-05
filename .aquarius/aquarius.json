@@ -8,6 +8,10 @@
 		"idl": {
 			"name": "IDLE interface definition",
 			"plugin": "idle"
+		},
+		"ob": {
+			"name": "Oberon programming language",
+			"plugin": "oberon"
 		}
     },
     "install": {
