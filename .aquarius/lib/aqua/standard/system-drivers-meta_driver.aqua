@@ -4,13 +4,32 @@ expanded class
 feature
 
    Install_Driver (Identifier : String) : System.Address
+      require
+         Identifier.Length < 200
       local
-         Mem : System.Memory.Mem
+         Mem   : System.Memory.Mem
+         Index : Integer
+         Addr  : System.Address
+         W     : Word_32
       do
-         Mem.Put_Word_32 (16#FFFF_F1244#, Identifier.Block.Count)
-         Mem.Put_Address (16#FFFF_F1248#, Identifier.Block.Base)
-         Mem.Put_Word_32 (16#FFFF_F1240#, 1)
-         Result := Mem.Get_Address (16#FFFF_F1240#)
+         Addr := 16#FFFF_F210#
+         W.Convert_From (Identifier.Length)
+         Mem.Put_Word_32 (Addr, W)
+         from
+            Index := 1
+            Addr  := 16#FFFF_F214#
+         until
+            Index > Identifier.Length
+         loop
+            Mem.Put_Word_32 (Addr, Identifier.Element (Index).UTF_32_Code)
+            Addr := Addr.Offset_Words (1)
+            Index := Index + 1
+         end
+
+         Addr := 16#FFFF_F200#
+         Mem.Put_Word_32 (Addr, 1)
+         Addr := 16#FFFF_F204#
+         Result := Mem.Get_Address (Addr)
       end
       
 end

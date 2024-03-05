@@ -10,22 +10,6 @@ feature
          Mem.Put_Word_32 (Character_Addr, Ch.UTF_32_Code)
       end
 
-    Col : Integer
-      local
-         Mem : System.Memory.Mem
-      do
-         Result.Convert_From (Mem.Get_Word_32 (Col_Addr))
-      end
-      
-    Set_Col (Value : Integer)
-       local
-          Mem : System.Memory.Mem
-          Col_32 : System.Word_32
-       do
-          Col_32.Convert_From (Value)
-          Mem.Put_Word_32 (Col_Addr, Col_32)
-       end
-       
     Set_Output (Name : String)
        local
           Mem : System.Memory.Mem
@@ -40,7 +24,8 @@ feature { None }
       local
          Meta : System.Drivers.Meta_Driver
       once
-         Result := 16#FFFF_F000#  --  Meta.Install_Driver ("aqua-text-writer")
+         Result := Meta.Install_Driver ("aqua-text-writer")
+         --  Result := 16#FFFF_F000#
       end
       
    Character_Addr : System.Address
@@ -48,19 +33,14 @@ feature { None }
          Result := Base
       end
       
-   Col_Addr : System.Address
-      once
-         Result := Base.Offset_Words (1)
-      end
-
    Output_Addr : System.Address
       once
-         Result := Base.Offset_Words (2)
+         Result := Base.Offset_Words (1)
       end
       
    Name_Addr : System.Address
       once
-         Result := Base.Offset_Words (3)
+         Result := Base.Offset_Words (2)
       end
       
 

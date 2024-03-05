@@ -6,6 +6,7 @@ with Ack.Compile;
 with Ack.Loader;
 
 with Aquarius.Configuration;
+with Aquarius.Devices.Text_Writer;
 with Aquarius.Grammars.Manager;
 with Aquarius.Loader;
 with Aquarius.Programs;
@@ -128,6 +129,9 @@ package body Aquarius.Library is
 
       Check_Assembly_Package ("system-os");
       Check_Assembly_Package ("mm");
+
+      Aquarius.Devices.Register
+        ("aqua-text-writer", Aquarius.Devices.Text_Writer.Create);
 
    end Initialize;
 

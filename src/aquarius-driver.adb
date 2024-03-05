@@ -5,6 +5,7 @@ with Ack.Compile;
 
 with Aqua.Server;
 
+with Aquarius.Devices.Meta;
 with Aquarius.Grammars.Manager;
 with Aquarius.Library;
 with Aquarius.Loader;
@@ -45,6 +46,11 @@ begin
                             Ada.Directories.Compose
                               ("./.aquarius/tmp/obj/", Base_Name, "o");
          begin
+            Server.Install_Device
+              (Base   => 16#FFFF_F200#,
+               Bound  => 16#FFFF_F300#,
+               Device => Aquarius.Devices.Meta.Create (Server));
+
             Server.Load (Object_Path);
             Server.Run (Trace => Trace_Server);
          end;
