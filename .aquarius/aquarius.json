@@ -16,6 +16,7 @@
     },
     "install": {
 		"paths": {
+			"temporary": "tmp",
 			"standard": "lib/aqua",
 			"assembly": "tmp/asm",
 			"grammar": "grammar",

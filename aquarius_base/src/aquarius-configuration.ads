@@ -4,6 +4,8 @@ package Aquarius.Configuration is
      (Grammar_Name : String)
       return String;
 
+   function Temporary_Path return String;
+
    function Generated_Path return String;
 
    function Generated_File_Path

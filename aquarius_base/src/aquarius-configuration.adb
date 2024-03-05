@@ -105,6 +105,15 @@ package body Aquarius.Configuration is
       return Get_Path ("/install/paths/object");
    end Object_Path;
 
+   --------------------
+   -- Temporary_Path --
+   --------------------
+
+   function Temporary_Path return String is
+   begin
+      return Get_Path ("/install/paths/temporary");
+   end Temporary_Path;
+
    ---------------
    -- Tool_Path --
    ---------------

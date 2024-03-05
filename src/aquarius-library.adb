@@ -5,6 +5,7 @@ with Ada.Text_IO;
 with Ack.Compile;
 with Ack.Loader;
 
+with Aquarius.Configuration;
 with Aquarius.Grammars.Manager;
 with Aquarius.Loader;
 with Aquarius.Programs;
@@ -21,6 +22,38 @@ package body Aquarius.Library is
    is (Aquarius.Loader.Load_From_File
        (Grammar => Aquarius.Grammars.Manager.Get_Grammar ("aqua"),
         Path    => Path));
+
+   procedure Check_Assembly_Package (Name : String);
+
+   procedure Check_Directory (Path : String);
+
+   ----------------------------
+   -- Check_Assembly_Package --
+   ----------------------------
+
+   procedure Check_Assembly_Package (Name : String) is
+      Assembled : Boolean;
+   begin
+      Ack.Compile.Check_Assembly_Package (Name, Assembled);
+      if Assembled then
+         Ada.Text_IO.Put_Line ("built " & Name);
+      end if;
+   end Check_Assembly_Package;
+
+   ---------------------
+   -- Check_Directory --
+   ---------------------
+
+   procedure Check_Directory (Path : String) is
+   begin
+      if not Ada.Directories.Exists (Path) then
+         Ada.Directories.Create_Directory (Path);
+      end if;
+   exception
+      when others =>
+         Ada.Text_IO.Put_Line
+           ("cannot create directory: " & Path);
+   end Check_Directory;
 
    ------------------------
    -- Find_Configuration --
@@ -88,14 +121,13 @@ package body Aquarius.Library is
 
       Ack.Loader.Set_Loader (Load_Aqua_Class'Access);
 
-      declare
-         Assembled : Boolean;
-      begin
-         Ack.Compile.Check_Assembly_Package ("system-os", Assembled);
-         if Assembled then
-            Ada.Text_IO.Put_Line ("built System.OS");
-         end if;
-      end;
+      Check_Directory (Aquarius.Configuration.Temporary_Path);
+      Check_Directory (Aquarius.Configuration.Generated_Path);
+      Check_Directory (Aquarius.Configuration.Assembly_Path);
+      Check_Directory (Aquarius.Configuration.Object_Path);
+
+      Check_Assembly_Package ("system-os");
+      Check_Assembly_Package ("mm");
 
    end Initialize;
 
