@@ -127,17 +127,21 @@ package Aquarius.Grammars is
    not overriding
    procedure Check_Grammar (Grammar : in out Aquarius_Grammar_Record);
 
-   procedure Add_Action_Group
+   procedure Create_Action_Group
      (Grammar : in out Aquarius_Grammar_Record;
       Name    : String;
       Trigger : Aquarius.Actions.Action_Execution_Trigger;
-      Group   :    out Aquarius.Actions.Action_Group);
-   --  Add_Action_Group: add an action group to the grammar.  If more
+      Group   : out Aquarius.Actions.Action_Group);
+   --  Create_Action_Group: add an action group to the grammar.  If more
    --  than one action group has the same trigger, (see
    --  Aquarius.Actions spec for details on triggers) they are always
    --  executed in the same order they were added.  Furthermore, an
    --  action group always runs in isolation and to completion on the
-   --  entire tree before the next one the in trigger set starts.
+   --  entire tree before the next one the in the trigger set starts.
+
+   procedure Add_Action_Group
+     (Grammar : in out Aquarius_Grammar_Record;
+      Group   : Aquarius.Actions.Action_Group);
 
    procedure Scan_Action_Groups
      (Grammar : Aquarius_Grammar_Record'Class;

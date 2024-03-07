@@ -26,6 +26,9 @@
 		"tools": {
 			"as": "e:/git/aqua/aqua_as/bin/aqua_as.exe"
 		}
-    }
+    },
+	"plugins": {
+		
+	}
 }
     

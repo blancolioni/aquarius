@@ -9,7 +9,8 @@ with Aquarius.Configuration;
 with Aquarius.Devices.Text_Writer;
 with Aquarius.Grammars.Manager;
 with Aquarius.Loader;
-with Aquarius.Programs;
+with Aquarius.Plugins.Manager;
+with Aquarius.Programs.Device;
 
 with Kosei.Json;
 
@@ -132,6 +133,12 @@ package body Aquarius.Library is
 
       Aquarius.Devices.Register
         ("aqua-text-writer", Aquarius.Devices.Text_Writer.Create);
+      Aquarius.Devices.Register
+        ("aquarius-program-tree",
+         Aquarius.Programs.Device.Aquarius_Tree_Driver);
+
+      Aquarius.Plugins.Manager.Load
+        (Aquarius.Grammars.Manager.Get_Grammar ("ebnf"));
 
    end Initialize;
 

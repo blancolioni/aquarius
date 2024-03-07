@@ -53,7 +53,8 @@ package body Aquarius.Programs is
       Offset_Rule          => Aquarius.Source.No_Source_Position,
       Render_Class         => null,
       Local_Env            => null,
-      String_Props         => String_Property_Maps.Empty_Map);
+      String_Props         => String_Property_Maps.Empty_Map,
+      Aqua_Props           => Aqua_Property_Maps.Empty_Map);
 
    --  After a node is changed, update any entry it references
    procedure Update_Entry

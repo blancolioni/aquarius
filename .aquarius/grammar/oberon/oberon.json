@@ -1,0 +1,11 @@
+{
+    "name": "oberon",
+    "description": "Oberon-2",
+    "version": "0.1.0",
+    "groups": [
+        {
+            "name": "checks",
+            "stage": "semantic"
+        }
+    ]
+}

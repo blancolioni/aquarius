@@ -1,5 +1,6 @@
 private with Ada.Containers.Indefinite_Hashed_Maps;
 private with Ada.Strings.Fixed.Hash;
+private with Aqua;
 
 private with WL.String_Maps;
 
@@ -31,6 +32,7 @@ package Aquarius.Programs is
      and Aquarius.Actions.Actionable
      and Aquarius.Entries.Entry_Property_Interface
      and Aquarius.Types.Type_Property_Interface
+     --  and Aquarius.Source.Has_Source_Position_Interface
      with private;
 
    type Program_Tree is access all Program_Tree_Type'Class;
@@ -454,6 +456,9 @@ private
 
    Name_Property         : constant String := "name";
 
+   package Aqua_Property_Maps is
+     new WL.String_Maps (Aqua.Word, Aqua."=");
+
    type Local_Environment_Access is
      access all Local_Environment_Interface'Class;
 
@@ -462,6 +467,7 @@ private
      and Aquarius.Actions.Actionable
      and Aquarius.Entries.Entry_Property_Interface
      and Aquarius.Types.Type_Property_Interface
+     --  and Aquarius.Source.Has_Source_Position_Interface
    with
       record
          Free              : Boolean;
@@ -500,6 +506,7 @@ private
          Render_Class      : Aquarius.Syntax.Syntax_Tree;
          Local_Env         : Local_Environment_Access;
          String_Props      : String_Property_Maps.Map;
+         Aqua_Props        : Aqua_Property_Maps.Map;
       end record;
 
    function Class_Name

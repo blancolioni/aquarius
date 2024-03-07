@@ -31,6 +31,11 @@ package body Kosei is
       Path  : String)
       return String;
 
+   function Iterate_Path
+     (Start : Cursor_Interface'Class;
+      Path  : String)
+      return Cursor_Interface'Class;
+
    -----------------------
    -- Add_Configuration --
    -----------------------
@@ -71,7 +76,7 @@ package body Kosei is
       return String
    is
    begin
-      for Element of Config_List loop
+      for Element of reverse Config_List loop
          declare
             Index_Path : constant String :=
                            Match_Path (Path, Element.Name);
@@ -82,6 +87,28 @@ package body Kosei is
          end;
       end loop;
       return "";
+   end Get;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Path : String)
+      return Cursor_Interface'Class
+   is
+   begin
+      for Element of reverse Config_List loop
+         declare
+            Index_Path : constant String :=
+                           Match_Path (Path, Element.Name);
+         begin
+            if Index_Path /= "" then
+               return Element.Config.Element.Root.Iterate_Path (Index_Path);
+            end if;
+         end;
+      end loop;
+      raise Constraint_Error with Path & ": path not found";
    end Get;
 
    ------------------
@@ -105,6 +132,27 @@ package body Kosei is
       return Start.Value (Path);
    end Iterate_Path;
 
+   ------------------
+   -- Iterate_Path --
+   ------------------
+
+   function Iterate_Path
+     (Start : Cursor_Interface'Class;
+      Path  : String)
+      return Cursor_Interface'Class
+   is
+   begin
+      for I in Path'Range loop
+         if Path (I) = '/' then
+            return Start
+              .Element (Path (Path'First .. I - 1))
+                .Iterate_Path (Path (I + 1 .. Path'Last));
+         end if;
+      end loop;
+
+      return Start.Element (Path);
+   end Iterate_Path;
+
    ----------------
    -- Match_Path --
    ----------------
@@ -123,7 +171,11 @@ package body Kosei is
                       Path (First .. Last);
          begin
             if Head = Config_Path then
-               return Path (Last + 1 .. Path'Last);
+               if Head = "/" then
+                  return Path (Last + 1 .. Path'Last);
+               else
+                  return Path (Last + 2 .. Path'Last);
+               end if;
             end if;
          end;
       end if;

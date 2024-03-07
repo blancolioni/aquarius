@@ -1,0 +1,10 @@
+class Oberon.Checks.identdef
+
+feature
+
+   After_Ident (Name : String)
+      do
+      end
+
+
+end

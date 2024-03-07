@@ -1,0 +1,11 @@
+{
+    "name": "pascal",
+    "description": "ISO 7185 Pascal",
+    "version": "0.1.0",
+    "groups": [
+        {
+            "name": "checks",
+            "stage": "semantic"
+        }
+    ]
+}

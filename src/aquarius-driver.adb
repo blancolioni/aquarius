@@ -26,9 +26,6 @@ begin
 
    Aquarius.Library.Initialize;
 
-   Aquarius.Plugins.Manager.Load
-     (Aquarius.Grammars.Manager.Get_Grammar ("ebnf"));
-
    declare
       Start_Class : constant String := Aquarius.Options.Start_Class;
    begin
@@ -61,15 +58,26 @@ begin
    if Aquarius.Options.Source_File_Count > 0 then
       for I in 1 .. Aquarius.Options.Source_File_Count loop
          declare
+            use type Aquarius.Grammars.Aquarius_Grammar;
             Path : constant String := Aquarius.Options.Source_File (I);
             Grammar : constant Aquarius.Grammars.Aquarius_Grammar :=
                         Aquarius.Grammars.Manager.Get_Grammar_For_File
                           (File_Name => Path);
-            Program : constant Aquarius.Programs.Program_Tree :=
-                  Aquarius.Loader.Load_From_File
-                          (Grammar, Path);
          begin
-            Ada.Text_IO.Put_Line (Program.Image);
+            if Grammar /= null then
+               Aquarius.Plugins.Manager.Load (Grammar);
+               declare
+                  Program : constant Aquarius.Programs.Program_Tree :=
+                              Aquarius.Loader.Load_From_File
+                                (Grammar, Path);
+               begin
+                  Ada.Text_IO.Put_Line (Program.Image);
+               end;
+            else
+               Ada.Text_IO.Put_Line
+                 (Ada.Text_IO.Standard_Error,
+                  Path & ": no grammar found");
+            end if;
          end;
       end loop;
       return;

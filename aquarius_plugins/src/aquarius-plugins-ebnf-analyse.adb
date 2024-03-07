@@ -6,6 +6,7 @@ with Aquarius.Grammars.Builtin;
 with Aquarius.Lexers;
 with Aquarius.Lexers.Parser;
 with Aquarius.Programs;                 use Aquarius.Programs;
+with Aquarius.Properties;
 with Aquarius.Syntax;
 with Aquarius.Tokens;
 with Aquarius.Trees;

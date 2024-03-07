@@ -21,13 +21,11 @@ package body  Aquarius.Grammars is
 
    procedure Add_Action_Group
      (Grammar : in out Aquarius_Grammar_Record;
-      Name    : String;
-      Trigger : Aquarius.Actions.Action_Execution_Trigger;
-      Group   :    out Aquarius.Actions.Action_Group)
+      Group   : Aquarius.Actions.Action_Group)
    is
    begin
-      Aquarius.Actions.Create_Action_Group
-        (Grammar.Action_Groups, Name, Trigger, Group);
+      Aquarius.Actions.Add_Action_Group
+        (Grammar.Action_Groups, Group);
    end Add_Action_Group;
 
    ------------------------
@@ -319,6 +317,21 @@ package body  Aquarius.Grammars is
       Grammar.Error := Has_Errors;
 
    end Check_Grammar;
+
+   -------------------------
+   -- Create_Action_Group --
+   -------------------------
+
+   procedure Create_Action_Group
+     (Grammar : in out Aquarius_Grammar_Record;
+      Name    : String;
+      Trigger : Aquarius.Actions.Action_Execution_Trigger;
+      Group   :    out Aquarius.Actions.Action_Group)
+   is
+   begin
+      Aquarius.Actions.Create_Action_Group
+        (Grammar.Action_Groups, Name, Trigger, Group);
+   end Create_Action_Group;
 
    -----------
    -- Frame --

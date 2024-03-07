@@ -172,7 +172,11 @@ package Aquarius.Actions is
       Trigger    : Action_Execution_Trigger;
       Group      :    out Action_Group);
 
---     function Get_Group_Count (List : Action_Group_List)
+   procedure Add_Action_Group
+     (List       : in out Action_Group_List;
+      Group      : Action_Group);
+
+   --     function Get_Group_Count (List : Action_Group_List)
 --                              return Natural;
 --     function Get_Group (List  : Action_Group_List;
 --                         Index : Positive)

@@ -27,6 +27,11 @@ package body Kosei.Json is
       Name     : String)
       return String;
 
+   overriding procedure Iterate_Children
+     (This    : Json_Cursor;
+      Process : not null access
+        procedure (Position : Cursor_Interface'Class));
+
    type Json_Config is new Configuration_Interface with
       record
          Root : Json_Cursor;
@@ -76,6 +81,31 @@ package body Kosei.Json is
       return Json_Cursor'
         (Top => Json_Holders.To_Holder (Result));
    end Element;
+
+   ----------------------
+   -- Iterate_Children --
+   ----------------------
+
+   overriding procedure Iterate_Children
+     (This    : Json_Cursor;
+      Process : not null access
+        procedure (Position : Cursor_Interface'Class))
+   is
+      Value : constant WL.Json.Json_Value'Class :=
+                This.Top.Element;
+   begin
+      if Value in WL.Json.Json_Array'Class then
+         declare
+            Arr : WL.Json.Json_Array'Class
+            renames WL.Json.Json_Array'Class (Value);
+         begin
+            for I in 1 .. Arr.Length loop
+               Process (Json_Cursor'
+                          (Top => Json_Holders.To_Holder (Arr.Element (I))));
+            end loop;
+         end;
+      end if;
+   end Iterate_Children;
 
    --------------------
    -- Read_Json_File --

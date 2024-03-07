@@ -50,6 +50,18 @@ package body Aquarius.Actions is
       return Group.Group_Trigger;
    end Action_Group_Trigger;
 
+   ----------------------
+   -- Add_Action_Group --
+   ----------------------
+
+   procedure Add_Action_Group
+     (List       : in out Action_Group_List;
+      Group      : Action_Group)
+   is
+   begin
+      List.Groups.Append (Group);
+   end Add_Action_Group;
+
    -----------------
    -- After_Child --
    -----------------

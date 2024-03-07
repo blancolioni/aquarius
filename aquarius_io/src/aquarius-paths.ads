@@ -3,12 +3,6 @@ with Ada.Containers.Vectors;
 
 package Aquarius.Paths is
 
-   function Scratch_Path return String;
-
-   function Scratch_File (Name : String;
-                          Extension : String := "")
-                          return String;
-
    function Is_Newer
      (File_1, File_2 : String)
       return Boolean;

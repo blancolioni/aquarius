@@ -11,11 +11,13 @@ tags = []
 
 [[depends-on]]
 aquarius_base = "*"
+aquarius_devices = "*"
 aquarius_trees = "*"
 aquarius_syntax = "*"
 
 [[pins]]
 aquarius_base = { path = "../aquarius_base" }
+aquarius_devices = { path = "../aquarius_devices" }
 aquarius_trees = { path = "../aquarius_trees" }
 aquarius_syntax = { path = "../aquarius_syntax" }
 

@@ -21,9 +21,19 @@ package Kosei is
       return String
       is abstract;
 
+   procedure Iterate_Children
+     (This    : Cursor_Interface;
+      Process : not null access
+        procedure (Position : Cursor_Interface'Class))
+   is abstract;
+
    function Get
      (Path : String)
       return String;
+
+   function Get
+     (Path : String)
+      return Cursor_Interface'Class;
 
    procedure Add_Configuration
      (This : Configuration_Interface'Class);

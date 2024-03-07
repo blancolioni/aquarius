@@ -15,7 +15,7 @@ with Ack.Errors;
 with Ack.Features;
 with Ack.Semantic;
 
-with Aquarius.Paths;
+with Aquarius.Configuration;
 with Aquarius.Syntax;
 with Aquarius.Trees;
 
@@ -83,12 +83,10 @@ package body Ack.Bindings is
    function Load_Ack_Binding
      (Binding_File_Path : String;
       Base_Aqua_Path    : String;
-      OS                : Aqua.OS.Reference;
       Grammar           : Aquarius.Grammars.Aquarius_Grammar;
       Group             : Aquarius.Actions.Action_Group)
       return Boolean
    is
-      pragma Unreferenced (OS);
       References     : List_Of_Constant_Entities.List;
       Binding_Table  : Ack.Bindings.Actions.Ack_Binding_Table;
       Binding_Vector : Binding_Record_Vectors.Vector;
@@ -920,8 +918,8 @@ package body Ack.Bindings is
          declare
             use Ada.Calendar, Ada.Directories;
             Object_Path : constant String :=
-                            Aquarius.Paths.Scratch_File
-                              (Base_Name (Binding_File_Path) & ".o32");
+                            Aquarius.Configuration.Object_File_Path
+                              (Base_Name (Binding_File_Path));
          begin
 
             if Exists (Binding_File_Path) then

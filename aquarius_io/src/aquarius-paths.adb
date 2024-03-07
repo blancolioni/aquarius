@@ -3,8 +3,6 @@ with Ada.Directories;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 
-with Kosei;
-
 package body Aquarius.Paths is
 
    Always_Newer : constant Boolean := False;
@@ -66,28 +64,6 @@ package body Aquarius.Paths is
       end loop;
       return Result;
    end Join_Paths;
-
-   ------------------
-   -- Scratch_File --
-   ------------------
-
-   function Scratch_File (Name : String;
-                          Extension : String := "")
-                          return String
-   is
-   begin
-      return Ada.Directories.Compose
-        (Scratch_Path, Name, Extension);
-   end Scratch_File;
-
-   ------------------
-   -- Scratch_Path --
-   ------------------
-
-   function Scratch_Path return String is
-   begin
-      return Kosei.Get ("/install/paths/scratch");
-   end Scratch_Path;
 
    ----------------------
    -- To_Aquarius_Path --
