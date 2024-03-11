@@ -1,0 +1,35 @@
+class
+   Test_Once_Feature
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-once-feature"
+      end
+      
+   Count : Integer
+
+   OK : Boolean
+     once
+        Count := Count + 1
+        Result := True
+     end
+
+   Execute
+      local
+      do
+         Success := OK
+         Success := OK
+
+         Success := Count = 1
+
+         if not Success then 
+            Fail_Message := "Once feature was evaluated twice"
+         end
+      end
+       
+end 

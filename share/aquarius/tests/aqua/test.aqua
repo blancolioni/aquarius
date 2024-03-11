@@ -59,6 +59,8 @@ feature
 --         Test_List.Append (T)
          create { Test_Simple_Tuples } T
          Test_List.Append (T)
+         create { Test_Once_Feature } T
+         Test_List.Append (T)
          create { Test_Diamond_Inheritance } T
          Test_List.Append (T)
          create { Test_Descendent_Create } T
