@@ -75,6 +75,10 @@ package body Aquarius.Programs.Device is
       Value := This.Rs (R);
    end Get_Word_32;
 
+   -----------------
+   -- Set_Word_32 --
+   -----------------
+
    overriding procedure Set_Word_32
      (This    : in out Aquarius_Tree_Driver_Record;
       Address : Aqua.Address_Type;
@@ -83,6 +87,33 @@ package body Aquarius.Programs.Device is
       use type Aqua.Word_32;
       R : constant Register_Index := Register_Index (Address / 4);
    begin
+      case R is
+         when R_Current =>
+            if Value /= 0 and then
+              (Value >= 2 ** 31 or else
+                 not Aquarius.Programs.Is_Valid_Sequence (Positive (Value)))
+            then
+               raise Constraint_Error with
+                 "invalid sequence number: "
+                 & Aqua.Images.Hex_Image (Value);
+            end if;
+            if Value = 0 then
+               This.Current := null;
+            else
+               This.Current :=
+                 Aquarius.Programs.Get_Tree_From_Sequence (Positive (Value));
+            end if;
+
+         when R_Command =>
+            if Value > Driver_Command'Pos (Driver_Command'Last) then
+               raise Constraint_Error with
+                 "invalid command: " & Aqua.Images.Hex_Image (Value);
+            end if;
+
+         when others =>
+            null;
+      end case;
+
       This.Rs (R) := Value;
 
       if R = R_Command then
@@ -104,6 +135,9 @@ package body Aquarius.Programs.Device is
    begin
 
       if Current_Sequence = 0 then
+         Ada.Text_IO.Put_Line
+           (Ada.Text_IO.Standard_Error,
+            "execute-command: no current tree");
          return;
       end if;
 
@@ -114,6 +148,11 @@ package body Aquarius.Programs.Device is
       end if;
 
       if not Is_Command (Command) then
+         Ada.Text_IO.Put_Line
+           (Ada.Text_IO.Standard_Error,
+            "execute-command:"
+            & Command'Image
+            & ": not a valid command");
          return;
       end if;
 

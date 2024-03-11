@@ -130,6 +130,7 @@ package body Aquarius.Library is
 
       Check_Assembly_Package ("system-os");
       Check_Assembly_Package ("mm");
+      Check_Assembly_Package ("aquarius-init");
 
       Aquarius.Devices.Register
         ("aqua-text-writer", Aquarius.Devices.Text_Writer.Create);

@@ -5,6 +5,7 @@ with Ack.Compile;
 
 with Aqua.Server;
 
+with Aquarius.Actions;
 with Aquarius.Devices.Meta;
 with Aquarius.Grammars.Manager;
 with Aquarius.Library;
@@ -66,12 +67,14 @@ begin
          begin
             if Grammar /= null then
                Aquarius.Plugins.Manager.Load (Grammar);
+
                declare
                   Program : constant Aquarius.Programs.Program_Tree :=
                               Aquarius.Loader.Load_From_File
                                 (Grammar, Path);
                begin
-                  Ada.Text_IO.Put_Line (Program.Image);
+                  Grammar.Run_Action_Trigger
+                    (Program, Aquarius.Actions.Semantic_Trigger);
                end;
             else
                Ada.Text_IO.Put_Line

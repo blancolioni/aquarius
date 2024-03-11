@@ -565,6 +565,10 @@ private
    overriding function Name (Item : Program_Tree_Type) return String
    is (Aquarius.Names.To_String (Item.Tree_Name));
 
+   function Is_Valid_Sequence
+     (Sequence : Positive)
+      return Boolean;
+
    function Get_Tree_From_Sequence
      (Sequence : Positive)
       return Program_Tree;

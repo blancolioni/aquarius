@@ -59,6 +59,10 @@ package body Ack.Compile is
         ("aqua_as " & Assembly_Path & " -o " & Object_Path);
    end Assemble;
 
+   ----------------------------
+   -- Check_Assembly_Package --
+   ----------------------------
+
    procedure Check_Assembly_Package
      (Package_Name : String;
       Assembled    : out Boolean)
@@ -234,20 +238,6 @@ package body Ack.Compile is
             "Error assembling " & Base_Name);
       end if;
    end Generate_Object_Code;
-
-   --     Assembly_Path    : constant String :=
-   --                          Aquarius.Paths.Scratch_File
-   --                            (Base_Name, "m32");
-   --     Assembly_Program : constant Aquarius.Programs.Program_Tree :=
-   --                          Aquarius.Loader.Load_From_File
-   --                            (Assembly_Path);
-   --     Assembly_Grammar : constant Aquarius.Grammars.Aquarius_Grammar :=
-   --                          Aquarius.Grammars.Manager.Get_Grammar_For_File
-   --                            (Assembly_Path);
-   --  begin
-   --     Assembly_Grammar.Run_Action_Trigger
-   --       (Assembly_Program, Aquarius.Actions.Semantic_Trigger);
-   --  end Generate_Object_Code;
 
    -------------------
    -- Compile_Class --

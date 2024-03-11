@@ -181,8 +181,8 @@ package body Ack.Generate is
                                       (Class.Get_Note_Item (Note_Name, 3));
                begin
                   Unit.Note
-                    (".bind_action "
-                     & Class.Declaration_Context.Standard_Name
+                    ("bind_action", 1,
+                     Class.Declaration_Context.Standard_Name
                      & " " & Feature.Link_Name
                      & " " & Position_Name
                      & " " & Parent_Name
@@ -242,8 +242,6 @@ package body Ack.Generate is
            (Class_Defined_Feature'Access,
             Generate_Feature'Access);
       end;
-
-      --  Unit.Save (Class.Link_Name & ".lst");
 
       declare
          Target : Tagatha.Arch.Aqua.Instance;

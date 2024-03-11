@@ -1,9 +1,14 @@
-class Oberon.Checks.identdef
+class
+   Oberon.Checks.identdef
+
+inherit
+   Aqua.Text_IO
 
 feature
 
    After_Ident (Name : String)
       do
+         Put_line ("identdef after " & Name)
       end
 
 

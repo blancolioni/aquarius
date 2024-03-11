@@ -1053,6 +1053,18 @@ package body Aquarius.Programs is
    end Is_Terminal;
 
    -----------------------
+   -- Is_Valid_Sequence --
+   -----------------------
+
+   function Is_Valid_Sequence
+     (Sequence : Positive)
+      return Boolean
+   is
+   begin
+      return Sequence <= Allocated_List.Last_Index;
+   end Is_Valid_Sequence;
+
+   -----------------------
    -- Layout_End_Column --
    -----------------------
 

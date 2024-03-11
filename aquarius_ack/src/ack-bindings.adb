@@ -3,8 +3,6 @@ with Ada.Directories;
 with Ada.Strings.Fixed;
 with Ada.Text_IO;
 
-with Ada.Calendar.Formatting;
-
 with WL.String_Maps;
 with WL.String_Sets;
 
@@ -921,17 +919,6 @@ package body Ack.Bindings is
                             Aquarius.Configuration.Object_File_Path
                               (Base_Name (Binding_File_Path));
          begin
-
-            if Exists (Binding_File_Path) then
-               Ada.Text_IO.Put_Line
-                 ("most recent class modification: "
-                  & Ada.Calendar.Formatting.Image
-                    (Newest_Class_Time, True));
-               Ada.Text_IO.Put_Line
-                 ("binding file modification: "
-                  & Ada.Calendar.Formatting.Image
-                    (Modification_Time (Binding_File_Path), True));
-            end if;
 
             if First_Class
               or else not Exists (Object_Path)

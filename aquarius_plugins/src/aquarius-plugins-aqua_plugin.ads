@@ -16,4 +16,12 @@ private
      (This : in out Instance;
       Name : String);
 
+   procedure Bind_Action
+     (This        : in out Instance;
+      Group       : Aquarius.Actions.Action_Group;
+      Position    : Rule_Position;
+      Parent_Name : String;
+      Child_Name  : String;
+      Address     : Aqua.Address_Type);
+
 end Aquarius.Plugins.Aqua_Plugin;
