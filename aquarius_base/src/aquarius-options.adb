@@ -22,6 +22,15 @@ package body Aquarius.Options is
       return AP.Boolean_Value ("aqua trace");
    end Aqua_Trace;
 
+   ------------------
+   -- Code_Trigger --
+   ------------------
+
+   function Code_Trigger return Boolean is
+   begin
+      return AP.Boolean_Value ("code trigger");
+   end Code_Trigger;
+
    ----------
    -- Load --
    ----------
@@ -34,6 +43,12 @@ package body Aquarius.Options is
          Name          => "aqua trace",
          Long_Option   => "aqua-trace",
          Usage         => "Enable trace for Aqua execution");
+
+      AP.Add_Option
+        (O             => Make_Boolean_Option (False),
+         Name          => "code trigger",
+         Long_Option   => "code-trigger",
+         Usage         => "Run the code trigger on source files");
 
       AP.Add_Option
         (O             => Make_String_Option (""),
