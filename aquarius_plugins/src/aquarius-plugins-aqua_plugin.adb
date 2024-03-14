@@ -7,6 +7,7 @@ with Aquarius.Actions;
 with Aquarius.Configuration;
 with Aquarius.Devices.Meta;
 with Aquarius.Grammars.Manager;
+with Aquarius.Options;
 with Aquarius.Programs;
 with Aquarius.Syntax;
 
@@ -108,7 +109,7 @@ package body Aquarius.Plugins.Aqua_Plugin is
          Arguments => [0,
                        Aqua.Word_32 (Top_Seq),
                        Aqua.Word_32 (Seq)],
-         Trace     => False);
+         Trace     => Aquarius.Options.Aqua_Trace);
    end Execute;
 
    -------------
@@ -140,7 +141,7 @@ package body Aquarius.Plugins.Aqua_Plugin is
                        Aqua.Word_32 (Top_Seq),
                        Aqua.Word_32 (Parent_Seq),
                        Aqua.Word_32 (Child_Seq)],
-         Trace     => False);
+         Trace     => Aquarius.Options.Aqua_Trace);
    end Execute;
 
    ----------

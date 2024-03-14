@@ -8,4 +8,6 @@ package Aquarius.Options is
    function Source_File_Count return Natural;
    function Source_File (Index : Positive) return String;
 
+   function Aqua_Trace return Boolean;
+
 end Aquarius.Options;

@@ -139,6 +139,7 @@ package body Ack.Generate is
          Unit.Indirect_Call (1, 0);
          Unit.Push_Constant (Tagatha.Int_32'(0));
          Unit.Pop_Result (1);
+         Unit.Exit_Routine;
          Unit.End_Routine;
       end if;
 
@@ -201,6 +202,7 @@ package body Ack.Generate is
 
       Unit.Begin_Routine
         (Class.Link_Name & "$init");
+      Unit.Exit_Routine;
       Unit.End_Routine;
 
       if not Class.Expanded and then not Class.Deferred then
@@ -1052,7 +1054,7 @@ package body Ack.Generate is
       pragma Unreferenced (Context);
    begin
       if Tagatha.Code.Has_Label (Target) then
-         Unit.Branch (Target);
+         Unit.Retry_Routine;
       else
          raise Constraint_Error with
          Get_Program (Retry).Show_Location

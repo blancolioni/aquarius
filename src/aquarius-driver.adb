@@ -16,14 +16,11 @@ with Aquarius.Programs;
 with Aquarius.Version;
 
 procedure Aquarius.Driver is
-   Trace_Server : Boolean;
 begin
 
    if not Aquarius.Options.Load then
       return;
    end if;
-
-   Trace_Server := Aquarius.Options.Trace_Server;
 
    Aquarius.Library.Initialize;
 
@@ -50,7 +47,7 @@ begin
                Device => Aquarius.Devices.Meta.Create (Server));
 
             Server.Load (Object_Path);
-            Server.Run (Trace => Trace_Server);
+            Server.Run (Trace => Aquarius.Options.Aqua_Trace);
          end;
          return;
       end if;

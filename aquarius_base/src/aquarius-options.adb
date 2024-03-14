@@ -13,12 +13,27 @@ package body Aquarius.Options is
 
    Source_File_Vector : String_Vectors.Vector;
 
+   ----------------
+   -- Aqua_Trace --
+   ----------------
+
+   function Aqua_Trace return Boolean is
+   begin
+      return AP.Boolean_Value ("aqua trace");
+   end Aqua_Trace;
+
    ----------
    -- Load --
    ----------
 
    function Load return Boolean is
    begin
+
+      AP.Add_Option
+        (O             => Make_Boolean_Option (False),
+         Name          => "aqua trace",
+         Long_Option   => "aqua-trace",
+         Usage         => "Enable trace for Aqua execution");
 
       AP.Add_Option
         (O             => Make_String_Option (""),

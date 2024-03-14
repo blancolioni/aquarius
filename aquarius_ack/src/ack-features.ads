@@ -262,7 +262,6 @@ private
          Preconditions        : Assertion_Record_Lists.List;
          Postconditions       : Assertion_Record_Lists.List;
          Retry_Label          : Tagatha.Code.Label := Tagatha.Code.No_Label;
-         Rescue_Label         : Tagatha.Code.Label := Tagatha.Code.No_Label;
          Instantiated         : Feature_Lists.List;
          Routine_Node         : Node_Id := No_Node;
          Explicit_Value_Node  : Node_Id := No_Node;

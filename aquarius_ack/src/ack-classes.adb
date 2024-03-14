@@ -850,7 +850,7 @@ package body Ack.Classes is
 
       Unit.Drop;
       Unit.Pop_Result (1);
-
+      Unit.Exit_Routine;
       Unit.End_Routine;
    end Generate_Object_Allocator;
 

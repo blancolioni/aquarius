@@ -201,21 +201,17 @@ package body Ack.Features is
             if Tagatha.Code.Has_Label (Fail_Label) then
                Unit.Branch (Fail_Label);
             else
-               if Feature.Rescue_Node in Real_Node_Id then
-                  Unit.Branch (Feature.Rescue_Label);
-               else
-                  declare
-                     Message : constant String :=
-                                 Get_Program (Clause.Node).Show_Location
-                               & ": assertion failure in precondition of "
-                                 & Feature.Declared_Name
-                                 & (if Clause.Tag = No_Name then ""
-                                    else ": " & To_String (Clause.Tag));
-                  begin
-                     Push_String_Constant (Unit, Message);
-                     Ack.Generate.Generate_Exit (Unit);
-                  end;
-               end if;
+               declare
+                  Message : constant String :=
+                              Get_Program (Clause.Node).Show_Location
+                            & ": assertion failure in precondition of "
+                              & Feature.Declared_Name
+                              & (if Clause.Tag = No_Name then ""
+                                 else ": " & To_String (Clause.Tag));
+               begin
+                  Push_String_Constant (Unit, Message);
+                  Unit.Raise_Exception;
+               end;
             end if;
 
             Unit.Set_Label (Out_Label);
@@ -326,8 +322,10 @@ package body Ack.Features is
                            Feature.Link_Name & "$once_flag";
       Once_Value_Label : constant String :=
                            Feature.Link_Name & "$once_value";
-      Exit_Label       : constant Tagatha.Code.Label := Unit.Next_Label;
-      Rescue_Label     : constant Tagatha.Code.Label := Unit.Next_Label;
+      Retry_Label      : constant String :=
+                           Feature.Link_Name & "$retry";
+      Rescue_Label     : constant String :=
+                           Feature.Link_Name & "$rescue";
       Line             : constant Positive :=
                            Positive
                              (Get_Program
@@ -337,8 +335,6 @@ package body Ack.Features is
                              (Get_Program
                                 (Feature.Declaration_Node).Location_Column);
    begin
-
-      Feature.Rescue_Label := Rescue_Label;
 
       Unit.Source_Location (Line, Column);
 
@@ -353,6 +349,7 @@ package body Ack.Features is
                            Tagatha.Int_32 (Feature.Property_Offset));
          Unit.Pop_Result (1);
 
+         Unit.Exit_Routine;
          Unit.End_Routine;
 
       elsif Feature.External then
@@ -386,7 +383,7 @@ package body Ack.Features is
             if Result_Count > 0 then
                Unit.Pop_Result (1);
             end if;
-
+            Unit.Exit_Routine;
             Unit.End_Routine;
          end if;
 
@@ -408,17 +405,10 @@ package body Ack.Features is
 --              Unit.Pop_Argument (1);
 --           end if;
 
-         if Feature.Rescue_Node in Real_Node_Id then
-            --  Feature.Rescue_Label := Unit.Next_Label;
-            --  Feature.Retry_Label := Unit.Next_Label;
-
-            Unit.Exception_Handler
-              (Start_Label   => Feature.Link_Name,
-               End_Label     => Feature.Link_Name & "$end",
-               Handler_Label => Feature.Link_Name & "$rescue");
-            Feature.Retry_Label := Unit.Next_Label;
-            Unit.Set_Label (Feature.Retry_Label);
-         end if;
+         for I in 1 .. Feature.Local_Count loop
+            Unit.Push_Constant (Tagatha.Int_32'(0));
+            Unit.Pop_Local (Tagatha.Local_Index (I));
+         end loop;
 
          if Feature.Declaration_Context.Monitor_Preconditions then
             declare
@@ -434,6 +424,14 @@ package body Ack.Features is
 
          end if;
 
+         Unit.Exception_Handler
+           (Start_Label   => Retry_Label,
+            End_Label     => Rescue_Label,
+            Handler_Label => Rescue_Label);
+
+         Feature.Retry_Label := Unit.Next_Label;
+         Unit.Set_Label (Feature.Retry_Label);
+         Unit.Set_Label (Unit.Named_Label (Retry_Label));
          if Feature.Once then
             declare
                Continue_Once : constant Tagatha.Code.Label :=
@@ -445,15 +443,10 @@ package body Ack.Features is
                   Unit.Push_Name (Once_Value_Label, Extern => True);
                   Unit.Pop_Result (1);
                end if;
-               Unit.Branch (Exit_Label);
+               Unit.Exit_Routine;
                Unit.Set_Label (Continue_Once);
             end;
          end if;
-
-         for I in 1 .. Feature.Local_Count loop
-            Unit.Push_Constant (Tagatha.Int_32'(0));
-            Unit.Pop_Local (Tagatha.Local_Index (I));
-         end loop;
 
          if Feature.Monitor_Postconditions then
             for Old of Feature.Olds loop
@@ -481,11 +474,11 @@ package body Ack.Features is
                      & (if Clause.Tag = No_Name then ""
                        else ": " & To_String (Clause.Tag)));
 
-                  if Feature.Rescue_Node in Real_Node_Id then
-                     Unit.Branch (Rescue_Label);
-                  else
+                  --  if Feature.Rescue_Node in Real_Node_Id then
+                  --     Unit.Branch (Rescue_Label);
+                  --  else
                      Unit.Call ("system.os.halt", 1, 0);
-                  end if;
+                  --  end if;
                   Unit.Set_Label (Out_Label);
                end;
             end loop;
@@ -503,8 +496,9 @@ package body Ack.Features is
             Unit.Pop_Result (1);
          end if;
 
-         Unit.Branch (Exit_Label);
-         Unit.Set_Label (Rescue_Label);
+         Unit.Exit_Routine;
+
+         Unit.Set_Label (Unit.Named_Label (Rescue_Label));
 
          if Feature.Rescue_Node in Real_Node_Id then
             Ack.Generate.Generate_Compound
@@ -512,9 +506,7 @@ package body Ack.Features is
                Retry_Target => Feature.Retry_Label);
          end if;
 
-         Unit.Call ("system.os.halt", 0, 0);
-
-         Unit.Set_Label (Exit_Label);
+         Unit.Fail_Routine;
          Unit.End_Routine;
 
          if Feature.Once then
