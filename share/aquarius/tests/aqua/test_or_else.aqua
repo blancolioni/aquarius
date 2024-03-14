@@ -1,0 +1,47 @@
+class
+   Test_Or_Else
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-or-else"
+      end
+      
+   X : Boolean
+      do
+         Result := True
+      end
+      
+   Y : Boolean
+      do
+         Result := True
+      end
+
+   X_Or_Else_Y : Boolean
+      do
+         Result := X or else Y
+      end
+
+   Y_Or_Else_X : Boolean
+      do
+         Result := Y or else X
+      end
+      
+   Execute
+      do
+         if not X_Or_Else_Y then
+            Success := False
+            Fail_Message := "X or else Y was false"
+         elsif not Y_Or_Else_X then
+            Success := False
+            Fail_Message := "Y or else X was false"
+         else
+            Success := True
+         end
+      end
+       
+end 

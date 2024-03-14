@@ -1,0 +1,42 @@
+class
+   Test_And_Then
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-and-then"
+      end
+
+   Count : Integer
+
+   X : Boolean
+     do
+        Count := Count + 1
+        Result := True
+     end
+
+   Y : Boolean
+      do
+         Result := True
+      end
+
+   Execute
+      do
+         Success := Y and then X
+
+         if not Success then
+            Fail_Message := "True and then True was False"
+         else
+            Success := False and then X
+            Success := Count = 1
+            if not Success then
+               Fail_Message := "Count should have been 1, but was " & Count.To_String
+            end
+         end
+      end
+       
+end 
