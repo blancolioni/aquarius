@@ -221,6 +221,36 @@ feature
          I := I - 1
          Block.Put (I, With_Character.UTF_32_Code)
       end
+
+   Ends_With (Other : String) : Boolean
+      local
+         Current_Index : Integer
+         Other_Index   : Integer
+      do
+         if Other.Length <= Current.Length then
+            Result := True
+            from
+               Current_Index := Current.Length
+               Other_Index   := Other.Length
+               Result := True
+            invariant
+               Other_Index >= 1 and then Other_Index <= Other.Length
+               and then Current_Index >= 1 and then Current_Index <= Current.Length
+               and then Current_Index >= Other_Index
+            until
+               Other_Index = 0 or not Result
+            loop
+               if Current.Element (Current_Index) /= Other.Element (Other_Index) then
+                  Result := False
+               else
+                  Current_Index := Current_Index - 1
+                  Other_Index := Other_Index - 1
+               end
+            end
+         end
+      ensure
+         Result implies Slice (Length - Other.Length + 1, Length) = Other
+      end
    
 feature { None }  --  string literals
 

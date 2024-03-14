@@ -23,6 +23,8 @@ feature
          Test_List.Append (T)
          create { Test_Strings_3 } T
          Test_List.Append (T)
+         create { Test_String_Ends_With } T
+         Test_List.Append (T)
 --         create { Test_Strings_Fail } T
 --         Test_List.Append (T)
          create { Test_Manual_Iterator } T
@@ -39,6 +41,8 @@ feature
          Test_List.Append (T)
          create { Test_Integer_Enum } T
          Test_List.Append (T)
+         create { Test_Rescue } T
+         Test_List.Append (T)
 --         create { Test_Explicit_Integer_Interval } T
 --         Test_List.Append (T)
 --         create { Test_Explicit_Interval } T
@@ -50,8 +54,6 @@ feature
          create { Test_Indirect_Inheritance } T
          Test_List.Append (T)
 --         create { Test_List_Inheritance } T
---         Test_List.Append (T)
---         create { Test_Rescue } T
 --         Test_List.Append (T)
          create { Test_Boolean_Implies } T
          Test_List.Append (T)

@@ -1,0 +1,27 @@
+class
+   Test_String_Ends_With
+   
+inherit
+   Unit_Test
+      
+feature
+
+   S : String
+      do
+         Result := "this is a string"
+      end
+      
+   Name : String
+      do
+         Result := "test-string-ends-with"
+      end
+      
+   Execute
+      do
+         Success := S.Ends_With ("string")
+         if not Success then
+            Fail_Message := "Expected True for ends with string: " & S
+         end
+      end
+       
+end 
