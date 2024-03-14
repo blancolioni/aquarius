@@ -57,8 +57,8 @@ feature
 --         Test_List.Append (T)
          create { Test_Boolean_Implies } T
          Test_List.Append (T)
---         create { Test_Weaker_Precondition } T
---         Test_List.Append (T)
+         create { Test_Weaker_Precondition } T
+         Test_List.Append (T)
          create { Test_Simple_Tuples } T
          Test_List.Append (T)
          create { Test_Once_Feature } T

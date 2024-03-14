@@ -3,7 +3,7 @@ class
    
 inherit
    Unit_Test
-   Weaker_Precondition_1 redefine Value end
+   Weaker_Precondition_1
    
 feature
 
@@ -11,7 +11,7 @@ feature
    
    Value (X : Integer) : Integer
       require else
-         X > 20
+         X < 20
       do
          Result := X
       end
@@ -24,7 +24,7 @@ feature
    Execute
       do
          if not Failed then 
-            Success := Value (10) = 10
+            Success := Value (15) = 15
          end
       rescue
          Failed := True
