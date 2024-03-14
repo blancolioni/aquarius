@@ -5,6 +5,8 @@
 	extern main
 	
 start:
+    setl %2, 240
+    put rG, %2
     seth %2, 64    
     put rS, %2
     put rO, %2
