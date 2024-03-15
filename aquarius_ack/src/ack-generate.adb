@@ -679,30 +679,20 @@ package body Ack.Generate is
 
       if Is_Andthen or else Is_Orelse then
          declare
-            --  Maybe : constant Tagatha.Code.Label := Unit.Next_Label;
             Leave : constant Tagatha.Code.Label := Unit.Next_Label;
             Loc   : constant Tagatha.Local_Index := Unit.Add_Local;
          begin
-            Unit.Push_Constant
-              (Tagatha.Int_32'
-                 (if Is_Andthen then 0 else 1));
+            Generate_Expression (Unit, Context, Left);
+            Unit.Duplicate;
             Unit.Pop_Local (Loc);
 
-            Generate_Expression (Unit, Context, Left);
             if Is_Andthen then
                Unit.Branch (Tagatha.Z, Leave);
             else
                Unit.Branch (Tagatha.NZ, Leave);
             end if;
+
             Generate_Expression (Unit, Context, Right);
-            if Is_Andthen then
-               Unit.Branch (Tagatha.Z, Leave);
-            else
-               Unit.Branch (Tagatha.NZ, Leave);
-            end if;
-            Unit.Push_Constant
-              (Tagatha.Int_32'
-                 (if Is_Andthen then 1 else 0));
             Unit.Pop_Local (Loc);
 
             Unit.Set_Label (Leave);

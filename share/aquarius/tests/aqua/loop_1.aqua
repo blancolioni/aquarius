@@ -1,0 +1,54 @@
+class
+   Loop_1
+
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "loop-1"
+      end
+
+   Execute
+      local
+         S, T     : String
+         Index    : Integer
+         Continue : Boolean
+         Retried  : Boolean
+      do
+         if Retried then
+            Success := False
+            Fail_Message := "Failure in loop"
+         else
+            S := "test string"
+            T := S
+
+            from
+               Index := S.Length
+               Continue := True
+            invariant
+               Index >= 0 and then Index <= S.Length
+            until
+               Index = 0 or else not Continue
+            loop
+               if S.Element (Index) /= T.Element (Index) then
+                  Continue := False
+               end
+               Index := Index - 1
+            end
+
+            Success := True
+         end
+
+      rescue
+
+         if not Retried then 
+            Retried := True
+            retry
+         end
+      end
+       
+end 
+

@@ -31,6 +31,8 @@ feature
          Test_List.Append (T)
          create { Test_And_Then } T
          Test_List.Append (T)
+         create { Loop_1 } T
+         Test_List.Append (T)
          create { Test_Manual_Iterator } T
          Test_List.Append (T)
          create { Test_Simple_Loop } T
