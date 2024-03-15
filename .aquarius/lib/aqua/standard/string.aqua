@@ -238,7 +238,7 @@ feature
                and then Current_Index >= 1 and then Current_Index <= Current.Length
                and then Current_Index >= Other_Index
             until
-               Other_Index = 0 or not Result
+               Other_Index = 0 or else not Result
             loop
                if Current.Element (Current_Index) /= Other.Element (Other_Index) then
                   Result := False
