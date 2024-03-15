@@ -15,6 +15,8 @@ with Aquarius.Programs.Device;
 
 with Kosei.Json;
 
+with Tagatha.Code;
+
 package body Aquarius.Library is
 
    function Find_Configuration return String;
@@ -148,6 +150,11 @@ package body Aquarius.Library is
             Ada.Directories.Delete_File ("trace.txt");
          end if;
       end if;
+
+      Tagatha.Code.Enable_Trace
+        (Enable_P_Code       => Aquarius.Options.Tagatha_Trace_P_Code,
+         Enable_Transfers    => Aquarius.Options.Tagatha_Trace_Transfers,
+         Enable_Improvements => Aquarius.Options.Tagatha_Trace_Improvements);
 
    end Initialize;
 
