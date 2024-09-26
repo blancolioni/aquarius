@@ -6,6 +6,10 @@
         {
             "name": "checks",
             "stage": "semantic"
+        },
+        {
+            "name": "generate",
+            "stage": "code"
         }
     ]
 }

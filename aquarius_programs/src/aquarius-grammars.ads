@@ -5,10 +5,11 @@ private with Ada.Strings.Equal_Case_Insensitive;
 
 with Aquarius.Actions;
 with Aquarius.Lexers;
+with Aquarius.Locations;
 with Aquarius.Names;
 with Aquarius.Programs;
 with Aquarius.Properties;
-with Aquarius.Source;
+with Aquarius.Sources;
 with Aquarius.Syntax;
 with Aquarius.Tokens;
 with Aquarius.Trees;
@@ -260,14 +261,16 @@ package Aquarius.Grammars is
 
    not overriding
    function Make_Program_Tree
-     (Grammar : not null access Aquarius_Grammar_Record;
-      Name    : String)
+     (Grammar  : not null access Aquarius_Grammar_Record;
+      Source   : Aquarius.Sources.Source_Reference;
+      Location : Aquarius.Locations.Location_Interface'Class;
+      Name     : String)
       return Aquarius.Programs.Program_Tree;
 
    not overriding
    function Make_Error_Tree
      (Grammar  : Aquarius_Grammar_Record;
-      Position : Aquarius.Source.Source_Position;
+      Location : Aquarius.Locations.Location_Interface'Class;
       Message  : String)
      return Aquarius.Programs.Program_Tree;
 

@@ -25,6 +25,7 @@ aquarius_plugins = "*"
 aquarius_trees = "*"
 aquarius_syntax = "*"
 aquarius_programs = "*"
+aquarius_ui = "*"
 
 [[pins]]
 tagatha = { path = "../tagatha" }
@@ -37,6 +38,7 @@ aquarius_plugins = { path = "./aquarius_plugins" }
 aquarius_trees = { path = "./aquarius_trees" }
 aquarius_syntax = { path = "./aquarius_syntax" }
 aquarius_programs = { path = "./aquarius_programs" }
+aquarius_ui = { path = "./aquarius_ui" }
 
 [build-switches]
 "*".ada_version = "ada2022"

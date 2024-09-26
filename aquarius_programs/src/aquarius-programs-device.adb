@@ -169,10 +169,10 @@ package body Aquarius.Programs.Device is
             This.Write_String (This.Current.Concatenate_Children);
          when File_Name =>
             This.Write_String
-              (Aquarius.Names.To_String (This.Current.Source_File_Name));
+              (This.Current.Source.Short_Name);
          when Full_File_Name =>
             This.Write_String
-              (Aquarius.Names.To_String (This.Current.Source_File_Name));
+              (This.Current.Source.Full_Name);
          when Start_Line =>
             This.Rs (R_Transfer) := Aqua.Word (This.Current.Start_Line);
          when End_Line =>
@@ -182,9 +182,9 @@ package body Aquarius.Programs.Device is
          when End_Column =>
             This.Rs (R_Transfer) := Aqua.Word (This.Current.End_Column);
          when Start_Position =>
-            This.Rs (R_Transfer) := Aqua.Word (This.Current.Start_Position);
+            This.Rs (R_Transfer) := Aqua.Word (This.Current.Start_Offset);
          when End_Position =>
-            This.Rs (R_Transfer) := Aqua.Word (This.Current.End_Position);
+            This.Rs (R_Transfer) := Aqua.Word (This.Current.End_Offset);
          when Error =>
             This.Current.Attach_Message
               (Aquarius.Messages.New_Message

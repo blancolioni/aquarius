@@ -1,9 +1,10 @@
 private with Ada.Containers.Vectors;
 
+with Aquarius.Locations;
 with Aquarius.Messages;
 with Aquarius.Names;
 with Aquarius.Properties;
-with Aquarius.Source;
+with Aquarius.Sources;
 
 package Aquarius.Trees is
 
@@ -16,10 +17,11 @@ package Aquarius.Trees is
    type Array_Of_Objects is array (Positive range <>) of Aquarius_Object;
 
    type Root_Tree_Type is
---     abstract new Aquarius.Actions.Action_Source and
---     Aquarius.Actions.Actionable and
-     abstract new Aquarius.Messages.Message_Location and
-     Root_Aquarius_Object with private;
+     abstract new Aquarius.Messages.Message_Location
+     and Aquarius.Locations.Updateable_Location_Interface
+     and Root_Aquarius_Object
+   with private;
+
    type Tree is access all Root_Tree_Type'Class;
 
    overriding
@@ -33,7 +35,8 @@ package Aquarius.Trees is
 
    procedure Initialise_Tree
      (Item          : in out Root_Tree_Type;
-      Location      : Aquarius.Source.Source_Position;
+      Source        : Aquarius.Sources.Source_Reference;
+      Location      : Aquarius.Locations.Location_Interface'Class;
       Keep_Parent   : Boolean;
       Keep_Siblings : Boolean;
       Temporary     : Boolean := False);
@@ -44,39 +47,37 @@ package Aquarius.Trees is
    --  with Post => Aquarius.Source.Show (Item.Get_Location) =
    --    Aquarius.Source.Show (Location);
 
+   overriding function Offset
+     (This : Root_Tree_Type)
+      return Aquarius.Locations.Location_Offset;
+
+   overriding function Line
+     (This : Root_Tree_Type)
+      return Aquarius.Locations.Line_Index;
+
+   overriding function Column
+     (This : Root_Tree_Type)
+      return Aquarius.Locations.Column_Index;
+
+   overriding procedure Update_Location
+     (This : in out Root_Tree_Type;
+      From : Aquarius.Locations.Location_Interface'Class);
+
    overriding function Location_Name
-     (Location  : Root_Tree_Type;
+     (This      : Root_Tree_Type;
       Show_Path : Boolean := False)
       return String;
-
-   overriding
-   function Location_Line
-     (Location : Root_Tree_Type)
-      return Natural;
-
-   overriding
-   function Location_Column
-     (Location : Root_Tree_Type)
-      return Natural;
 
    overriding
    procedure Attach_Message
      (To    : in out Root_Tree_Type;
       Item  : Aquarius.Messages.Message);
 
-   overriding
-   function Before
-     (Left   : Root_Tree_Type;
-      Right  : not null access Aquarius.Messages.Message_Location'Class)
-      return Boolean;
-
-   overriding
-   procedure Get_Messages
+   overriding procedure Get_Messages
      (From  : Root_Tree_Type;
       List  : in out Aquarius.Messages.Message_List);
 
-   overriding
-   procedure Clear_Messages
+   overriding procedure Clear_Messages
      (Item : in out Root_Tree_Type);
 
    --  Has_Messages: returns true if this node only has messages attached
@@ -91,13 +92,9 @@ package Aquarius.Trees is
      (Item : Root_Tree_Type)
       return Aquarius.Messages.Message_Level;
 
-   function Get_Location
-     (Item : Root_Tree_Type)
-      return Aquarius.Source.Source_Position;
-
-   procedure Set_Location
-     (Item : in out Root_Tree_Type;
-      Loc  : Aquarius.Source.Source_Position);
+   function Source
+     (This : Root_Tree_Type)
+      return Aquarius.Sources.Source_Reference;
 
    procedure Set_Property
      (Item  : in out Root_Tree_Type;
@@ -322,13 +319,15 @@ private
       new Ada.Containers.Vectors (Positive, Tree);
 
    type Root_Tree_Type is
---     abstract new Aquarius.Actions.Action_Source and
---     Aquarius.Actions.Actionable and
-     abstract new Aquarius.Messages.Message_Location and
-     Root_Aquarius_Object with
+     abstract new Aquarius.Messages.Message_Location
+     and Aquarius.Locations.Updateable_Location_Interface
+     and Root_Aquarius_Object with
       record
          Identity            : Positive;
-         Location            : Aquarius.Source.Source_Position;
+         Source              : Aquarius.Sources.Source_Reference;
+         Offset              : Aquarius.Locations.Location_Offset := 0;
+         Line                : Aquarius.Locations.Line_Index      := 1;
+         Column              : Aquarius.Locations.Column_Index    := 1;
          Temporary           : Boolean;
          Keep_Parent         : Boolean := False;
          Keep_Siblings       : Boolean := False;
@@ -342,5 +341,25 @@ private
    pragma Inline_Always (Left_Sibling);
    pragma Inline_Always (Right_Sibling);
    pragma Inline_Always (Parent);
+
+   function Source
+     (This : Root_Tree_Type)
+      return Aquarius.Sources.Source_Reference
+   is (This.Source);
+
+   overriding function Offset
+     (This : Root_Tree_Type)
+      return Aquarius.Locations.Location_Offset
+   is (This.Offset);
+
+   overriding function Line
+     (This : Root_Tree_Type)
+      return Aquarius.Locations.Line_Index
+   is (This.Line);
+
+   overriding function Column
+     (This : Root_Tree_Type)
+      return Aquarius.Locations.Column_Index
+   is (This.Column);
 
 end Aquarius.Trees;

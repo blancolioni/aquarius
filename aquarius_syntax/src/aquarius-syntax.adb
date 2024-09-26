@@ -1,8 +1,6 @@
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 
-with Aquarius.Source;
-
 package body Aquarius.Syntax is
 
    type Named_Format is
@@ -575,7 +573,7 @@ package body Aquarius.Syntax is
                   (if Tree.Name /= ""
                    then "'" & Tree.Name & "' "
                    else "")
-                  & "(" & Aquarius.Source.Show (Tree.Get_Location) & ")";
+                  & "(" & Tree.Show_Location & ")";
       Postfix : constant String := Children_Image (Tree'Access);
    begin
       case Tree.Node.Class is
@@ -608,8 +606,9 @@ package body Aquarius.Syntax is
    -- Indent --
    ------------
 
-   function Indent (Tree : Syntax_Tree_Record)
-                   return Aquarius.Layout.Positive_Count
+   function Indent
+     (Tree : Syntax_Tree_Record)
+      return Aquarius.Locations.Column_Count
    is
    begin
       return Tree.Indent;
@@ -620,7 +619,7 @@ package body Aquarius.Syntax is
    --------------
 
    function Indented (Tree : Syntax_Tree_Record) return Boolean is
-      use type Aquarius.Layout.Count;
+      use type Aquarius.Locations.Column_Count;
    begin
       return Tree.Indent /= 0;
    end Indented;
@@ -808,15 +807,17 @@ package body Aquarius.Syntax is
       if not Aquarius.Trees.Is_Null
         (Aquarius.Trees.Tree (Declaration))
       then
-         Aquarius.Trees.Initialise_Tree
-           (Aquarius.Trees.Root_Tree_Type (Result.all),
-            Declaration.Get_Location,
-            Keep_Parent => False, Keep_Siblings => False);
+         Result.Initialise_Tree
+           (Source        => Declaration.Source,
+            Location      => Declaration.all,
+            Keep_Parent   => False,
+            Keep_Siblings => False);
       else
-         Aquarius.Trees.Initialise_Tree
-           (Aquarius.Trees.Root_Tree_Type (Result.all),
-            Aquarius.Source.No_Source_Position,
-            Keep_Parent => False, Keep_Siblings => False);
+         Result.Initialise_Tree
+           (Source        => null,
+            Location      => Locations.To_Location (0, 1, 1),
+            Keep_Parent   => False,
+            Keep_Siblings => False);
       end if;
       Result.Node := new Syntax_Tree_Node_Record;
       Result.Node.Class         := Class;

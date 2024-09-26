@@ -1,0 +1,14 @@
+class
+   Oberon.Generate.Factor
+
+inherit
+   Aqua.Text_IO
+
+feature
+
+   After_Integer (Child : String)
+      do
+         Put_line ("PUSH " & Child)
+      end
+
+end

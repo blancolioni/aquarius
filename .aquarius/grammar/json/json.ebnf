@@ -1,6 +1,9 @@
 top_level ::= json_value
 case_sensitive = false
 
+format ':' no_space_before
+format component_value indented_child
+
 identifier ::= !\l[\w_]*!
 integer    ::= !\d+!
 string     ::= !\x22[^\x22]*\x22!

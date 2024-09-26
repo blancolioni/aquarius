@@ -1,6 +1,6 @@
 with Ada.Strings.Unbounded;
 
-with Aquarius.Layout;                  use Aquarius.Layout;
+with Aquarius.Locations;               use Aquarius.Locations;
 with Aquarius.Formats;                 use Aquarius.Formats;
 
 private package Aquarius.Programs.Arrangements.Contexts is
@@ -20,21 +20,21 @@ private package Aquarius.Programs.Arrangements.Contexts is
          Message_Level      : Aquarius.Messages.Message_Level :=
                                 Aquarius.Messages.No_Message;
          Space_Priority     : Rule_Priority       := 1;
-         Current_Line       : Line_Number         := 1;
-         Current_Column     : Column_Number       := 1;
-         Current_Position   : Position            := 0;
-         Current_Indent     : Column_Number       := 1;
-         Previous_Indent    : Column_Number       := 1;
-         Soft_Indent        : Column_Offset       := 0;
-         Right_Margin       : Column_Number       := 72;
+         Current_Line       : Line_Index          := 1;
+         Current_Column     : Column_Index        := 1;
+         Current_Position   : Location_Offset     := 0;
+         Current_Indent     : Column_Index        := 1;
+         Previous_Indent    : Column_Index        := 1;
+         Soft_Indent        : Column_Count        := 0;
+         Right_Margin       : Column_Index        := 72;
          Rearranging        : Boolean             := False;
          Updating           : Boolean             := False;
          Skip_Terminal      : Boolean             := False;
          User_Text          : Ada.Strings.Unbounded.Unbounded_String;
-         User_Text_Length   : Count               := 0;
+         User_Text_Length   : Natural             := 0;
          User_Cursor        : Aquarius.Trees.Cursors.Cursor;
-         User_Text_Line     : Aquarius.Layout.Line_Number;
-         User_Text_Column   : Aquarius.Layout.Column_Number;
+         User_Text_Line     : Line_Index          := 1;
+         User_Text_Column   : Column_Index        := 1;
          Logging            : Aquarius.Messages.Message_List;
          Stop_Tree          : Program_Tree        := null;
          Stopped            : Boolean             := False;

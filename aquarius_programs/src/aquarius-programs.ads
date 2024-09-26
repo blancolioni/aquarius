@@ -7,10 +7,10 @@ private with WL.String_Maps;
 with Aquarius.Actions;
 with Aquarius.Entries;
 with Aquarius.Formats;
-with Aquarius.Layout;
+with Aquarius.Locations;
 with Aquarius.Messages;
 with Aquarius.Names;
-with Aquarius.Source;
+with Aquarius.Sources;
 with Aquarius.Syntax;
 with Aquarius.Tokens;
 pragma Elaborate_All (Aquarius.Tokens);
@@ -32,7 +32,6 @@ package Aquarius.Programs is
      and Aquarius.Actions.Actionable
      and Aquarius.Entries.Entry_Property_Interface
      and Aquarius.Types.Type_Property_Interface
-     --  and Aquarius.Source.Has_Source_Position_Interface
      with private;
 
    type Program_Tree is access all Program_Tree_Type'Class;
@@ -41,22 +40,26 @@ package Aquarius.Programs is
    Empty_Program_Tree_Array : Array_Of_Program_Trees (1 .. 0);
 
    function New_Program_Tree
-     (Syntax   : Aquarius.Syntax.Syntax_Tree)
+     (Syntax   : Aquarius.Syntax.Syntax_Tree;
+      Source   : Aquarius.Sources.Source_Reference;
+      Location : Aquarius.Locations.Location_Interface'Class)
       return Program_Tree;
 
    function New_Program
      (Syntax   : Aquarius.Syntax.Syntax_Tree;
-      Source   : Aquarius.Source.Source_File)
+      Source   : Aquarius.Sources.Source_Reference;
+      Location : Aquarius.Locations.Location_Interface'Class)
       return Program_Tree;
 
    function New_Program_Root
      (Syntax   : Aquarius.Syntax.Syntax_Tree;
-      Source   : Aquarius.Source.Source_File;
+      Source   : Aquarius.Sources.Source_Reference;
+      Location : Aquarius.Locations.Location_Interface'Class;
       Environment : not null access Local_Environment_Interface'Class)
       return Program_Tree;
 
    function New_Error_Tree
-     (Position : Aquarius.Source.Source_Position;
+     (Location : Aquarius.Locations.Location_Interface'Class;
       Syntax   : Aquarius.Syntax.Syntax_Tree;
       Message  : String)
       return Program_Tree;
@@ -66,10 +69,6 @@ package Aquarius.Programs is
    --  tree.  Zero is never returned, except for the root node.
    function Syntax_Index (Tree : not null access Program_Tree_Type)
                          return Natural;
-
-   procedure Set_Source_Position
-     (Item : in out Program_Tree_Type;
-      Pos  : Aquarius.Source.Source_Position);
 
    procedure Expand (Item : not null access Program_Tree_Type);
    --  Expand: creates all required children of a tree
@@ -173,33 +172,30 @@ package Aquarius.Programs is
       return String
    is (Item.Local_Environment.Environment_Name);
 
-   function Layout_Start_Position (Item : Program_Tree_Type)
-                                  return Aquarius.Layout.Position;
-   function Layout_End_Position (Item : Program_Tree_Type)
-                                return Aquarius.Layout.Position;
-   function Layout_Start_Column (Item : Program_Tree_Type)
-                                  return Aquarius.Layout.Column_Number;
-   function Layout_End_Column (Item : Program_Tree_Type)
-                               return Aquarius.Layout.Column_Number;
+   function Start_Offset
+     (Item : Program_Tree_Type)
+      return Aquarius.Locations.Location_Offset;
 
-   function Layout_Line (Item : Program_Tree_Type)
-                         return Aquarius.Layout.Line_Number;
+   function End_Offset
+     (Item : Program_Tree_Type)
+      return Aquarius.Locations.Location_Offset;
 
-   function Contains_Position (Item : Program_Tree_Type;
-                               Position : Aquarius.Layout.Position)
-                               return Boolean;
+   function Start_Column
+     (Item : Program_Tree_Type)
+      return Aquarius.Locations.Column_Index;
 
-   procedure Set_Layout_Position
-     (Item : in out Program_Tree_Type;
-      Pos  : Aquarius.Layout.Position;
-      Line : Aquarius.Layout.Line_Number;
-      Col  : Aquarius.Layout.Column_Number);
+   function End_Column
+     (Item : Program_Tree_Type)
+      return Aquarius.Locations.Column_Index;
 
-   function Layout_Length (Item : Program_Tree_Type)
-                          return Aquarius.Layout.Count;
+   function Contains_Offset
+     (Item : Program_Tree_Type;
+      Offset : Aquarius.Locations.Location_Offset)
+      return Boolean;
 
-   function Source (Item : Program_Tree_Type'Class)
-                   return Aquarius.Source.Source_File;
+   function Layout_Length
+     (Item : Program_Tree_Type)
+      return Natural;
 
    function Source_File_Name
      (Item : Program_Tree_Type'Class)
@@ -215,40 +211,35 @@ package Aquarius.Programs is
 
    function Find_Node_At
      (Top      : not null access Program_Tree_Type'Class;
-      Location : Aquarius.Layout.Position)
+      Location : Aquarius.Locations.Location_Offset)
       return Program_Tree;
    --  Search for a node at Location within the original source file
 
-   function Find_Node_At
-     (Parent   : not null access Program_Tree_Type'Class;
-      Location : Aquarius.Source.Source_Position)
-      return Program_Tree;
-
    function Find_Local_Node_At
      (Top      : not null access Program_Tree_Type'Class;
-      Location : Aquarius.Layout.Position)
+      Location : Aquarius.Locations.Location_Offset)
       return Program_Tree;
    --  Search for a node placed at Location in the local rendered context
 
    function Find_Local_First_Node_At_Line
      (Top  : not null access Program_Tree_Type'Class;
-      Line : Aquarius.Layout.Line_Number)
+      Line : Aquarius.Locations.Line_Index)
       return Program_Tree;
 
    function Find_Node_Containing
      (Top      : not null access Program_Tree_Type'Class;
-      Location : Aquarius.Layout.Position)
+      Location : Aquarius.Locations.Location_Offset)
       return Program_Tree;
    --  Find a child of Top which contains the given Location and return it.
    --  Return null if no such child exists.
 
    procedure Set_Vertical_Gap_Before
      (Item  : in out Program_Tree_Type'Class;
-      Gap   : Aquarius.Layout.Count);
+      Gap   : Aquarius.Locations.Line_Count);
 
    function Vertical_Gap_Before
      (Item : Program_Tree_Type'Class)
-      return Aquarius.Layout.Count;
+      return Aquarius.Locations.Line_Count;
 
    function Separator_New_Line (Item : Program_Tree_Type'Class)
                                return Boolean;
@@ -368,8 +359,9 @@ package Aquarius.Programs is
    function Frame (Item : Program_Tree_Type)
                   return Aquarius.Tokens.Token_Frame;
 
-   function Minimum_Indent (Item : Program_Tree_Type)
-                           return Aquarius.Source.Column_Number;
+   function Minimum_Indent
+     (Item : Program_Tree_Type)
+      return Aquarius.Locations.Column_Count;
 
    function Has_Cross_Reference
      (Item : Program_Tree_Type'Class)
@@ -467,7 +459,6 @@ private
      and Aquarius.Actions.Actionable
      and Aquarius.Entries.Entry_Property_Interface
      and Aquarius.Types.Type_Property_Interface
-     --  and Aquarius.Source.Has_Source_Position_Interface
    with
       record
          Free              : Boolean;
@@ -489,20 +480,19 @@ private
          Self              : Program_Tree;
          Sequence          : Natural := 0;
          Tree_Name         : Aquarius.Names.Aquarius_Name;
-         Source_File       : Aquarius.Source.Source_File;
-         Source_File_Name  : Aquarius.Names.Aquarius_Name;
+         Source_File       : Aquarius.Sources.Source_Reference;
          Msg_Level         : Aquarius.Messages.Message_Level;
-         Vertical_Gap      : Aquarius.Layout.Count;
+         Vertical_Gap      : Aquarius.Locations.Line_Count;
          Syntax            : Aquarius.Syntax.Syntax_Tree;
          Fill_Text         : Aquarius.Tokens.Token_Text;
-         Local_Start       : Aquarius.Layout.Position;
-         Start_Position    : Aquarius.Layout.Position;
-         End_Position      : Aquarius.Layout.Position;
-         Start_Line        : Aquarius.Layout.Line_Number;
-         End_Line          : Aquarius.Layout.Line_Number;
-         Start_Column      : Aquarius.Layout.Column_Number;
-         End_Column        : Aquarius.Layout.Column_Number;
-         Offset_Rule       : Aquarius.Source.Source_Position;
+         Local_Start       : Aquarius.Locations.Location_Offset;
+         Start_Offset      : Aquarius.Locations.Location_Offset;
+         End_Offset        : Aquarius.Locations.Location_Offset;
+         Start_Line        : Aquarius.Locations.Line_Index;
+         End_Line          : Aquarius.Locations.Line_Count;
+         Start_Column      : Aquarius.Locations.Column_Index;
+         End_Column        : Aquarius.Locations.Column_Count;
+         Offset_Rule       : Natural;
          Render_Class      : Aquarius.Syntax.Syntax_Tree;
          Local_Env         : Local_Environment_Access;
          String_Props      : String_Property_Maps.Map;
@@ -547,6 +537,10 @@ private
      (Program  : in out Program_Tree_Type;
       Property : not null access Types.Root_Aquarius_Type'Class);
 
+   overriding procedure Update_Location
+     (This : in out Program_Tree_Type;
+      From : Aquarius.Locations.Location_Interface'Class);
+
    procedure Set_Property
      (Program  : in out Program_Tree_Type;
       Name     : String;
@@ -577,5 +571,25 @@ private
      (Tree : Program_Tree_Type'Class)
       return Natural
    is (Tree.Sequence);
+
+   function Start_Offset
+     (Item : Program_Tree_Type)
+      return Aquarius.Locations.Location_Offset
+   is (Item.Start_Offset);
+
+   function End_Offset
+     (Item : Program_Tree_Type)
+      return Aquarius.Locations.Location_Offset
+   is (Item.End_Offset);
+
+   function Start_Column
+     (Item : Program_Tree_Type)
+      return Aquarius.Locations.Column_Index
+   is (Item.Start_Column);
+
+   function End_Column
+     (Item : Program_Tree_Type)
+      return Aquarius.Locations.Column_Index
+   is (Item.End_Column);
 
 end Aquarius.Programs;

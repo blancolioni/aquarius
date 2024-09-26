@@ -9,10 +9,16 @@ with Aquarius.Actions;
 with Aquarius.Devices.Meta;
 with Aquarius.Grammars.Manager;
 with Aquarius.Library;
-with Aquarius.Loader;
+with Aquarius.Reader;
+with Aquarius.Messages.Files;
 with Aquarius.Options;
 with Aquarius.Plugins.Manager;
 with Aquarius.Programs;
+with Aquarius.Programs.Arrangements;
+with Aquarius.Rendering.Text;
+with Aquarius.Sources.Files;
+with Aquarius.Streams.Files;
+with Aquarius.Tests;
 with Aquarius.Version;
 
 procedure Aquarius.Driver is
@@ -23,6 +29,11 @@ begin
    end if;
 
    Aquarius.Library.Initialize;
+
+   if Aquarius.Options.Self_Test then
+      Aquarius.Tests.Run_Tests;
+      return;
+   end if;
 
    declare
       Start_Class : constant String := Aquarius.Options.Start_Class;
@@ -66,12 +77,35 @@ begin
                Aquarius.Plugins.Manager.Load (Grammar);
 
                declare
+                  Source : constant Aquarius.Sources.Source_Reference :=
+                             Aquarius.Sources.Files.File_Source (Path);
+                  Stream : constant Aquarius.Streams.Reader_Reference :=
+                             Aquarius.Streams.Files.File_Reader (Path);
                   Program : constant Aquarius.Programs.Program_Tree :=
-                              Aquarius.Loader.Load_From_File
-                                (Grammar, Path);
+                              Aquarius.Reader.Read
+                                (Grammar =>  Grammar,
+                                 Source  =>  Source,
+                                 Stream  =>  Stream);
+                  Render  : Aquarius.Rendering.Root_Aquarius_Renderer'Class :=
+                              Aquarius.Rendering.Text.File_Renderer
+                                (Ada.Directories.Base_Name (Path)
+                                 & "."
+                                 & Ada.Directories.Extension (Path));
+                  Messages : Aquarius.Messages.Message_List;
                begin
                   Grammar.Run_Action_Trigger
                     (Program, Aquarius.Actions.Semantic_Trigger);
+
+                  Aquarius.Programs.Arrangements.Arrange (Program, Messages);
+                  Aquarius.Messages.Files.Save_Messages
+                    ("arrangement.log", Messages);
+                  Aquarius.Programs.Arrangements.Render
+                    (Program, Render);
+
+                  if Aquarius.Options.Code_Trigger then
+                     Grammar.Run_Action_Trigger
+                       (Program, Aquarius.Actions.Code_Trigger);
+                  end if;
                end;
             else
                Ada.Text_IO.Put_Line

@@ -267,10 +267,10 @@ package body Aquarius.Messages is
                           return String
    is
       Line_Img : constant String :=
-        Ada.Strings.Fixed.Trim (Positive'Image (Location.Location_Line),
+        Ada.Strings.Fixed.Trim (Location.Line'Image,
                                 Ada.Strings.Left);
       Col_Img : constant String :=
-        Ada.Strings.Fixed.Trim (Positive'Image (Location.Location_Column),
+        Ada.Strings.Fixed.Trim (Location.Column'Image,
                                 Ada.Strings.Left);
    begin
       return Location_Name (Location) & ":" & Line_Img & ":" & Col_Img;

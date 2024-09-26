@@ -8,10 +8,12 @@ with Ack.Loader;
 with Aquarius.Configuration;
 with Aquarius.Devices.Text_Writer;
 with Aquarius.Grammars.Manager;
-with Aquarius.Loader;
+with Aquarius.Reader;
 with Aquarius.Options;
 with Aquarius.Plugins.Manager;
 with Aquarius.Programs.Device;
+with Aquarius.Sources.Files;
+with Aquarius.Streams.Files;
 
 with Kosei.Json;
 
@@ -23,10 +25,7 @@ package body Aquarius.Library is
 
    function Load_Aqua_Class
      (Path : String)
-      return Aquarius.Programs.Program_Tree
-   is (Aquarius.Loader.Load_From_File
-       (Grammar => Aquarius.Grammars.Manager.Get_Grammar ("aqua"),
-        Path    => Path));
+      return Aquarius.Programs.Program_Tree;
 
    procedure Check_Assembly_Package (Name : String);
 
@@ -157,5 +156,28 @@ package body Aquarius.Library is
          Enable_Improvements => Aquarius.Options.Tagatha_Trace_Improvements);
 
    end Initialize;
+
+   ---------------------
+   -- Load_Aqua_Class --
+   ---------------------
+
+   function Load_Aqua_Class
+     (Path : String)
+      return Aquarius.Programs.Program_Tree
+   is
+      Grammar : constant Aquarius.Grammars.Aquarius_Grammar :=
+                  Aquarius.Grammars.Manager.Get_Grammar ("aqua");
+      Source  : constant Aquarius.Sources.Source_Reference :=
+                  Aquarius.Sources.Files.File_Source (Path);
+      Stream  : constant Aquarius.Streams.Reader_Reference :=
+                  Aquarius.Streams.Files.File_Reader (Path);
+      Program : constant Aquarius.Programs.Program_Tree :=
+                  Aquarius.Reader.Read
+                    (Grammar =>  Grammar,
+                     Source  =>  Source,
+                     Stream  =>  Stream);
+   begin
+      return Program;
+   end Load_Aqua_Class;
 
 end Aquarius.Library;

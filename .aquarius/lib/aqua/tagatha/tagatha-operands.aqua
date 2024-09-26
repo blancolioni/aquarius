@@ -1,0 +1,10 @@
+deferred class
+   Tagatha.Operands
+
+feature
+
+   To_String : String
+      deferred
+      end
+
+   Push

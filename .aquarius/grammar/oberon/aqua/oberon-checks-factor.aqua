@@ -1,0 +1,16 @@
+class
+   Oberon.Checks.Factor
+
+inherit
+   Aqua.Text_IO
+
+feature
+
+   After_Integer (Child : String)
+      do
+         if Child.Ends_With ("H") then
+            --  Put_Line ("hex value: " & Child)
+         end
+      end
+
+end

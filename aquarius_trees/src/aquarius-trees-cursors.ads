@@ -55,7 +55,7 @@ private
    type Cursor is
       record
          Right_Tree : Tree;
-         Off_Right  : Boolean;
+         Off_Right  : Boolean := False;
       end record;
 
    pragma Inline_Always (Get_Left_Tree);

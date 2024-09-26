@@ -8,7 +8,7 @@ feature
 
    After_Ident (Name : String)
       do
-         Put_line ("identdef after " & Name)
+         --  Put_line ("identdef after " & Name)
       end
 
 

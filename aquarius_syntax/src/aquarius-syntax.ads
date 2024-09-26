@@ -1,6 +1,6 @@
 with Aquarius.Actions;
 with Aquarius.Formats;
-with Aquarius.Layout;
+with Aquarius.Locations;
 with Aquarius.Names;
 with Aquarius.Tokens;
 with Aquarius.Trees;
@@ -184,7 +184,7 @@ package Aquarius.Syntax is
 
    function Indented (Tree : Syntax_Tree_Record) return Boolean;
    function Indent (Tree : Syntax_Tree_Record)
-                   return Aquarius.Layout.Positive_Count;
+                   return Aquarius.Locations.Column_Count;
 
 --     procedure Indent_Child
 --       (Item        : not null access Syntax_Tree_Record;
@@ -367,8 +367,8 @@ private
      Aquarius.Actions.Action_Source with
       record
          Node             : Syntax_Tree_Node;
-         Indent           : Aquarius.Layout.Count := 0;
-         Vertical_Gap     : Aquarius.Layout.Count := 0;
+         Indent           : Aquarius.Locations.Column_Count := 0;
+         Vertical_Gap     : Aquarius.Locations.Line_Count := 0;
          Render_Class     : Aquarius.Names.Aquarius_Name;
          When_Properties  : Aquarius.Names.Sets.Name_Set;
          Has_Indent_Rule  : Boolean               := False;

@@ -10,7 +10,7 @@ package body Aquarius.Programs.Arrangements.Logging is
 
    procedure Log
      (Context  : in out Contexts.Arrangement_Context;
-      Program  : Aquarius.Programs.Program_Tree;
+      Program  : not null Aquarius.Programs.Program_Tree;
       Text     : String)
    is
       use Ada.Strings, Ada.Strings.Fixed;
@@ -44,7 +44,7 @@ package body Aquarius.Programs.Arrangements.Logging is
 
    procedure Log
      (Context  : in out Contexts.Arrangement_Context;
-      Program  : Program_Tree)
+      Program  : not null Program_Tree)
    is
       use Ada.Strings, Ada.Strings.Fixed;
       function To_String (I : Integer) return String

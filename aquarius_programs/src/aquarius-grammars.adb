@@ -526,12 +526,12 @@ package body  Aquarius.Grammars is
 
    function Make_Error_Tree
      (Grammar  : Aquarius_Grammar_Record;
-      Position : Aquarius.Source.Source_Position;
+      Location : Aquarius.Locations.Location_Interface'Class;
       Message  : String)
       return Aquarius.Programs.Program_Tree
    is
       Result : constant Aquarius.Programs.Program_Tree :=
-        Aquarius.Programs.New_Error_Tree (Position,
+        Aquarius.Programs.New_Error_Tree (Location,
                                           Grammar.Error_Syntax,
                                           Message);
    begin
@@ -544,8 +544,10 @@ package body  Aquarius.Grammars is
 
    not overriding
    function Make_Program_Tree
-     (Grammar : not null access Aquarius_Grammar_Record;
-      Name    : String)
+     (Grammar  : not null access Aquarius_Grammar_Record;
+      Source   : Aquarius.Sources.Source_Reference;
+      Location : Aquarius.Locations.Location_Interface'Class;
+      Name     : String)
       return Aquarius.Programs.Program_Tree
    is
       Syntax : Aquarius.Syntax.Syntax_Tree;
@@ -554,7 +556,8 @@ package body  Aquarius.Grammars is
    begin
       if Grammar.Non_Terminals.Contains (Std_Name) then
          Syntax := Grammar.Non_Terminals.Element (Std_Name);
-         Result := Aquarius.Programs.New_Program_Tree (Syntax);
+         Result :=
+           Aquarius.Programs.New_Program_Tree (Syntax, Source, Location);
          Set_Grammar (Result, Grammar);
          return Result;
       else

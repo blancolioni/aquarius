@@ -19,7 +19,9 @@ package body Aquarius.Programs.Parser is
    type Parseable (Class : Parseable_Type) is
       record
          First_Token   : Aquarius.Tokens.Token;
-         Position      : Aquarius.Source.Source_Position;
+         Offset        : Aquarius.Locations.Location_Offset := 0;
+         Line          : Aquarius.Locations.Line_Index      := 1;
+         Column        : Aquarius.Locations.Column_Index    := 1;
          Subtree       : Program_Tree;
       end record;
 
@@ -28,9 +30,10 @@ package body Aquarius.Programs.Parser is
    --  element.  Compare with Is_Ambiguous, which returns True if
    --  context ambiguity list has more than one *active* element.
 
-   function Make_Parseable (From_Token : Aquarius.Tokens.Token;
-                            Pos        : Aquarius.Source.Source_Position)
-                           return Parseable;
+   function Make_Parseable
+     (From_Token : Aquarius.Tokens.Token;
+      Location   : Aquarius.Locations.Location_Interface'Class)
+      return Parseable;
 
    function Make_Parseable (From_Tree  : Program_Tree)
                            return Parseable;
@@ -106,11 +109,10 @@ package body Aquarius.Programs.Parser is
       Context        : in out Parse_Context);
 
    procedure Parse_Terminal
-     (Tok            : Aquarius.Tokens.Token;
-      Tok_Pos        : Aquarius.Source.Source_Position;
-      Tok_Text       : String;
-      Current        : List_Of_Ambiguities.Cursor;
-      Context        : in out Parse_Context);
+     (Tok      : Aquarius.Tokens.Token;
+      Tok_Text : String;
+      Current  : List_Of_Ambiguities.Cursor;
+      Context  : in out Parse_Context);
 
    function New_Ambiguity
      (Current : List_Of_Ambiguities.Cursor;
@@ -132,7 +134,7 @@ package body Aquarius.Programs.Parser is
 --       (Location       : in out Ambiguity;
 --        New_Try        : in     Positive;
 --        Tok            : in     Aquarius.Tokens.Token;
---        Tok_Pos        : in     Aquarius.Source.Source_Position;
+--        Tok_Pos        : in     Aquarius.Layout.Position;
 --        Tok_Text       : in     String;
 --        Context        : in out Parse_Context;
 --        Recovered      :    out Boolean);
@@ -141,18 +143,20 @@ package body Aquarius.Programs.Parser is
    -- Add_Comment --
    -----------------
 
-   procedure Add_Comment (Context  : in out Parse_Context;
-                          Position : Aquarius.Source.Source_Position;
-                          Comment  : Program_Tree)
+   procedure Add_Comment
+     (Context  : in out Parse_Context;
+      Location : Aquarius.Locations.Location_Interface'Class;
+      Comment  : Program_Tree)
    is
-      pragma Unreferenced (Position);
+      pragma Unreferenced (Location);
+      use type Aquarius.Locations.Line_Count;
    begin
 
       --  Comment.File_Start := Position;
       Context.Comments.Append (Comment);
       if Context.Vertical_Space > 0 then
          Comment.Set_Vertical_Gap_Before
-           (Aquarius.Layout.Positive_Count (Context.Vertical_Space));
+           (Context.Vertical_Space);
          Context.Vertical_Space := 0;
       end if;
    end Add_Comment;
@@ -246,7 +250,10 @@ package body Aquarius.Programs.Parser is
                   Comments       => Program_Tree_Vector.Empty_Vector,
                   Interactive    => Interactive,
                   Run_Actions    => Run_Actions,
-                  Vertical_Space => 0);
+                  Vertical_Space => 0,
+                  Location       =>
+                    Locations.To_Location
+                      (Root.Offset, Root.Line, Root.Column));
       if Grammar = null then
          Context.Grammar :=
            Aquarius.Grammars.Aquarius_Grammar
@@ -305,20 +312,28 @@ package body Aquarius.Programs.Parser is
    -- Make_Parseable --
    --------------------
 
-   function Make_Parseable (From_Token : Aquarius.Tokens.Token;
-                            Pos        : Aquarius.Source.Source_Position)
-                           return Parseable
+   function Make_Parseable
+     (From_Token : Aquarius.Tokens.Token;
+      Location   : Aquarius.Locations.Location_Interface'Class)
+      return Parseable
    is
    begin
-      return (Parseable_Token, From_Token, Pos, null);
+      return Parseable'
+        (Class       => Parseable_Token,
+         First_Token => From_Token,
+         Offset      => Location.Offset,
+         Line        => Location.Line,
+         Column      => Location.Column,
+         Subtree     => null);
    end Make_Parseable;
 
    --------------------
    -- Make_Parseable --
    --------------------
 
-   function Make_Parseable (From_Tree  : Program_Tree)
-                           return Parseable
+   function Make_Parseable
+     (From_Tree  : Program_Tree)
+      return Parseable
    is
 
       function First_Token (T : Program_Tree) return Program_Tree;
@@ -354,7 +369,13 @@ package body Aquarius.Programs.Parser is
 
       Tok : constant Program_Tree := First_Token (From_Tree);
    begin
-      return (Parseable_Tree, Tok.Get_Token, Tok.Get_Location, From_Tree);
+      return Parseable'
+        (Class       => Parseable_Tree,
+         First_Token => Tok.Get_Token,
+         Offset      => Tok.Offset,
+         Line        => Tok.Line,
+         Column      => Tok.Column,
+         Subtree     => From_Tree);
    end Make_Parseable;
 
    ---------------------------------
@@ -554,8 +575,6 @@ package body Aquarius.Programs.Parser is
       Context        : in out Parse_Context)
    is
       Tok         : constant Aquarius.Tokens.Token := Item.First_Token;
-      Tok_Pos     : constant Aquarius.Source.Source_Position :=
-        Item.Position;
       Match_Count : Natural := 0;
       Match       : array (1 .. Choice.Syntax.Child_Count) of Boolean :=
         [others => False];
@@ -586,8 +605,7 @@ package body Aquarius.Programs.Parser is
 
       if Match_Count = 0 and then Bad_Match = 0 then
          raise Constraint_Error with
-           "no parse opportunities at " &
-           Aquarius.Source.Show (Tok_Pos);
+           "no parse opportunities at " & Choice.Show_Location;
       elsif Match_Count = 1 or else
         (Match_Count = 0 and then Bad_Match /= 0)
       then
@@ -603,7 +621,10 @@ package body Aquarius.Programs.Parser is
 
          declare
             Child       : constant Program_Tree :=
-              New_Program_Tree (Syn.Syntax_Child (Match_Index));
+                            New_Program_Tree
+                              (Syn.Syntax_Child (Match_Index),
+                               Choice.Source,
+                               Choice.all);
          begin
             Choice.Add_Child (Child);
             Child.Expand;
@@ -625,7 +646,10 @@ package body Aquarius.Programs.Parser is
             if Match (I) then
                declare
                   Child : constant Program_Tree :=
-                    New_Program_Tree (Syn.Syntax_Child (I));
+                            New_Program_Tree
+                              (Syn.Syntax_Child (I),
+                               Choice.Source,
+                               Choice.all);
                   A     : constant Ambiguity :=
                     New_Ambiguity (Current, Choice, Child);
                begin
@@ -695,7 +719,10 @@ package body Aquarius.Programs.Parser is
       function Make_Subtree return Program_Tree is
          pragma Assert (Syn.Child_Count = 1);
          Result : constant Program_Tree :=
-           New_Program_Tree (Syn.Syntax_Child (1));
+                    New_Program_Tree
+                      (Syn.Syntax_Child (1),
+                       Parent.Source,
+                       Parent.all);
       begin
          Result.Set_Foster_Parent (Parent);
 
@@ -704,7 +731,9 @@ package body Aquarius.Programs.Parser is
 
          for I in 1 .. Syn.Syntax_Child (1).Child_Count loop
             Result.Add_Child
-              (New_Program_Tree (Syn.Syntax_Child (1).Syntax_Child (I)));
+              (New_Program_Tree
+                 (Syn.Syntax_Child (1).Syntax_Child (I),
+                  Parent.Source, Parent.all));
          end loop;
          return Result;
       end Make_Subtree;
@@ -767,7 +796,9 @@ package body Aquarius.Programs.Parser is
          for I in 1 .. Syn.Child_Count loop
             declare
                New_Child : constant Program_Tree :=
-                 New_Program_Tree (Syn.Syntax_Child (I));
+                             New_Program_Tree
+                               (Syn.Syntax_Child (I),
+                                Parent.Source, Parent.all);
             begin
 
                Parent.Add_Child (New_Child);
@@ -802,7 +833,6 @@ package body Aquarius.Programs.Parser is
       Next, First       : Natural := Line'First;
       Class             : Aquarius.Tokens.Token_Class;
       Tok               : Aquarius.Tokens.Token;
-      Tok_Pos           : Aquarius.Source.Source_Position;
       Complete          : Boolean;
       Unique            : Boolean;
       Have_Class        : Boolean;
@@ -817,12 +847,8 @@ package body Aquarius.Programs.Parser is
                                False, Complete, Have_Class, Unique,
                                Class, Tok, First, Next, null);
          if Have_Class then
-            Aquarius.Source.Set_Position
-              (Tok_Pos, 1,
-               Aquarius.Source.Column_Number (First));
-            if Token_OK (Tok, Tok_Pos, Context) then
-               Parse_Token (Tok, Tok_Pos,
-                            Line (First .. Next), Context);
+            if Token_OK (Tok, Context) then
+               Parse_Token (Tok, Line (First .. Next), Context);
             else
                raise Constraint_Error with "Parse_Line" &
                  ": syntax error at " &
@@ -838,7 +864,7 @@ package body Aquarius.Programs.Parser is
          if Have_Error then
             Add_Error (Context,
                        Grammar.Make_Error_Tree
-                         (Tok_Pos, Line (First .. Next)));
+                         (Context, Line (First .. Next)));
          end if;
 
          First := Next + 1;
@@ -1012,11 +1038,10 @@ package body Aquarius.Programs.Parser is
    --------------------
 
    procedure Parse_Terminal
-     (Tok            : Aquarius.Tokens.Token;
-      Tok_Pos        : Aquarius.Source.Source_Position;
-      Tok_Text       : String;
-      Current        : List_Of_Ambiguities.Cursor;
-      Context        : in out Parse_Context)
+     (Tok      : Aquarius.Tokens.Token;
+      Tok_Text : String;
+      Current  : List_Of_Ambiguities.Cursor;
+      Context  : in out Parse_Context)
    is
       use Aquarius.Trees.Cursors;
       use type Aquarius.Tokens.Token;
@@ -1034,8 +1059,7 @@ package body Aquarius.Programs.Parser is
       end if;
 
       Set_User_Whitespace (Context, Current, Program);
-
-      Program.Set_Source_Position (Tok_Pos);
+      Program.Update_Location (Context);
 
 --        if Tok_Pos /= Aquarius.Source.No_Source_Position then
 --           declare
@@ -1069,13 +1093,12 @@ package body Aquarius.Programs.Parser is
    -----------------
 
    procedure Parse_Token
-     (Tok            : Aquarius.Tokens.Token;
-      Tok_Pos        : Aquarius.Source.Source_Position;
-      Tok_Text       : String;
-      Context        : in out Parse_Context)
+     (Tok      : Aquarius.Tokens.Token;
+      Tok_Text : String;
+      Context  : in out Parse_Context)
    is
    begin
-      Parse_Token (Make_Parseable (Tok, Tok_Pos), Tok_Text, Context);
+      Parse_Token (Make_Parseable (Tok, Context), Tok_Text, Context);
    end Parse_Token;
 
    -----------------
@@ -1170,8 +1193,8 @@ package body Aquarius.Programs.Parser is
             Aquarius.Trace.Trace_Put_Line
               (Aquarius.Trace.Parsing,
                "active ambiguity count at "
-               & "'" & Tok_Text & "' "
-               & Aquarius.Source.Show (Item.Position)
+               & "'" & Tok_Text & "'"
+               & Item.Offset'Image
                & ":"
                & Natural'Image (Active_Count)
                & " of"
@@ -1192,17 +1215,15 @@ package body Aquarius.Programs.Parser is
       Context          : in out Parse_Context;
       No_Left_Repeater : Boolean := False)
    is
+      use Aquarius.Locations;
       use Aquarius.Syntax;
       use Aquarius.Trees.Cursors;
-      use type Aquarius.Source.Column_Number;
 
       Tok         : constant Aquarius.Tokens.Token := Item.First_Token;
-      Tok_Pos     : constant Aquarius.Source.Source_Position :=
-        Item.Position;
       A        : constant Ambiguity := List_Of_Ambiguities.Element (Current);
       Location : Aquarius.Trees.Cursors.Cursor renames A.Location;
-      Column     : constant Aquarius.Source.Column_Number :=
-        Aquarius.Source.Get_Column (Tok_Pos);
+      Column      : constant Aquarius.Locations.Column_Index :=
+                      Context.Column;
 
       procedure Parse_Into_New_Repeater
         (Repeater   : Program_Tree;
@@ -1227,11 +1248,13 @@ package body Aquarius.Programs.Parser is
                New_Separator : Program_Tree;
                New_Repeater  : Program_Tree;
             begin
-               New_Separator := New_Program_Tree (Syn.Separator);
+               New_Separator :=
+                 New_Program_Tree (Syn.Separator, Repeater.Source, Context);
                New_Separator.Separator_Node := True;
                Repeater.Add_Child (New_Separator);
                New_Repeater :=
-                 New_Program_Tree (Syntax_Tree (Syn.First_Child));
+                 New_Program_Tree (Syntax_Tree (Syn.First_Child),
+                                   Repeater.Source, Context);
                Repeater.Add_Child (New_Repeater);
                New_Repeater.Expand;
                Location := Left_Of_Tree (New_Separator);
@@ -1243,7 +1266,9 @@ package body Aquarius.Programs.Parser is
             --  Add a new repeater tree
             declare
                New_Repeater : constant Program_Tree :=
-                 New_Program_Tree (Syntax_Tree (Syn.First_Child));
+                                New_Program_Tree
+                                  (Syntax_Tree (Syn.First_Child),
+                                   Repeater.Source, Context);
             begin
                if Right_Tree = null then
                   Add_Child (Repeater, New_Repeater);
@@ -1264,8 +1289,7 @@ package body Aquarius.Programs.Parser is
    begin
 
       if not Is_Off_Right (Location) then
-         Program_Tree (Get_Right_Tree (Location)).Set_Source_Position
-           (Tok_Pos);
+         Program_Tree (Get_Right_Tree (Location)).Update_Location (Context);
       end if;
 
       --  pragma Assert (Token_OK (Tok, Tok_Pos, Location, Search_Parents));
@@ -1316,10 +1340,11 @@ package body Aquarius.Programs.Parser is
                      Context    => Context,
                         Parent     => Program.Program_Parent,
                      Right      => Right_Tree,
-                     Options    => [1   => New_Program_Tree (Syn),
-                                    2   =>
-                                      New_Program_Tree
-                                      (Right_Tree.Syntax)]);
+                     Options    => [New_Program_Tree
+                                    (Syn, Program.Source, Program.all),
+                                    New_Program_Tree
+                                      (Right_Tree.Syntax,
+                                       Program.Source, Program.all)]);
                else
                   Parse_Into_New_Repeater (Program);
                end if;
@@ -1409,7 +1434,7 @@ package body Aquarius.Programs.Parser is
 
                elsif Syn.Syntax_Class = Terminal then
 
-                  Parse_Terminal (Tok, Tok_Pos, Tok_Text, Current, Context);
+                  Parse_Terminal (Tok, Tok_Text, Current, Context);
 
                elsif Program.Child_Count = 0 then
 
@@ -1573,7 +1598,8 @@ package body Aquarius.Programs.Parser is
             begin
                Add_Child (T,
                           New_Program_Tree
-                            (Syntax_Tree (T.Syntax.First_Child)));
+                            (Syntax_Tree (T.Syntax.First_Child),
+                             Top.Source, Top.all));
             end;
          end if;
          T := T.First_Program_Child;
@@ -1605,6 +1631,7 @@ package body Aquarius.Programs.Parser is
       Current  : List_Of_Ambiguities.Cursor;
       At_Tree  : Program_Tree)
    is
+      use Aquarius.Locations;
       use Aquarius.Trees;
       Ancestor       : Aquarius.Trees.Tree;
       Left_Ancestor  : Aquarius.Trees.Tree;
@@ -1612,8 +1639,7 @@ package body Aquarius.Programs.Parser is
       A : constant Ambiguity := List_Of_Ambiguities.Element (Current);
    begin
       if Context.Vertical_Space > 0 then
-         At_Tree.Set_Vertical_Gap_Before
-           (Aquarius.Layout.Count (Context.Vertical_Space));
+         At_Tree.Set_Vertical_Gap_Before (Context.Vertical_Space);
       end if;
 
       if A.Last_Parse = null then
@@ -1648,8 +1674,9 @@ package body Aquarius.Programs.Parser is
    -- Set_Vertical_Space --
    ------------------------
 
-   procedure Set_Vertical_Space (Context  : in out Parse_Context;
-                                 Space    : Natural)
+   procedure Set_Vertical_Space
+     (Context  : in out Parse_Context;
+      Space    : Aquarius.Locations.Line_Count)
    is
    begin
       Context.Vertical_Space := Space;
@@ -1700,17 +1727,14 @@ package body Aquarius.Programs.Parser is
    is
       use Aquarius.Syntax;
       use Aquarius.Trees.Cursors;
-      use type Aquarius.Source.Column_Number;
       use type Aquarius.Tokens.Token;
+      use type Aquarius.Locations.Column_Count;
       Tok     : constant Aquarius.Tokens.Token := Item.First_Token;
-      Tok_Pos : constant Aquarius.Source.Source_Position := Item.Position;
       Result : Boolean;
       Left_Tree : constant Program_Tree :=
         Program_Tree (Get_Left_Tree (Location));
       Right_Tree : constant Program_Tree :=
         Program_Tree (Get_Right_Tree (Location));
-      Column     : constant Aquarius.Source.Column_Number :=
-        Aquarius.Source.Get_Column (Tok_Pos);
    begin
 
       if not Is_Off_Right (Location) then
@@ -1731,7 +1755,7 @@ package body Aquarius.Programs.Parser is
             Syn     : constant Syntax_Tree  := Program.Syntax;
          begin
 
-            if Column < Program.Minimum_Indent then
+            if Item.Column < Program.Minimum_Indent then
                if not Program.Has_Children and then
                  Aquarius.Syntax.Checks.Nullable (Syn)
                then
@@ -1798,7 +1822,7 @@ package body Aquarius.Programs.Parser is
             Syn     : constant Syntax_Tree  := Left_Tree.Syntax;
          begin
 
-            if Column < Left_Tree.Minimum_Indent then
+            if Item.Column < Left_Tree.Minimum_Indent then
                Result := False;
             elsif Syn.Repeatable then
                if not Is_Empty (Syn.Separator) then
@@ -1839,7 +1863,7 @@ package body Aquarius.Programs.Parser is
                   Syn : constant Syntax_Tree := Tree.Syntax;
                begin
                   if Syn.Repeatable and then
-                    Column >= Tree.Minimum_Indent and then
+                    Item.Column >= Tree.Minimum_Indent and then
                     Aquarius.Syntax.Checks.Begins (Tok, Syn)
                   then
                      Result := True;
@@ -1861,7 +1885,6 @@ package body Aquarius.Programs.Parser is
 
    function Token_OK
      (Tok            : Aquarius.Tokens.Token;
-      Tok_Pos        : Aquarius.Source.Source_Position;
       Context        : Parse_Context)
      return Boolean
    is
@@ -1871,7 +1894,7 @@ package body Aquarius.Programs.Parser is
       while Has_Element (It) loop
          if Element (It).Active then
             if Element (It).Active and then
-              Token_OK (Make_Parseable (Tok, Tok_Pos),
+              Token_OK (Make_Parseable (Tok, Context),
                         Element (It).Location)
             then
                return True;
@@ -2031,5 +2054,17 @@ package body Aquarius.Programs.Parser is
          end;
       end if;
    end Update_Ambiguities;
+
+   ---------------------
+   -- Update_Location --
+   ---------------------
+
+   overriding procedure Update_Location
+     (This : in out Parse_Context;
+      From : Aquarius.Locations.Location_Interface'Class)
+   is
+   begin
+      This.Location.Update_Location (From);
+   end Update_Location;
 
 end Aquarius.Programs.Parser;

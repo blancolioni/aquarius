@@ -1,0 +1,7 @@
+{
+    "name": "idle",
+    "description": "Rose interface definition language",
+    "version": "0.1.0",
+    "groups": [
+    ]
+}

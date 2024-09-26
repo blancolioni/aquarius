@@ -1,6 +1,8 @@
 private with Ada.Strings.Unbounded;
 private with Ada.Containers.Vectors;
 
+with Aquarius.Locations;
+
 package Aquarius.Messages is
 
    --  Aquarius.Messages
@@ -24,7 +26,8 @@ package Aquarius.Messages is
    function Level_Name (Level : Message_Level) return String;
 
    --  Message_Location: something that can have messages attached to it
-   type Message_Location is interface;
+   type Message_Location is interface
+     and Aquarius.Locations.Location_Interface;
 
    --  Message: an Aquarius message, with a severity level, a text
    --  string, an optional references to other message locations and
@@ -80,23 +83,9 @@ package Aquarius.Messages is
       return String
       is abstract;
 
-   function Location_Line (Location : Message_Location)
-                          return Natural
-      is abstract;
-
-   function Location_Column (Location : Message_Location)
-                            return Natural
-      is abstract;
-
    --  Attach_Message: add the message to the location
    procedure Attach_Message (To    : in out Message_Location;
                              Item  : Message)
-      is abstract;
-
-   --  Before: return true if the first location comes before the second
-   function Before (Left   : Message_Location;
-                    Right  : not null access Message_Location'Class)
-                   return Boolean
       is abstract;
 
    procedure Clear_Messages (Item : in out Message_Location)

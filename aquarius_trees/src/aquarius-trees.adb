@@ -221,20 +221,6 @@ package body Aquarius.Trees is
       Aquarius.Messages.Add_Message (To.Messages, Item);
    end Attach_Message;
 
-   ------------
-   -- Before --
-   ------------
-
-   overriding
-   function Before (Left   : Root_Tree_Type;
-                    Right  : not null access Messages.Message_Location'Class)
-                   return Boolean
-   is
-      use type Aquarius.Source.Source_Position;
-   begin
-      return Left.Location < Tree (Right).Location;
-   end Before;
-
    ------------------------
    -- Breadth_First_Scan --
    ------------------------
@@ -622,17 +608,6 @@ package body Aquarius.Trees is
       return It;
    end First_Leaf;
 
-   ------------------
-   -- Get_Location --
-   ------------------
-
-   function Get_Location (Item : Root_Tree_Type)
-                         return Aquarius.Source.Source_Position
-   is
-   begin
-      return Item.Location;
-   end Get_Location;
-
    ---------------------------
    -- Get_Matching_Children --
    ---------------------------
@@ -883,16 +858,18 @@ package body Aquarius.Trees is
    ---------------------
 
    procedure Initialise_Tree
-     (Item      : in out Root_Tree_Type;
-      Location  : Aquarius.Source.Source_Position;
+     (Item          : in out Root_Tree_Type;
+      Source        : Aquarius.Sources.Source_Reference;
+      Location      : Aquarius.Locations.Location_Interface'Class;
       Keep_Parent   : Boolean;
       Keep_Siblings : Boolean;
-      Temporary : Boolean := False)
+      Temporary     : Boolean := False)
    is
    begin
       Current_Node_Id := Current_Node_Id + 1;
       Item.Identity  := Current_Node_Id;
-      Item.Location  := Location;
+      Item.Source    := Source;
+      Item.Update_Location (Location);
       Item.Temporary := Temporary;
       Item.Keep_Parent := Keep_Parent;
       Item.Keep_Siblings := Keep_Siblings;
@@ -979,46 +956,20 @@ package body Aquarius.Trees is
       return Item.Left;
    end Left_Sibling;
 
-   ---------------------
-   -- Location_Column --
-   ---------------------
-
-   overriding
-   function Location_Column (Location : Root_Tree_Type)
-                            return Natural
-   is
-   begin
-      return Natural (Aquarius.Source.Get_Column (Location.Get_Location));
-   end Location_Column;
-
-   -------------------
-   -- Location_Line --
-   -------------------
-
-   overriding
-   function Location_Line (Location : Root_Tree_Type)
-                          return Natural
-   is
-   begin
-      return Natural (Aquarius.Source.Get_Line (Location.Get_Location));
-   end Location_Line;
-
    -------------------
    -- Location_Name --
    -------------------
 
    overriding function Location_Name
-     (Location  : Root_Tree_Type;
+     (This      : Root_Tree_Type;
       Show_Path : Boolean := False)
       return String
    is
    begin
       if Show_Path then
-         return Aquarius.Source.Get_Relative_Path
-           (Aquarius.Source.Get_Source_File (Location.Get_Location));
+         return This.Source.Full_Name;
       else
-         return Aquarius.Source.Get_File_Name
-           (Aquarius.Source.Get_Source_File (Location.Get_Location));
+         return This.Source.Short_Name;
       end if;
    end Location_Name;
 
@@ -1110,8 +1061,8 @@ package body Aquarius.Trees is
       end loop;
 
       raise Aquarius.Properties.Property_Error with
-        Aquarius.Source.Show (Item.Location) &
-        ": property " & Properties.Get_Name (Prop) & " not found in tree " &
+        Item.Show_Location
+        & ": property " & Properties.Get_Name (Prop) & " not found in tree " &
         Root_Tree_Type'Class (Item).Text;
 
    end Property;
@@ -1274,17 +1225,6 @@ package body Aquarius.Trees is
    end Set_Foster_Parent;
 
    ------------------
-   -- Set_Location --
-   ------------------
-
-   procedure Set_Location (Item : in out Root_Tree_Type;
-                           Loc  : Aquarius.Source.Source_Position)
-   is
-   begin
-      Item.Location := Loc;
-   end Set_Location;
-
-   ------------------
    -- Set_Property --
    ------------------
 
@@ -1344,5 +1284,19 @@ package body Aquarius.Trees is
    begin
       return Root_Tree_Type'Class (Item).Name;
    end Text;
+
+   ---------------------
+   -- Update_Location --
+   ---------------------
+
+   overriding procedure Update_Location
+     (This : in out Root_Tree_Type;
+      From : Aquarius.Locations.Location_Interface'Class)
+   is
+   begin
+      This.Offset := From.Offset;
+      This.Line := From.Line;
+      This.Column := From.Column;
+   end Update_Location;
 
 end Aquarius.Trees;

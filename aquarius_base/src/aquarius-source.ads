@@ -1,3 +1,5 @@
+with Aquarius.Sources;
+
 package Aquarius.Source is
 
    pragma Elaborate_Body (Aquarius.Source);
@@ -11,6 +13,10 @@ package Aquarius.Source is
    type Source_File is private;
 
    function "<" (Left, Right : Source_Position) return Boolean;
+
+   function To_Source_Reference
+     (File : Source_File)
+      return Aquarius.Sources.Source_Reference;
 
    --  If we encounter a tab character, it gets translated to spaces
    --  Aquarius itself never uses tab characters, so files that are
@@ -73,6 +79,7 @@ private
          Current_Position    : Source_Position;
          Current_Line        : String (1 .. Max_Line_Length);
          Current_Line_Length : Natural;
+         Reference           : Aquarius.Sources.Source_Reference;
       end record;
 
    function Get_File_Name (File : access Source_File_Record) return String
@@ -106,5 +113,10 @@ private
 
    No_Source_Position : constant Source_Position :=
      (null, 0, 0, False, True);
+
+   function To_Source_Reference
+     (File : Source_File)
+      return Aquarius.Sources.Source_Reference
+   is (File.Reference);
 
 end Aquarius.Source;

@@ -1,28 +1,33 @@
 with Aquarius.Grammars;
 with Aquarius.Interaction;
 with Aquarius.Programs;
+with Aquarius.Sources;
+with Aquarius.Streams;
 
-package Aquarius.Loader is
+package Aquarius.Reader is
 
-   function Load_From_File
+   function Read
      (Grammar    : Aquarius.Grammars.Aquarius_Grammar;
       Store      : not null access Programs.Root_Program_Tree_Store'Class;
       Interactor : Aquarius.Interaction.Interactor_Access;
-      Path       : String)
+      Source     : Aquarius.Sources.Source_Reference;
+      Stream     : Aquarius.Streams.Reader_Reference)
       return Aquarius.Programs.Program_Tree;
 
-   function Load_From_File
+   function Read
      (Grammar    : Aquarius.Grammars.Aquarius_Grammar;
-      Path       : String)
+      Source     : Aquarius.Sources.Source_Reference;
+      Stream     : Aquarius.Streams.Reader_Reference)
      return Aquarius.Programs.Program_Tree;
    --  Load file using default store, interactor.
    --     interactor - console
 
-   function Load_From_File
+   function Read
      (Grammar    : Aquarius.Grammars.Aquarius_Grammar;
       Store      : not null access Programs.Root_Program_Tree_Store'Class;
-      Path       : String)
-     return Aquarius.Programs.Program_Tree;
+      Source     : Aquarius.Sources.Source_Reference;
+      Stream     : Aquarius.Streams.Reader_Reference)
+      return Aquarius.Programs.Program_Tree;
    --  Load file using default interactor (console)
 
-end Aquarius.Loader;
+end Aquarius.Reader;

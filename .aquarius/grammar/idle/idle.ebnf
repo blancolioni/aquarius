@@ -9,6 +9,15 @@ delimiter          ::= delimiters "(),;[]^."
 
 line_comment = "--"
 
+format '(' space_before no_space_after
+format ')' no_space_before space_after
+format ';' no_space_before new_line_after
+format ':' space_before space_after
+format ',' no_space_before space_after
+format '.' no_space_before no_space_after
+
+format declaration_list indented_child
+
 package ::= interface_declaration
 
 interface_declaration ::= 

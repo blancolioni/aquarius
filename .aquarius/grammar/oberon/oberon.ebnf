@@ -15,15 +15,20 @@ format '(' space_before no_space_after
 format ')' no_space_before space_after
 format ',' no_space_before space_after
 format '.' no_space_before no_space_after
+format '~' no_space_after
+format '[' no_space_before no_space_after
+format ']' no_space_before
+format ':=' space_before space_after
+format '{' no_space_after
+format '}' no_space_before
 
 format ConstantDeclaration indented_child
 format TypeDeclaration indented_child
 format VariableDeclaration indented_child
-format statement indented_child
-format 'END' new_line_before
+format StatementSequence indented_child
 
 qualident ::= [ident '.'] ident
-identdef ::= ident ['*']
+identdef ::= ident [ '*' ]
 
 designator ::= ident { designatorFollower }
 designatorFollower ::= '.' ident
@@ -32,10 +37,10 @@ designatorFollower ::= '.' ident
 
 ExpList ::= < expression / ',' >
 
-ConstantDeclaration ::= identdef '=' ConstExpression
+ConstantDeclaration ::= identdef '=' ConstExpression ';'
 ConstExpression ::= expression
 
-TypeDeclaration ::= identdef '=' type
+TypeDeclaration ::= identdef '=' type ';'
 type ::= qualident | ArrayType | RecordType | PointerType | ProcedureType
 
 ArrayType ::= 'ARRAY' < length / ',' > 'OF' type
@@ -51,7 +56,7 @@ PointerType ::= 'POINTER' 'TO' type
 
 ProcedureType ::= 'PROCEDURE' [ FormalParameters ]
 
-VariableDeclaration ::= IdentList ':' type
+VariableDeclaration ::= IdentList ':' type ';'
 
 expression ::= SimpleExpression [relation SimpleExpression]
 relation ::= '=' | '#' | '<' | '<=' | '>' | '>=' | 'IN' | 'IS'
@@ -70,7 +75,6 @@ ActualParameters ::= '(' [ExpList] ')'
 statement ::= assignment | ProcedureCall
               | IfStatement | CaseStatement 
               | WhileStatement | RepeatStatement | ForStatement
-
 
 assignment ::= designator ':=' expression
 
@@ -102,7 +106,7 @@ ForStatement ::= 'FOR' ident ':=' expression 'TO' expression [ 'BY' ConstExpress
                     StatementSequence
                  'END'
 
-ProcedureDeclaration ::= ProcedureHeading ';' ProcedureBody ident
+ProcedureDeclaration ::= ProcedureHeading ';' ProcedureBody ident ';'
 ProcedureHeading ::= 'PROCEDURE' identdef [FormalParameters]
 ProcedureBody ::= DeclarationSequence ['BEGIN' StatementSequence] [ 'RETURN' expression ]'END'
 DeclarationSequence ::= BasicDeclarationSequence ProcedureDeclarationSequence
@@ -113,13 +117,13 @@ BasicDeclaration ::= 'CONST' ConstantDeclarationSequence
                    | 'TYPE' TypeDeclarationSequence 
                    | 'VAR' VariableDeclarationSequence
 
-ConstantDeclarationSequence ::= { ConstantDeclaration ';' }
+ConstantDeclarationSequence ::= { ConstantDeclaration }
 
-TypeDeclarationSequence ::= { TypeDeclaration ';' }
+TypeDeclarationSequence ::= { TypeDeclaration }
 
-VariableDeclarationSequence ::= { VariableDeclaration ';' }
+VariableDeclarationSequence ::= { VariableDeclaration }
 
-ProcedureDeclarationSequence ::= { ProcedureDeclaration ';' }
+ProcedureDeclarationSequence ::= { ProcedureDeclaration }
 
 FormalParameters ::= '(' { FPSection / ';' } ')' [':' qualident]
 FPSection ::= ['VAR'] < ident / ',' > ':' FormalType

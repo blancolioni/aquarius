@@ -123,8 +123,8 @@ package body Ack.Generate is
 
       if Root then
          Unit.Source_Location
-           (Line   => Positive (Get_Program (Node).Location_Line),
-            Column => Positive (Get_Program (Node).Location_Column));
+           (Line   => Positive (Get_Program (Node).Line),
+            Column => Positive (Get_Program (Node).Column));
 
          Unit.Begin_Routine
            (Name => Class.Link_Name & "$main");
@@ -284,8 +284,8 @@ package body Ack.Generate is
       is
       begin
          Unit.Source_Location
-           (Line   => Positive (Get_Program (Instruction).Location_Line),
-            Column => Positive (Get_Program (Instruction).Location_Column));
+           (Line   => Positive (Get_Program (Instruction).Line),
+            Column => Positive (Get_Program (Instruction).Column));
 
          case N_Instruction (Kind (Instruction)) is
             when N_Assignment =>
@@ -1054,15 +1054,15 @@ package body Ack.Generate is
       Retry   : Node_Id;
       Target  : Tagatha.Code.Label)
    is
-      pragma Unreferenced (Context);
+      pragma Unreferenced (Context, Retry, Target);
    begin
-      if Tagatha.Code.Has_Label (Target) then
-         Unit.Retry_Routine;
-      else
-         raise Constraint_Error with
-         Get_Program (Retry).Show_Location
-           & ": expected to be in a rescue context";
-      end if;
+      --  if Tagatha.Code.Has_Label (Target) then
+      Unit.Retry_Routine;
+      --  else
+      --     raise Constraint_Error with
+      --     Get_Program (Retry).Show_Location
+      --       & ": expected to be in a rescue context";
+      --  end if;
    end Generate_Retry;
 
    ------------------------

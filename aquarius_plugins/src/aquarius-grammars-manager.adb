@@ -4,8 +4,10 @@ with Ada.Directories;
 with Ada.Strings.Fixed;
 
 with Aquarius.Grammars.EBNF;
-with Aquarius.Loader;
+with Aquarius.Reader;
 with Aquarius.Messages.Console;
+with Aquarius.Sources.Files;
+with Aquarius.Streams.Files;
 
 with Kosei;
 
@@ -27,6 +29,10 @@ package body Aquarius.Grammars.Manager is
 
    procedure Check_EBNF;
    --  Check_EBNF: load EBNF grammar if it's not already loaded.
+
+   function Get_Grammar_For_Tag
+     (Grammar_Tag : String)
+      return Aquarius_Grammar;
 
    ----------------
    -- Check_EBNF --
@@ -78,6 +84,18 @@ package body Aquarius.Grammars.Manager is
 
    end Get_Grammar;
 
+   -----------------
+   -- Get_Grammar --
+   -----------------
+
+   function Get_Grammar
+     (Source : Aquarius.Sources.Source_Reference)
+      return Aquarius_Grammar
+   is
+   begin
+      return Get_Grammar (Source.Grammar_Tag);
+   end Get_Grammar;
+
    --------------------------
    -- Get_Grammar_For_File --
    --------------------------
@@ -88,7 +106,23 @@ package body Aquarius.Grammars.Manager is
       Extension   : constant String :=
         Ada.Directories.Extension (File_Name);
    begin
-      if Extension = "ebnf" then
+      return Get_Grammar_For_Tag (Extension);
+   exception
+      when Grammar_Error =>
+         raise Grammar_Error with
+           "cannot find grammar for file extension ." & Extension;
+   end Get_Grammar_For_File;
+
+   -------------------------
+   -- Get_Grammar_For_Tag --
+   -------------------------
+
+   function Get_Grammar_For_Tag
+     (Grammar_Tag : String)
+      return Aquarius_Grammar
+   is
+   begin
+      if Grammar_Tag = "ebnf" then
          Check_EBNF;
          return EBNF_Grammar;
       end if;
@@ -96,16 +130,16 @@ package body Aquarius.Grammars.Manager is
       declare
          Grammar_Name : constant String :=
                           Kosei.Get
-                            ("/extensions/" & Extension & "/plugin");
+                            ("/extensions/" & Grammar_Tag & "/plugin");
       begin
          if Grammar_Name = "" then
             raise Grammar_Error with
-              "cannot find grammar for file extension ." & Extension;
+              "cannot find grammar for tag '" & Grammar_Tag & "'";
          else
             return Get_Grammar (Grammar_Name);
          end if;
       end;
-   end Get_Grammar_For_File;
+   end Get_Grammar_For_Tag;
 
    ------------------
    -- Load_Grammar --
@@ -144,7 +178,11 @@ package body Aquarius.Grammars.Manager is
 
       --  Turn off tracing while loading a grammar
 
-      EBNF   := Aquarius.Loader.Load_From_File (EBNF_Grammar, Path);
+      EBNF :=
+        Aquarius.Reader.Read
+          (Grammar =>  EBNF_Grammar,
+           Source  =>  Aquarius.Sources.Files.File_Source (Path),
+           Stream  =>  Aquarius.Streams.Files.File_Reader (Path));
 
       Result := New_Grammar (Name, EBNF);
       Loaded_Grammars.Append (Result);

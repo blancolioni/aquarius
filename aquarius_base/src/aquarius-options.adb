@@ -16,9 +16,14 @@ package body Aquarius.Options is
    Aqua_Trace_Option   : constant String := "aqua trace";
    Code_Trigger_Option : constant String := "code trigger";
    Start_Class_Option  : constant String := "start class";
+   Self_Test_Option    : constant String := "self test";
+   Help_Option         : constant String := "help";
 
-   Tagatha_Trace_P_Code_Option    : constant String := "tagatha p-code";
-   Tagatha_Trace_Transfers_Option : constant String := "tagatha transfers";
+   Show_Full_Path_Option : constant String := "show full path";
+   Report_Files_Option   : constant String := "report files";
+
+   Tagatha_Trace_P_Code_Option       : constant String := "tagatha p-code";
+   Tagatha_Trace_Transfers_Option    : constant String := "tagatha transfers";
    Tagatha_Trace_Improvements_Option : constant String :=
                                          "tagatha improvements";
 
@@ -67,6 +72,30 @@ package body Aquarius.Options is
 
       AP.Add_Option
         (O             => Make_Boolean_Option (False),
+         Name          => Self_Test_Option,
+         Long_Option   => "self-test",
+         Usage         => "Run unit tests");
+
+      AP.Add_Option
+        (O             => Make_Boolean_Option (False),
+         Name          => Help_Option,
+         Long_Option   => "help",
+         Usage         => "Show help");
+
+      AP.Add_Option
+        (O             => Make_Boolean_Option (False),
+         Name          => Show_Full_Path_Option,
+         Long_Option   => "show-full-path",
+         Usage         => "use full path when reporting file names");
+
+      AP.Add_Option
+        (O             => Make_Boolean_Option (False),
+         Name          => Report_Files_Option,
+         Long_Option   => "report-files",
+         Usage         => "report all filesystem activity");
+
+      AP.Add_Option
+        (O             => Make_Boolean_Option (False),
          Name          => Tagatha_Trace_Improvements_Option,
          Long_Option   => "tagatha-trace-improvements",
          Usage         => "Log code improvements applied by Tagatha");
@@ -94,6 +123,11 @@ package body Aquarius.Options is
          return False;
       end if;
 
+      if AP.Boolean_Value (Help_Option) then
+         AP.Usage;
+         return False;
+      end if;
+
       for File_Name of AP.Tail loop
          Source_File_Vector.Append (File_Name);
       end loop;
@@ -102,14 +136,32 @@ package body Aquarius.Options is
 
    end Load;
 
-   -----------------
-   -- Start_Class --
-   -----------------
+   ------------------
+   -- Report_Files --
+   ------------------
 
-   function Start_Class return String is
+   function Report_Files return Boolean is
    begin
-      return AP.String_Value ("start class");
-   end Start_Class;
+      return AP.Boolean_Value (Report_Files_Option);
+   end Report_Files;
+
+   ---------------
+   -- Self_Test --
+   ---------------
+
+   function Self_Test return Boolean is
+   begin
+      return AP.Boolean_Value (Self_Test_Option);
+   end Self_Test;
+
+   --------------------
+   -- Show_Full_Path --
+   --------------------
+
+   function Show_Full_Path return Boolean is
+   begin
+      return AP.Boolean_Value (Show_Full_Path_Option);
+   end Show_Full_Path;
 
    -----------------
    -- Source_File --
@@ -128,6 +180,15 @@ package body Aquarius.Options is
    begin
       return Source_File_Vector.Last_Index;
    end Source_File_Count;
+
+   -----------------
+   -- Start_Class --
+   -----------------
+
+   function Start_Class return String is
+   begin
+      return AP.String_Value ("start class");
+   end Start_Class;
 
    --------------------------------
    -- Tagatha_Trace_Improvements --

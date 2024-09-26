@@ -329,11 +329,11 @@ package body Ack.Features is
       Line             : constant Positive :=
                            Positive
                              (Get_Program
-                                (Feature.Declaration_Node).Location_Line);
+                                (Feature.Declaration_Node).Line);
       Column           : constant Positive :=
                            Positive
                              (Get_Program
-                                (Feature.Declaration_Node).Location_Column);
+                                (Feature.Declaration_Node).Column);
    begin
 
       Unit.Source_Location (Line, Column);

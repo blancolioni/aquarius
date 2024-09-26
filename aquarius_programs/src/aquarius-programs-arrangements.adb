@@ -2,7 +2,6 @@ with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 
 with Aquarius.Formats;
-with Aquarius.Layout;
 with Aquarius.Messages;
 
 with Aquarius.Programs.Arrangements.Contexts;
@@ -104,14 +103,14 @@ package body Aquarius.Programs.Arrangements is
    -------------
 
    procedure Arrange
-     (Item        : Program_Tree;
+     (Item        : not null Program_Tree;
       Messages    : out Aquarius.Messages.Message_List;
       Line_Length : Positive      := 72)
    is
       Context : Arrangement_Context;
    begin
       Context.Right_Margin :=
-        Aquarius.Layout.Column_Number (Line_Length);
+        Aquarius.Locations.Column_Index (Line_Length);
       Context.User_Cursor := Aquarius.Trees.Cursors.Left_Of_Tree (Item);
       Arrange (Item, Context);
       Check_Previous_Line_Length (Context);
@@ -129,18 +128,18 @@ package body Aquarius.Programs.Arrangements is
    -------------
 
    procedure Arrange
-     (Item             : Program_Tree;
+     (Item             : not null Program_Tree;
       Point            : Aquarius.Trees.Cursors.Cursor;
       Partial          : String;
       Updating         : Boolean;
-      Partial_Line     : out Aquarius.Layout.Line_Number;
-      Partial_Column   : out Aquarius.Layout.Column_Number;
+      Partial_Line     : out Aquarius.Locations.Line_Index;
+      Partial_Column   : out Aquarius.Locations.Column_Index;
       Line_Length      : Positive      := 72)
    is
       Context : Arrangement_Context;
    begin
       Context.Right_Margin :=
-        Aquarius.Layout.Column_Number (Line_Length);
+        Aquarius.Locations.Column_Index (Line_Length);
       Context.User_Text :=
         Ada.Strings.Unbounded.To_Unbounded_String (Partial);
       Context.Updating := Updating;
@@ -178,7 +177,7 @@ package body Aquarius.Programs.Arrangements is
       end if;
 
       Context.Current_Indent :=
-        Aquarius.Layout.Column_Number
+        Aquarius.Locations.Column_Index
           (Indentation_Offset (Context.Current_Indent)
            + Child_Indent + Before_Indent);
 
@@ -188,7 +187,7 @@ package body Aquarius.Programs.Arrangements is
          if not Item.Has_Position
            and then Item.Program_Child (I).Has_Position
          then
-            Item.Start_Position := Item.Program_Child (I).Start_Position;
+            Item.Start_Offset := Item.Program_Child (I).Start_Offset;
             Item.Start_Line := Item.Program_Child (I).Start_Line;
             Item.Start_Column := Item.Program_Child (I).Start_Column;
             Item.Has_Position := True;
@@ -204,7 +203,7 @@ package body Aquarius.Programs.Arrangements is
       if Item.Has_Position then
          for I in reverse 1 .. Item.Child_Count loop
             if Item.Program_Child (I).Has_Position then
-               Item.End_Position := Item.Program_Child (I).End_Position;
+               Item.End_Offset := Item.Program_Child (I).End_Offset;
                exit;
             end if;
          end loop;
@@ -214,7 +213,7 @@ package body Aquarius.Programs.Arrangements is
       Item.End_Column := Context.Current_Column;
 
       Context.Current_Indent :=
-        Aquarius.Layout.Column_Number
+        Aquarius.Locations.Column_Index
           (Indentation_Offset (Context.Current_Indent)
            - Child_Indent + After_Indent);
 
@@ -232,7 +231,7 @@ package body Aquarius.Programs.Arrangements is
    procedure Arrange_Terminal (Item    : Program_Tree;
                                Context : in out Arrangement_Context)
    is
-      use Aquarius.Layout;
+      use Aquarius.Locations;
       Format    : constant Aquarius_Format := Item.Syntax.Get_Format;
       Rules     : constant Immediate_Rules := Formats.Rules (Format);
       Vertical_Gap : constant Natural :=
@@ -323,13 +322,13 @@ package body Aquarius.Programs.Arrangements is
          end;
       end if;
 
-      Item.Set_Layout_Position
+      Item.Update_Location
         (Context.Current_Position,
          Context.Current_Line, Context.Current_Column);
       Item.Has_Position := True;
 
       Logging.Log (Context, Item,
-                   "start: " & Aquarius.Layout.Show (Item.Start_Position));
+                   "start: " & Item.Start_Offset'Image);
 
       if Context.Need_Soft_New_Line then
          Context.Soft_Indent := Context.Soft_Indent - 2;
@@ -346,7 +345,7 @@ package body Aquarius.Programs.Arrangements is
       then
          null;
       else
-         Skip (Context, Natural (Item.Layout_Length));
+         Skip (Context, Item.Layout_Length);
       end if;
 
       if Before_Point (Item, Context.User_Cursor) then
@@ -375,7 +374,7 @@ package body Aquarius.Programs.Arrangements is
                       & Context.User_Text_Line'Img
                       & Context.User_Text_Column'Img
                       & "with length"
-                      & Count'Image (Context.User_Text_Length));
+                      & Context.User_Text_Length'Image);
 
       end if;
 
@@ -388,7 +387,7 @@ package body Aquarius.Programs.Arrangements is
             Align_With : constant Program_Tree :=
               Program_Tree (Item.Parent.First_Leaf);
          begin
-            Context.Current_Column := Align_With.Layout_Start_Column;
+            Context.Current_Column := Align_With.Start_Column;
          end;
          Context.Got_New_Line  := True;
          if Item.Separator_New_Line then
@@ -450,13 +449,19 @@ package body Aquarius.Programs.Arrangements is
    procedure Check_Previous_Line_Length
      (Context : in out Arrangement_Context)
    is
-      use Aquarius.Layout;
+      use Aquarius.Locations;
    begin
+
+      if Context.First_Terminal = null
+        or else Context.Previous_Terminal = null
+      then
+         return;
+      end if;
+
       Logging.Log (Context, Context.First_Terminal, "checking previous line");
       Logging.Log (Context, Context.Previous_Terminal,
                    "ends in column"
-                   & Column_Number'Image
-                     (Context.Previous_Terminal.End_Column));
+                   & Context.Previous_Terminal.End_Column'Image);
 
       if Context.Previous_Terminal.End_Column > Context.Right_Margin then
          declare
@@ -464,7 +469,7 @@ package body Aquarius.Programs.Arrangements is
             Left_Ancestor   : Aquarius.Trees.Tree;
             Right_Ancestor  : Aquarius.Trees.Tree;
             Ancestor        : Program_Tree;
-            Old_Soft_Indent : constant Column_Offset := Context.Soft_Indent;
+            Old_Soft_Indent : constant Column_Count := Context.Soft_Indent;
          begin
             Context.Soft_Indent := 0;
             Aquarius.Trees.Common_Ancestor
@@ -500,12 +505,12 @@ package body Aquarius.Programs.Arrangements is
    procedure Indent
      (Context : in out Arrangement_Context)
    is
-      use Aquarius.Layout;
+      use Aquarius.Locations;
    begin
       if Context.Current_Column < Context.Current_Indent then
          Context.Current_Position :=
            Context.Current_Position
-             + Position_Offset (Context.Current_Indent
+             + Location_Offset (Context.Current_Indent
                                 - Context.Current_Column);
          Context.Current_Column := Context.Current_Indent;
       end if;
@@ -519,12 +524,12 @@ package body Aquarius.Programs.Arrangements is
      (Context : in out Arrangement_Context;
       Count   : Natural := 1)
    is
-      use Aquarius.Layout;
+      use Aquarius.Locations;
    begin
       Context.Current_Line :=
-        Context.Current_Line + Line_Offset (Count);
+        Context.Current_Line + Line_Count (Count);
       Context.Current_Position :=
-        Context.Current_Position + Position_Offset (Count);
+        Context.Current_Position + Location_Offset (Count);
       Context.Current_Column := 1;
    end New_Line;
 
@@ -539,7 +544,7 @@ package body Aquarius.Programs.Arrangements is
       Finish  : Program_Tree)
    is
 
-      use Aquarius.Layout;
+      use Aquarius.Locations;
       use Aquarius.Syntax;
 
       function Separator_With_New_Line
@@ -575,18 +580,18 @@ package body Aquarius.Programs.Arrangements is
       Cancel_Separator  : Boolean := False;
       Separator_Level   : Natural := 0;
 
-      Partial_Length   : Column_Offset := Context.Current_Indent;
-      New_Line_Indent  : constant Column_Number :=
+      Partial_Length   : Column_Count := Context.Current_Indent;
+      New_Line_Indent  : constant Column_Index :=
                            Context.Current_Indent + 2;
-      Last_Column_Index : Column_Number := Context.Current_Indent;
+      Last_Column_Index : Column_Count := Context.Current_Indent;
 
 --        Remaining_Length  : Count :=
---                              Finish.End_Position.Column
---                                - Start.Start_Position.Column;
+--                              Finish.End_Offset.Column
+--                                - Start.Start_Offset.Column;
 
       Had_Soft_New_Line_After : Boolean := False;
       Last_Soft_New_Line      : Program_Tree := null;
-      Last_Soft_Column        : Column_Offset := 0;
+      Last_Soft_Column        : Column_Count := 0;
       Last_Soft_Level         : Natural := 0;
 
       Closing : constant Boolean := Enabled (Finish.Rules.Closing);
@@ -644,7 +649,7 @@ package body Aquarius.Programs.Arrangements is
                    or else Had_Soft_New_Line_After)
             then
                declare
-                  New_Length : constant Column_Offset :=
+                  New_Length : constant Column_Count :=
                                  Program.End_Column
                                    - Last_Column_Index
                                  + Partial_Length;
@@ -657,7 +662,7 @@ package body Aquarius.Programs.Arrangements is
                   else
                      Logging.Log (Context, Program,
                           "ignoring soft new line because line length is"
-                          & Column_Offset'Image (New_Length));
+                          & New_Length'Image);
                   end if;
                end;
 
@@ -700,8 +705,8 @@ package body Aquarius.Programs.Arrangements is
 
                Last_Column_Index := Program.End_Column;
 --                 Remaining_Length :=
---                   Finish.End_Position.Column
---                     - Program.End_Position.Column;
+--                   Finish.End_Offset.Column
+--                     - Program.End_Offset.Column;
             end if;
 
             if Program.Has_Soft_New_Line_Rule_After then
@@ -721,7 +726,7 @@ package body Aquarius.Programs.Arrangements is
          end;
       end Apply_Newlines;
 
-      Current_Indent : constant Column_Number := Context.Current_Indent;
+      Current_Indent : constant Column_Count := Context.Current_Indent;
 
    begin
 
@@ -730,7 +735,7 @@ package body Aquarius.Programs.Arrangements is
       Context.Current_Indent := Context.Previous_Indent;
       Context.Current_Line := Item.Start_Line;
       Context.Current_Column := Item.Start_Column;
-      Context.Current_Position := Item.Start_Position;
+      Context.Current_Position := Item.Start_Offset;
 
       Context.Rearranging := True;
       Context.Stop_Tree := Finish;
@@ -760,13 +765,13 @@ package body Aquarius.Programs.Arrangements is
    ------------
 
    procedure Render
-     (Program        : in Program_Tree;
+     (Program        : not null Program_Tree;
       Renderer       : in out Rendering.Root_Aquarius_Renderer'Class;
-      Point          : in Aquarius.Trees.Cursors.Cursor;
-      Partial        : in String;
-      Updating       : in Boolean;
-      Partial_Line   : in Aquarius.Layout.Line_Number;
-      Partial_Column : in Aquarius.Layout.Column_Number)
+      Point          : Aquarius.Trees.Cursors.Cursor;
+      Partial        : String;
+      Updating       : Boolean;
+      Partial_Line   : Aquarius.Locations.Line_Index;
+      Partial_Column : Aquarius.Locations.Column_Index)
    is
 
       procedure Perform_Render (P : Program_Tree);
@@ -793,10 +798,10 @@ package body Aquarius.Programs.Arrangements is
 
       procedure Render_Terminal (Terminal : Program_Tree) is
          use Aquarius.Messages;
-         Line : constant Aquarius.Layout.Line_Number :=
-                  Terminal.Layout_Line;
-         Column : constant Aquarius.Layout.Column_Number :=
-                    Terminal.Layout_Start_Column;
+         Line : constant Aquarius.Locations.Line_Index :=
+                  Terminal.Line;
+         Column : constant Aquarius.Locations.Column_Index :=
+                    Terminal.Start_Column;
          Msg_Level       : constant Message_Level :=
                              Terminal.Get_Inherited_Message_Level;
          At_Point        : constant Boolean :=
@@ -849,7 +854,7 @@ package body Aquarius.Programs.Arrangements is
    ------------
 
    procedure Render
-     (Program     : in Program_Tree;
+     (Program     : not null Program_Tree;
       Renderer    : in out Aquarius.Rendering.Root_Aquarius_Renderer'Class)
    is
    begin
@@ -866,12 +871,12 @@ package body Aquarius.Programs.Arrangements is
      (Context : in out Arrangement_Context;
       Count   : Natural := 1)
    is
-      use Aquarius.Layout;
+      use Aquarius.Locations;
    begin
       Context.Current_Column :=
-        Context.Current_Column + Column_Offset (Count);
+        Context.Current_Column + Column_Count (Count);
       Context.Current_Position :=
-        Context.Current_Position + Position_Offset (Count);
+        Context.Current_Position + Location_Offset (Count);
    end Skip;
 
 end Aquarius.Programs.Arrangements;

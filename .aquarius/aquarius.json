@@ -1,6 +1,10 @@
 {
     "version": "0.1.0-dev",
     "extensions": {
+		"aqua": {
+			"name": "Aqua source",
+			"plugin": "aqua"
+		},
 		"json": {
 			"name": "JSON file",
 			"plugin": "json"
@@ -24,7 +28,7 @@
 			"object": "tmp/obj"
 		},
 		"tools": {
-			"as": "e:/git/aqua/aqua_as/bin/aqua_as.exe"
+			"as": "../aqua/aqua_as/bin/aqua_as"
 		}
     },
 	"plugins": {
