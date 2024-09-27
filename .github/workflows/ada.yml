@@ -5,13 +5,15 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
+  
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    
     steps:
+    - name: Tagatha
+      uses: blancolioni/tagatha/.github/workflows/ada.yml@main    
+      
     - name: Checkout
       uses: actions/checkout@v3
 
@@ -20,3 +22,4 @@ jobs:
 
     - name: Build      
       run: alr build
+      
