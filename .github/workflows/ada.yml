@@ -15,13 +15,13 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: blancolioni/aqua_vm
-        path: aqua
+        path: aqua/aqua_vm
         
     - name: Checkout Aqua Assembler
       uses: actions/checkout@v4
       with:
         repository: blancolioni/aqua_as
-        path: aqua
+        path: aqua/aqua_as
         
     - name: Checkout Tagatha
       uses: actions/checkout@v4
