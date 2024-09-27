@@ -28,8 +28,8 @@ aquarius_programs = "*"
 aquarius_ui = "*"
 
 [[pins]]
-tagatha = { path = "../tagatha" }
-aqua_vm = { path = "../aqua/aqua_vm" }
+tagatha = { path = "./tagatha" }
+aqua_vm = { path = "./aqua/aqua_vm" }
 aquarius_ack = { path = "./aquarius_ack" }
 aquarius_base = { path = "./aquarius_base" }
 aquarius_devices = { path = "./aquarius_devices" }
