@@ -11,9 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Tagatha
-      uses: blancolioni/tagatha/.github/workflows/ada.yml@main    
-      
+    - name: Checkout Tagatha
+      uses: actions/checkout@v4
+      with:
+        repository: blancolioni/tagatha
+        path: tagatha
+        
     - name: Checkout
       uses: actions/checkout@v3
 
