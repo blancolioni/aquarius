@@ -11,11 +11,23 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - name: Checkout Aqua VM
+      uses: actions/checkout@v4
+      with:
+        repository: blancolioni/aqua_vm
+        path: ../aqua
+        
+    - name: Checkout Aqua Assembler
+      uses: actions/checkout@v4
+      with:
+        repository: blancolioni/aqua_as
+        path: ../aqua
+        
     - name: Checkout Tagatha
       uses: actions/checkout@v4
       with:
         repository: blancolioni/tagatha
-        path: tagatha
+        path: ..
         
     - name: Checkout
       uses: actions/checkout@v3
