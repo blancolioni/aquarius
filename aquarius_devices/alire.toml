@@ -15,7 +15,7 @@ aqua_vm = "*"
 
 [[pins]]
 aquarius_base = { path = "../aquarius_base" }
-aqua_vm = { path = "../../aqua/aqua_vm" }
+aqua_vm = { path = "../aqua_vm" }
 
 [build-switches]
 "*".ada_version = "ada2022"

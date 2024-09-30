@@ -19,8 +19,8 @@ aquarius_syntax = "*"
 aquarius_programs = "*"
 
 [[pins]]
-aqua_vm = { path = "../../aqua/aqua_vm" }
-tagatha = { path = "../../tagatha" }
+aqua_vm = { path = "../aqua_vm" }
+tagatha = { path = "../tagatha" }
 aquarius_base = { path = "../aquarius_base" }
 aquarius_io = { path = "../aquarius_io" }
 aquarius_trees = { path = "../aquarius_trees" }

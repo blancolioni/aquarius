@@ -28,7 +28,7 @@
 			"object": "tmp/obj"
 		},
 		"tools": {
-			"as": "../aqua/aqua_as/bin/aqua_as"
+			"as": "./aqua_as/bin/aqua_as"
 		}
     },
 	"plugins": {
