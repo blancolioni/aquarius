@@ -8,3 +8,6 @@
 /logs
 *~
 *.lst
+/aqua_as/
+/aqua_vm/
+/tagatha/
