@@ -214,6 +214,8 @@ package body Ack.Compile is
       Args        : GNAT.OS_Lib.Argument_List :=
                       [new String'("-o"),
                        new String'(Object_Path),
+                       new String'("--config-path"),
+                       new String'("./aqua_as/share/aqua_as"),
                        new String'("--write-listing")]
                       & (if Main
                          then [new String'(Standard_Asm & "/artl.s")]
