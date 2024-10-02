@@ -859,7 +859,7 @@ package body Aquarius.Trees is
 
    procedure Initialise_Tree
      (Item          : in out Root_Tree_Type;
-      Source        : Aquarius.Sources.Source_Reference;
+      Source        : not null Aquarius.Sources.Source_Reference;
       Location      : Aquarius.Locations.Location_Interface'Class;
       Keep_Parent   : Boolean;
       Keep_Siblings : Boolean;
@@ -868,7 +868,7 @@ package body Aquarius.Trees is
    begin
       Current_Node_Id := Current_Node_Id + 1;
       Item.Identity  := Current_Node_Id;
-      Item.Source    := Source;
+      Item.Source_Ref := Source;
       Item.Update_Location (Location);
       Item.Temporary := Temporary;
       Item.Keep_Parent := Keep_Parent;
@@ -965,7 +965,13 @@ package body Aquarius.Trees is
       Show_Path : Boolean := False)
       return String
    is
+      use type Aquarius.Sources.Source_Reference;
    begin
+      if This.Source_Ref = null then
+         raise Constraint_Error with
+           "no source:" & Root_Tree_Type'Class (This).Name;
+      end if;
+
       if Show_Path then
          return This.Source.Full_Name;
       else

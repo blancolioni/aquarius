@@ -40,27 +40,28 @@ package Aquarius.Programs is
    Empty_Program_Tree_Array : Array_Of_Program_Trees (1 .. 0);
 
    function New_Program_Tree
-     (Syntax   : Aquarius.Syntax.Syntax_Tree;
-      Source   : Aquarius.Sources.Source_Reference;
+     (Syntax   : not null Aquarius.Syntax.Syntax_Tree;
+      Source   : not null Aquarius.Sources.Source_Reference;
       Location : Aquarius.Locations.Location_Interface'Class)
       return Program_Tree;
 
    function New_Program
-     (Syntax   : Aquarius.Syntax.Syntax_Tree;
-      Source   : Aquarius.Sources.Source_Reference;
+     (Syntax   : not null Aquarius.Syntax.Syntax_Tree;
+      Source   : not null Aquarius.Sources.Source_Reference;
       Location : Aquarius.Locations.Location_Interface'Class)
       return Program_Tree;
 
    function New_Program_Root
-     (Syntax   : Aquarius.Syntax.Syntax_Tree;
-      Source   : Aquarius.Sources.Source_Reference;
+     (Syntax   : not null Aquarius.Syntax.Syntax_Tree;
+      Source   : not null Aquarius.Sources.Source_Reference;
       Location : Aquarius.Locations.Location_Interface'Class;
       Environment : not null access Local_Environment_Interface'Class)
       return Program_Tree;
 
    function New_Error_Tree
-     (Location : Aquarius.Locations.Location_Interface'Class;
-      Syntax   : Aquarius.Syntax.Syntax_Tree;
+     (Syntax   : not null Aquarius.Syntax.Syntax_Tree;
+      Source   : not null Aquarius.Sources.Source_Reference;
+      Location : Aquarius.Locations.Location_Interface'Class;
       Message  : String)
       return Program_Tree;
 

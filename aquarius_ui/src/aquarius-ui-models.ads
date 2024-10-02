@@ -1,13 +1,16 @@
 private with Ada.Strings.Unbounded;
+private with Aquarius.Programs.Parser;
 private with Aquarius.Trees.Cursors;
 
+with Aquarius.Grammars;
 with Aquarius.Programs;
 with Aquarius.UI.Editor;
 
 private package Aquarius.UI.Models is
 
    function Create_Model
-     (Program : Aquarius.Programs.Program_Tree)
+     (Grammar : Aquarius.Grammars.Aquarius_Grammar;
+      Program : Aquarius.Programs.Program_Tree)
       return Aquarius.UI.Editor.Model_Reference;
 
 private
@@ -20,9 +23,11 @@ private
 
    type Instance is new Aquarius.UI.Editor.Model_Interface with
       record
+         Grammar : Aquarius.Grammars.Aquarius_Grammar;
          Program : Aquarius.Programs.Program_Tree;
          Point   : Aquarius.Trees.Cursors.Cursor;
          Partial : Text;
+         Context : Aquarius.Programs.Parser.Parse_Context;
       end record;
 
    type Reference is access all Instance'Class;
@@ -35,6 +40,10 @@ private
    overriding function Contents
      (This : Instance)
       return String;
+
+   procedure Read_Partial
+     (This    : in out Instance'Class;
+      Leaving : Boolean);
 
    type Model_Command_Instance is abstract new Command_Interface with
       record

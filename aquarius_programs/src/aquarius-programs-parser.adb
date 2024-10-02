@@ -19,7 +19,7 @@ package body Aquarius.Programs.Parser is
    type Parseable (Class : Parseable_Type) is
       record
          First_Token   : Aquarius.Tokens.Token;
-         Offset        : Aquarius.Locations.Location_Offset := 0;
+         Offset        : Aquarius.Locations.Location_Offset := 1;
          Line          : Aquarius.Locations.Line_Index      := 1;
          Column        : Aquarius.Locations.Column_Index    := 1;
          Subtree       : Program_Tree;
@@ -245,6 +245,7 @@ package body Aquarius.Programs.Parser is
 
    begin
       Context := (Grammar        => Grammar,
+                  Root           => Root,
                   Ambiguities    => List_Of_Ambiguities.Empty_List,
                   Errors         => Program_Tree_Vector.Empty_Vector,
                   Comments       => Program_Tree_Vector.Empty_Vector,
@@ -864,7 +865,9 @@ package body Aquarius.Programs.Parser is
          if Have_Error then
             Add_Error (Context,
                        Grammar.Make_Error_Tree
-                         (Context, Line (First .. Next)));
+                         (Source   => Context.Root.Source,
+                          Location => Context,
+                          Message  => Line (First .. Next)));
          end if;
 
          First := Next + 1;

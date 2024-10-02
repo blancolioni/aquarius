@@ -804,21 +804,11 @@ package body Aquarius.Syntax is
    is
       Result : constant Syntax_Tree := new Syntax_Tree_Record;
    begin
-      if not Aquarius.Trees.Is_Null
-        (Aquarius.Trees.Tree (Declaration))
-      then
-         Result.Initialise_Tree
-           (Source        => Declaration.Source,
-            Location      => Declaration.all,
-            Keep_Parent   => False,
-            Keep_Siblings => False);
-      else
-         Result.Initialise_Tree
-           (Source        => null,
-            Location      => Locations.To_Location (0, 1, 1),
-            Keep_Parent   => False,
-            Keep_Siblings => False);
-      end if;
+      Result.Initialise_Tree
+        (Source        => Declaration.Source,
+         Location      => Declaration.all,
+         Keep_Parent   => False,
+         Keep_Siblings => False);
       Result.Node := new Syntax_Tree_Node_Record;
       Result.Node.Class         := Class;
       Result.Node.Frame         := Frame;

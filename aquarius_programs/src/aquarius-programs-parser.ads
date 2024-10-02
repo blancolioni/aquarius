@@ -120,6 +120,7 @@ private
      new Aquarius.Locations.Updateable_Location_Interface with
       record
          Grammar         : Aquarius.Grammars.Aquarius_Grammar;
+         Root            : Program_Tree;
          Ambiguities     : List_Of_Ambiguities.List;
          Comments        : Program_Tree_Vector.Vector;
          Errors          : Program_Tree_Vector.Vector;

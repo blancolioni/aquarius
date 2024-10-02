@@ -1158,13 +1158,14 @@ package body Aquarius.Programs is
    --------------------
 
    function New_Error_Tree
-     (Location : Aquarius.Locations.Location_Interface'Class;
-      Syntax   : Aquarius.Syntax.Syntax_Tree;
+     (Syntax   : not null Aquarius.Syntax.Syntax_Tree;
+      Source   : not null Aquarius.Sources.Source_Reference;
+      Location : Aquarius.Locations.Location_Interface'Class;
       Message  : String)
       return Program_Tree
    is
       Result : constant Program_Tree :=
-                 New_Program_Tree (Syntax, null, Location);
+                 New_Program_Tree (Syntax, Source, Location);
    begin
       Result.Fill (Message);
       Result.Error_Node := True;
@@ -1188,8 +1189,8 @@ package body Aquarius.Programs is
    -----------------
 
    function New_Program
-     (Syntax   : Aquarius.Syntax.Syntax_Tree;
-      Source   : Aquarius.Sources.Source_Reference;
+     (Syntax   : not null Aquarius.Syntax.Syntax_Tree;
+      Source   : not null Aquarius.Sources.Source_Reference;
       Location : Aquarius.Locations.Location_Interface'Class)
       return Program_Tree
    is
@@ -1204,8 +1205,8 @@ package body Aquarius.Programs is
    ----------------------
 
    function New_Program_Root
-     (Syntax   : Aquarius.Syntax.Syntax_Tree;
-      Source   : Aquarius.Sources.Source_Reference;
+     (Syntax   : not null Aquarius.Syntax.Syntax_Tree;
+      Source   : not null Aquarius.Sources.Source_Reference;
       Location : Aquarius.Locations.Location_Interface'Class;
       Environment : not null access Local_Environment_Interface'Class)
       return Program_Tree
@@ -1224,8 +1225,8 @@ package body Aquarius.Programs is
    ----------------------
 
    function New_Program_Tree
-     (Syntax   : Aquarius.Syntax.Syntax_Tree;
-      Source   : Aquarius.Sources.Source_Reference;
+     (Syntax   : not null Aquarius.Syntax.Syntax_Tree;
+      Source   : not null Aquarius.Sources.Source_Reference;
       Location : Aquarius.Locations.Location_Interface'Class)
       return Program_Tree
    is

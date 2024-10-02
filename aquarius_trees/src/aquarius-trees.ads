@@ -35,7 +35,7 @@ package Aquarius.Trees is
 
    procedure Initialise_Tree
      (Item          : in out Root_Tree_Type;
-      Source        : Aquarius.Sources.Source_Reference;
+      Source        : not null Aquarius.Sources.Source_Reference;
       Location      : Aquarius.Locations.Location_Interface'Class;
       Keep_Parent   : Boolean;
       Keep_Siblings : Boolean;
@@ -324,7 +324,7 @@ private
      and Root_Aquarius_Object with
       record
          Identity            : Positive;
-         Source              : Aquarius.Sources.Source_Reference;
+         Source_Ref          : Aquarius.Sources.Source_Reference;
          Offset              : Aquarius.Locations.Location_Offset := 0;
          Line                : Aquarius.Locations.Line_Index      := 1;
          Column              : Aquarius.Locations.Column_Index    := 1;
@@ -345,7 +345,11 @@ private
    function Source
      (This : Root_Tree_Type)
       return Aquarius.Sources.Source_Reference
-   is (This.Source);
+   is (if Aquarius.Sources."=" (This.Source_Ref, null)
+         then (if This.Parent /= null
+         then This.Parent.Source
+         else Aquarius.Sources.Internal_Source ("internal", "unknown"))
+       else This.Source_Ref);
 
    overriding function Offset
      (This : Root_Tree_Type)

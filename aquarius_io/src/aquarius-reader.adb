@@ -383,7 +383,8 @@ package body Aquarius.Reader is
                if Have_Error then
                   Add_Error (Context,
                              Grammar.Make_Error_Tree
-                               (Context, Slice (Line, First, Next)));
+                               (Result.Source,
+                                Context, Slice (Line, First, Next)));
                end if;
 
                First := Next + 1;

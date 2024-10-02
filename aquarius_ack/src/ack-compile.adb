@@ -211,7 +211,7 @@ package body Ack.Compile is
                       Aquarius.Configuration.Tool_Path ("as");
       Standard_Asm : constant String :=
                        Aquarius.Configuration.Aqua_Standard_Assembly_Path;
-      Args        : constant GNAT.OS_Lib.Argument_List :=
+      Args        : GNAT.OS_Lib.Argument_List :=
                       [new String'("-o"),
                        new String'(Object_Path),
                        new String'("--write-listing")]
@@ -231,6 +231,10 @@ package body Ack.Compile is
          end loop;
          Ada.Text_IO.New_Line;
       end if;
+
+      for Arg of Args loop
+         GNAT.OS_Lib.Free (Arg);
+      end loop;
 
       if Exit_Code /= 0 then
          Ada.Text_IO.Put_Line

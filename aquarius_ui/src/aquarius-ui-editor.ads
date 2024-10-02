@@ -1,3 +1,4 @@
+with Aquarius.Grammars;
 with Aquarius.Programs;
 
 package Aquarius.UI.Editor is
@@ -22,6 +23,7 @@ package Aquarius.UI.Editor is
 
    function Create
      (This    : Model_Factory_Interface;
+      Grammar : Aquarius.Grammars.Aquarius_Grammar;
       Program : Aquarius.Programs.Program_Tree)
       return Model_Reference
    is abstract;

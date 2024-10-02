@@ -2,6 +2,7 @@ with Aquarius.Locations;
 with Aquarius.Programs.Arrangements;
 with Aquarius.Rendering.Text;
 with Aquarius.Streams.Strings;
+with Aquarius.Tokens;
 
 package body Aquarius.UI.Models is
 
@@ -64,14 +65,23 @@ package body Aquarius.UI.Models is
    ------------------
 
    function Create_Model
-     (Program : Aquarius.Programs.Program_Tree)
+     (Grammar : Aquarius.Grammars.Aquarius_Grammar;
+      Program : Aquarius.Programs.Program_Tree)
       return Aquarius.UI.Editor.Model_Reference
    is
-   begin
-      return new Instance'
-        (Program => Program,
+      Model : Instance := Instance'
+        (Grammar => Grammar,
+         Program => Program,
+         Context => <>,
          Point   => Aquarius.Trees.Cursors.Left_Of_Tree (Program),
          Partial => <>);
+   begin
+      Model.Context.Initialise_Parse_Context
+        (Grammar     => Grammar,
+         Root        => Program,
+         Interactive => True,
+         Run_Actions => True);
+      return new Instance'(Model);
    end Create_Model;
 
    -------------
@@ -81,6 +91,7 @@ package body Aquarius.UI.Models is
    overriding procedure Execute (This : Insert_Character_Instance) is
    begin
       Ada.Strings.Unbounded.Append (This.Model.Partial, This.Ch);
+      This.Model.Read_Partial (False);
    end Execute;
 
    -------------------------------
@@ -96,6 +107,47 @@ package body Aquarius.UI.Models is
       return Insert_Character_Instance'
         (Model => Reference (This), Ch => Ch);
    end Insert_Character_At_Point;
+
+   ------------------
+   -- Read_Partial --
+   ------------------
+
+   procedure Read_Partial
+     (This    : in out Instance'Class;
+      Leaving : Boolean)
+   is
+      Text       : constant String := -This.Partial;
+      Complete   : Boolean;
+      Unique     : Boolean;
+      Have_Class : Boolean;
+      Class      : Aquarius.Tokens.Token_Class;
+      Tok        : Aquarius.Tokens.Token;
+      First      : Natural := 1;
+      Next       : Natural;
+
+      function Token_OK (Tok : Aquarius.Tokens.Token) return Boolean
+      is (Aquarius.Programs.Parser.Token_OK (Tok, This.Context));
+
+   begin
+      Aquarius.Tokens.Scan
+        (Frame      => This.Grammar.Frame,
+         Text       => Text,
+         Partial    => not Leaving,
+         Complete   => Complete,
+         Have_Class => Have_Class,
+         Unique     => Unique,
+         Class      => Class,
+         Tok        => Tok,
+         First      => First,
+         Last       => Next,
+         Token_OK   => Token_OK'Access);
+      if Have_Class then
+         if Token_OK (Tok) then
+            Aquarius.Programs.Parser.Parse_Token
+              (Tok, Text (First .. Next), This.Context);
+         end if;
+      end if;
+   end Read_Partial;
 
    ----------
    -- Undo --

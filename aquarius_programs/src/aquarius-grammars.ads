@@ -262,7 +262,7 @@ package Aquarius.Grammars is
    not overriding
    function Make_Program_Tree
      (Grammar  : not null access Aquarius_Grammar_Record;
-      Source   : Aquarius.Sources.Source_Reference;
+      Source   : not null Aquarius.Sources.Source_Reference;
       Location : Aquarius.Locations.Location_Interface'Class;
       Name     : String)
       return Aquarius.Programs.Program_Tree;
@@ -270,6 +270,7 @@ package Aquarius.Grammars is
    not overriding
    function Make_Error_Tree
      (Grammar  : Aquarius_Grammar_Record;
+      Source   : not null Aquarius.Sources.Source_Reference;
       Location : Aquarius.Locations.Location_Interface'Class;
       Message  : String)
      return Aquarius.Programs.Program_Tree;

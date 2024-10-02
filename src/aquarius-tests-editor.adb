@@ -34,12 +34,12 @@ package body Aquarius.Tests.Editor is
                   Aquarius.Programs.New_Program_Tree
                     (Syntax => Grammar.Get_Top_Level_Syntax,
                      Source => Source,
-                     Location => Aquarius.Locations.To_Location (0, 1, 1));
+                     Location => Aquarius.Locations.To_Location (1, 1, 1));
       Editor  : constant Aquarius.UI.Editor.Model_Reference :=
                   Aquarius.UI.Factories.Editor_Model_Factory
-                    .Create (Program);
+                    .Create (Grammar, Program);
       Command : constant Aquarius.UI.Command_Interface'Class :=
-                  Editor.Insert_Character_At_Point ('x');
+                  Editor.Insert_Character_At_Point ('{');
       Manager : Aquarius.UI.Commands.Command_Manager_Interface'Class :=
                   Aquarius.UI.Commands.Create_Command_Manager;
    begin
@@ -56,7 +56,7 @@ package body Aquarius.Tests.Editor is
    begin
       Suite.Append
         (Editor_Tests.Test
-           ("insert-single-character", Insert_Character_Test'Access, "x"));
+           ("insert-single-character", Insert_Character_Test'Access, "{ }"));
       Suite.Append
         (Editor_Tests.Test
            ("read-simple-stream", Read_Stream_Test'Access,
@@ -85,7 +85,7 @@ package body Aquarius.Tests.Editor is
                      Stream  => Reader);
       Editor  : constant Aquarius.UI.Editor.Model_Reference :=
                   Aquarius.UI.Factories.Editor_Model_Factory
-                    .Create (Program);
+                    .Create (Grammar, Program);
    begin
       return Editor.Contents;
    end Read_Stream_Test;
