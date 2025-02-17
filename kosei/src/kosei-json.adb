@@ -1,44 +1,20 @@
 with Ada.Characters.Handling;
-with Ada.Containers.Indefinite_Multiway_Trees;
+with Ada.Containers.Indefinite_Holders;
 with Ada.Directories;
-with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
+with WL.Json;
+
 package body Kosei.Json is
 
-   type Json_Element_Class is
-     (Null_Value, Boolean_Value, Integer_Value, Float_Value, String_Value,
-      Object_Value, Array_Value);
-
-   type Json_Element_Record (Class : Json_Element_Class) is
-      record
-         Name : Ada.Strings.Unbounded.Unbounded_String;
-         case Class is
-            when Null_Value =>
-               null;
-            when Boolean_Value =>
-               Bool_Value : Boolean;
-            when Integer_Value =>
-               Int_Value  : Integer;
-            when Float_Value =>
-               Flt_Value  : Float;
-            when String_Value =>
-               Str_Value : Ada.Strings.Unbounded.Unbounded_String;
-            when Object_Value =>
-               null;
-            when Array_Value =>
-               null;
-         end case;
-      end record;
-
-   package Json_Trees is
-     new Ada.Containers.Indefinite_Multiway_Trees
-       (Json_Element_Record);
+   package Json_Holders is
+     new Ada.Containers.Indefinite_Holders
+       (WL.Json.Json_Value'Class, WL.Json."=");
 
    type Json_Cursor is new Cursor_Interface with
       record
-         Position : Json_Trees.Cursor;
+         Top : Json_Holders.Holder;
       end record;
 
    overriding function Element
@@ -58,26 +34,17 @@ package body Kosei.Json is
 
    type Json_Config is new Configuration_Interface with
       record
-         Tree : Json_Trees.Tree;
+         Root : Json_Cursor;
       end record;
 
    overriding function Root
      (This : Json_Config)
       return Cursor_Interface'Class
-   is (Json_Cursor'(Position => Json_Trees.First_Child (This.Tree.Root)));
-
-   overriding procedure Put (This : Json_Config);
+   is (This.Root);
 
    function Read_Json_File
      (Path : String)
-     return Json_Trees.Tree;
-
-   function Find
-     (Parent : Json_Trees.Cursor;
-      Name   : String)
-      return Json_Trees.Cursor;
-
-   function To_String (Rec : Json_Element_Record) return String;
+     return WL.Json.Json_Value'Class;
 
    ---------------------
    -- Add_Json_Config --
@@ -87,10 +54,14 @@ package body Kosei.Json is
      (File_Path          : String;
       Configuration_Path : String := "")
    is
-      Tree : constant Json_Trees.Tree := Read_Json_File (File_Path);
+      Root_Value : constant WL.Json.Json_Value'Class :=
+                     Read_Json_File (File_Path);
+      Root       : constant Json_Cursor :=
+                     Json_Cursor'
+                       (Top => Json_Holders.To_Holder (Root_Value));
       Config : constant Json_Config :=
                  Json_Config'
-                   (Tree => Tree);
+                   (Root => Root);
    begin
       Config.Add_Configuration (Configuration_Path);
    end Add_Json_Config;
@@ -104,31 +75,12 @@ package body Kosei.Json is
       Name     : String)
       return Cursor_Interface'Class
    is
+      Result : constant WL.Json.Json_Value'Class :=
+                 Position.Top.Element.Get_Property (Name);
    begin
-      return Json_Cursor'(Position => Find (Position.Position, Name));
+      return Json_Cursor'
+        (Top => Json_Holders.To_Holder (Result));
    end Element;
-
-   ----------
-   -- Find --
-   ----------
-
-   function Find
-     (Parent : Json_Trees.Cursor;
-      Name   : String)
-      return Json_Trees.Cursor
-   is
-      use Ada.Strings.Unbounded;
-      use Json_Trees;
-      Child : Cursor := First_Child (Parent);
-   begin
-      while Has_Element (Child) loop
-         if Element (Child).Name = Name then
-            return Child;
-         end if;
-         Next_Sibling (Child);
-      end loop;
-      return Json_Trees.No_Element;
-   end Find;
 
    ----------------------
    -- Iterate_Children --
@@ -139,104 +91,21 @@ package body Kosei.Json is
       Process : not null access
         procedure (Position : Cursor_Interface'Class))
    is
-      procedure Local_Process (Position : Json_Trees.Cursor);
-
-      -------------------
-      -- Local_Process --
-      -------------------
-
-      procedure Local_Process (Position : Json_Trees.Cursor) is
-      begin
-         Process (Json_Cursor'(Position => Position));
-      end Local_Process;
-
-      Value : constant Json_Element_Record :=
-                Json_Trees.Element (This.Position);
+      Value : constant WL.Json.Json_Value'Class :=
+                This.Top.Element;
    begin
-
-      if Value.Class = Array_Value then
-         Json_Trees.Iterate_Children (This.Position, Local_Process'Access);
+      if Value in WL.Json.Json_Array'Class then
+         declare
+            Arr : WL.Json.Json_Array'Class
+            renames WL.Json.Json_Array'Class (Value);
+         begin
+            for I in 1 .. Arr.Length loop
+               Process (Json_Cursor'
+                          (Top => Json_Holders.To_Holder (Arr.Element (I))));
+            end loop;
+         end;
       end if;
    end Iterate_Children;
-
-   ---------
-   -- Put --
-   ---------
-
-   overriding procedure Put (This : Json_Config) is
-      use Ada.Strings.Unbounded;
-      use Ada.Text_IO;
-
-      procedure Put_Position (Position : Json_Trees.Cursor);
-
-      ------------------
-      -- Put_Position --
-      ------------------
-
-      procedure Put_Position (Position : Json_Trees.Cursor) is
-         Start_Col : constant Positive_Count := Col;
-         Rec       : constant Json_Element_Record :=
-                       Json_Trees.Element (Position);
-
-         First_Child : Boolean := True;
-
-         procedure Put_Child (Position : Json_Trees.Cursor);
-
-         ---------------
-         -- Put_Child --
-         ---------------
-
-         procedure Put_Child (Position : Json_Trees.Cursor) is
-         begin
-            if First_Child then
-               First_Child := False;
-            else
-               Put_Line (",");
-            end if;
-            Set_Col (Start_Col + 2);
-            Put_Position (Position);
-         end Put_Child;
-
-      begin
-         if Rec.Name /= "" then
-            Put ('"' & To_String (Rec.Name) & '"' & ": ");
-         end if;
-         case Rec.Class is
-            when Null_Value =>
-               Put ("null");
-            when Boolean_Value =>
-               Put (if Rec.Bool_Value then "true" else "false");
-            when Integer_Value =>
-               Put
-                 (Ada.Strings.Fixed.Trim
-                    (Rec.Int_Value'Image, Ada.Strings.Left));
-            when Float_Value =>
-               Put
-                 (Ada.Strings.Fixed.Trim
-                    (Rec.Flt_Value'Image, Ada.Strings.Left));
-            when String_Value =>
-               Put ('"' & To_String (Rec.Str_Value) & '"');
-            when Array_Value =>
-               Put_Line ("[");
-               Set_Col (Start_Col + 2);
-               Json_Trees.Iterate_Children
-                 (Position, Put_Child'Access);
-               New_Line;
-               Set_Col (Start_Col + 2);
-               Put ("]");
-            when Object_Value =>
-               Put_Line ("{");
-               Set_Col (Start_Col + 2);
-               Json_Trees.Iterate_Children
-                 (Position, Put_Child'Access);
-               New_Line;
-               Set_Col (Start_Col + 2);
-               Put ("}");
-         end case;
-      end Put_Position;
-   begin
-      Put_Position (Json_Trees.First_Child (This.Tree.Root));
-   end Put;
 
    --------------------
    -- Read_Json_File --
@@ -244,11 +113,8 @@ package body Kosei.Json is
 
    function Read_Json_File
      (Path : String)
-      return Json_Trees.Tree
+      return WL.Json.Json_Value'Class
    is
-      use Ada.Strings.Unbounded;
-      Tree               : Json_Trees.Tree;
-
       Current_Line       : Ada.Strings.Unbounded.Unbounded_String;
       Current_Line_Index : Natural := 0;
       Current_Last       : Natural := 0;
@@ -268,15 +134,9 @@ package body Kosei.Json is
 
       procedure Error (Message : String);
 
-      procedure Parse_Json_Element
-        (Name     : String;
-         Position : Json_Trees.Cursor);
-      procedure Parse_Json_Object
-        (Name     : String;
-         Position : Json_Trees.Cursor);
-      procedure Parse_Json_Array
-        (Name     : String;
-         Position : Json_Trees.Cursor);
+      function Parse_Json_Element return WL.Json.Json_Value'Class;
+      function Parse_Json_Object return WL.Json.Json_Value'Class;
+      function Parse_Json_Array return WL.Json.Json_Value'Class;
 
       function Parse_Terminal return String;
       function Parse_Rest_Of_String return String;
@@ -348,23 +208,13 @@ package body Kosei.Json is
       -- Parse_Json_Array --
       ----------------------
 
-      procedure Parse_Json_Array
-        (Name     : String;
-         Position : Json_Trees.Cursor)
-      is
-         Child_Pos : Json_Trees.Cursor;
+      function Parse_Json_Array return WL.Json.Json_Value'Class is
+         This : WL.Json.Json_Array;
       begin
-         Tree.Append_Child
-           (Position,
-            Json_Element_Record'(Name  => To_Unbounded_String (Name),
-                                 Class => Array_Value));
-         Child_Pos := Json_Trees.Last_Child (Position);
-
          while not Done
            and then Current_Character /= ']'
          loop
-
-            Parse_Json_Element ("", Child_Pos);
+            This.Append (Parse_Json_Element);
             Skip_Whitespace;
 
             if Current_Character = ',' then
@@ -382,47 +232,46 @@ package body Kosei.Json is
             Error ("missing ']'");
          end if;
 
+         return This;
+
       end Parse_Json_Array;
 
       ------------------------
       -- Parse_Json_Element --
       ------------------------
 
-      procedure Parse_Json_Element
-        (Name     : String;
-         Position : Json_Trees.Cursor)
-      is
+      function Parse_Json_Element return WL.Json.Json_Value'Class is
       begin
          Skip_Whitespace;
 
          if Done then
-            return;
+            return WL.Json.Null_Value;
          end if;
 
          case Current_Character is
             when '{' =>
                Next_Character;
                Skip_Whitespace;
-               Parse_Json_Object (Name, Position);
+               return Parse_Json_Object;
             when '[' =>
                Next_Character;
                Skip_Whitespace;
-               Parse_Json_Array (Name, Position);
+               return Parse_Json_Array;
             when others =>
                declare
                   Id : constant String := Parse_Terminal;
-                  N  : constant Unbounded_String :=
-                         To_Unbounded_String (Name);
-                  Rec : constant Json_Element_Record :=
-                          (if Id = "null" then (Null_Value, N)
-                           elsif Id = "true" or else Id = "false"
-                           then (Boolean_Value, N, Boolean'Value (Id))
-                           elsif (for all Ch of Id => Ch in '0' .. '9')
-                           then (Integer_Value, N, Integer'Value (Id))
-                           else (String_Value, N, To_Unbounded_String (Id)));
-
                begin
-                  Tree.Append_Child (Position, Rec);
+                  if Id = "null" then
+                     return WL.Json.Null_Value;
+                  elsif Id = "true" or else Id = "false" then
+                     return WL.Json.Boolean_Value
+                       (Boolean'Value (Id));
+                  elsif (for all Ch of Id => Ch in '0' .. '9') then
+                     return WL.Json.Integer_Value
+                       (Integer'Value (Id));
+                  else
+                     return WL.Json.String_Value (Id);
+                  end if;
                end;
          end case;
       end Parse_Json_Element;
@@ -431,18 +280,9 @@ package body Kosei.Json is
       -- Parse_Json_Object --
       -----------------------
 
-      procedure Parse_Json_Object
-        (Name     : String;
-         Position : Json_Trees.Cursor)
-      is
-         Child_Pos : Json_Trees.Cursor;
+      function Parse_Json_Object return WL.Json.Json_Value'Class is
+         This : WL.Json.Json_Object;
       begin
-         Tree.Append_Child
-           (Position,
-            Json_Element_Record'(Name  => To_Unbounded_String (Name),
-                                 Class => Object_Value));
-         Child_Pos := Json_Trees.Last_Child (Position);
-
          while not Done
            and then Current_Character /= '}'
          loop
@@ -458,7 +298,7 @@ package body Kosei.Json is
                         Error ("missing value");
                      end if;
 
-                     Parse_Json_Element (Id, Child_Pos);
+                     This.Set_Property (Id, Parse_Json_Element);
                   end;
                when others =>
                   Error ("missing field name");
@@ -484,6 +324,8 @@ package body Kosei.Json is
             Error ("missing close brace");
          end if;
 
+         return This;
+
       end Parse_Json_Object;
 
       --------------------------
@@ -491,6 +333,7 @@ package body Kosei.Json is
       --------------------------
 
       function Parse_Rest_Of_String return String is
+         use Ada.Strings.Unbounded;
          Result : Unbounded_String;
 
          procedure Save;
@@ -526,6 +369,7 @@ package body Kosei.Json is
       --------------------
 
       function Parse_Terminal return String is
+         use Ada.Strings.Unbounded;
          Result : Unbounded_String;
 
          procedure Save;
@@ -598,42 +442,17 @@ package body Kosei.Json is
 
    begin
       Start;
-      Parse_Json_Element ("", Tree.Root);
-      Tree.Append_Child
-        (Json_Trees.First_Child (Tree.Root),
-         Json_Element_Record'
-           (String_Value, To_Unbounded_String ("path"),
-            To_Unbounded_String
-              (Ada.Directories.Containing_Directory (Path))));
-      Finish;
-      return Tree;
+      return Result : WL.Json.Json_Value'Class :=
+        Parse_Json_Element
+      do
+         if Result in WL.Json.Json_Object'Class then
+            WL.Json.Json_Object'Class (Result)
+              .Set_Property ("path",
+                             Ada.Directories.Containing_Directory (Path));
+         end if;
+         Finish;
+      end return;
    end Read_Json_File;
-
-   ---------------
-   -- To_String --
-   ---------------
-
-   function To_String (Rec : Json_Element_Record) return String is
-   begin
-      case Rec.Class is
-         when Null_Value =>
-            return "null";
-         when Boolean_Value =>
-            return (if Rec.Bool_Value then "true" else "false");
-         when Integer_Value =>
-            return Ada.Strings.Fixed.Trim
-              (Rec.Int_Value'Image, Ada.Strings.Left);
-         when Float_Value =>
-            return Ada.Strings.Fixed.Trim
-              (Rec.Flt_Value'Image, Ada.Strings.Left);
-         when String_Value =>
-            return Ada.Strings.Unbounded.To_String (Rec.Str_Value);
-         when Array_Value =>
-            return "[array]";
-         when Object_Value =>
-            return "[object]";
-      end case;
-   end To_String;
 
    -----------
    -- Value --
@@ -644,13 +463,10 @@ package body Kosei.Json is
       Name     : String)
       return String
    is
-      Child : constant Json_Trees.Cursor := Find (Position.Position, Name);
+      Result : constant String :=
+                 Position.Top.Element.Get_Property (Name);
    begin
-      if Json_Trees.Has_Element (Child) then
-         return To_String (Json_Trees.Element (Child));
-      else
-         return "";
-      end if;
+      return (if Result = "null" then "" else Result);
    end Value;
 
 end Kosei.Json;

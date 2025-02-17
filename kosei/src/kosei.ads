@@ -2,8 +2,6 @@ package Kosei is
 
    type Configuration_Interface is interface;
 
-   procedure Put (This : Configuration_Interface) is abstract;
-
    type Cursor_Interface is interface;
 
    function Root
