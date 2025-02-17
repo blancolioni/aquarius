@@ -102,6 +102,7 @@ package body Ack.Generate is
                Unit.Duplicate;
                Unit.Dereference;
                Unit.Dereference (Tagatha.Int_32 (Offset));
+               Unit.Operate (Tagatha.Op_Add);
             end if;
          end;
       end if;
