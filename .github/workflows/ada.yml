@@ -11,27 +11,27 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
     - name: Checkout Aqua VM
       uses: actions/checkout@v4
       with:
         repository: blancolioni/aqua_vm
-        path: .
+        path: ./aqua_vm
         
     - name: Checkout Aqua Assembler
       uses: actions/checkout@v4
       with:
         repository: blancolioni/aqua_as
-        path: .
+        path: ./aqua_as
         
     - name: Checkout Tagatha
       uses: actions/checkout@v4
       with:
         repository: blancolioni/tagatha
-        path: .
+        path: ./tagatha
         
-    - name: Checkout
-      uses: actions/checkout@v3
-
     - name: Set up alire
       uses: alire-project/setup-alire@v2
 
