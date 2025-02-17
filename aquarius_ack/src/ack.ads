@@ -140,7 +140,8 @@ package Ack is
       E_Requires_Definition,
       E_Illegal_Redefinition,
       E_Not_An_Iterator,
-      E_Value_Might_Be_Void
+      E_Value_Might_Be_Void,
+      E_Redefining_Property_Not_Implemented
      );
 
    type Assertion_Monitoring_Level is
