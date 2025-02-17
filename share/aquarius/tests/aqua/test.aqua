@@ -11,6 +11,10 @@ feature
       local
          T : Unit_Test
       do
+         create { Test_Visitor_Pattern } T
+         Test_List.Append (T)
+         create { Test_Current } T
+         Test_List.Append (T)
          create { Test_Class_Load } T
          Test_List.Append (T)
          create { Test_Argument_Order  } T

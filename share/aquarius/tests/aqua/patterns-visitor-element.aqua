@@ -1,0 +1,7 @@
+deferred class Patterns.Visitor.Element
+
+feature
+    Accept (Visitor : Patterns.Visitor.Element_Visitor)
+        deferred
+        end
+end

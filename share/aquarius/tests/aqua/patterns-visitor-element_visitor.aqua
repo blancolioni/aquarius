@@ -1,0 +1,10 @@
+deferred class Patterns.Visitor.Element_Visitor
+
+feature
+    Visit_A (A : Patterns.Visitor.Element_A)
+        deferred
+        end
+
+    Visited_Element : Integer
+    
+end

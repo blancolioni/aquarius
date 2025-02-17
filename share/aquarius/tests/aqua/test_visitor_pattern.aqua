@@ -1,0 +1,25 @@
+class
+   Test_Visitor_Pattern
+   
+inherit
+   Unit_Test
+   
+feature
+   E : Patterns.Visitor.Element
+   V : Patterns.Visitor.Element_Visitor_1
+
+   Name : String
+      do
+         Result := "test-visitor-pattern"
+      end
+      
+   Execute
+      do
+         create { Patterns.Visitor.Element_A } E
+         E.Accept (V)
+         Success := V.Visited_Element = 1
+         if not Success then
+            Fail_Message := "Expected visited 1; found '" & V.Visited_Element.To_String & "'"
+         end
+      end
+end 

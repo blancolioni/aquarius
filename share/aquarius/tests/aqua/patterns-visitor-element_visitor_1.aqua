@@ -1,0 +1,8 @@
+class Patterns.Visitor.Element_Visitor_1 inherit Element_Visitor
+
+feature
+    Visit_A (A : Patterns.Visitor.Element_A)
+        do
+            Visited_Element := 1
+        end
+end

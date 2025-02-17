@@ -1,0 +1,45 @@
+class
+   Test_Current
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-current-variable"
+      end
+      
+   Changed : Boolean
+
+   Set_Changed
+      do
+         Changed := True
+      end
+
+   Execute
+      local
+         Copy : Test_Current
+      do
+         Copy := Current
+         Copy.Set_Changed
+         Success := Changed
+         if not Success then
+            Fail_Message := "Current alias did not set changed"
+         else
+            Changed := False
+            if Copy.Changed then
+               Success := False
+               Fail_Message := "Current alias did not clear changed"
+            else
+               Set_Changed
+               Success := Copy.Changed
+               if not Success then
+                  Fail_Message := "Setting changed did not update alias"
+               end
+            end
+         end
+      end
+      
+end 
