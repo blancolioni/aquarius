@@ -137,6 +137,9 @@ package body Ack.Errors is
             return "value of attached entity "
               & Get_Error_Entity (Node).Declared_Name
               & " might void but there is no default create routine";
+         when E_Redefining_Property_Not_Implemented =>
+            return "redefining or effecting properties not implemented"
+              & " (property " & Get_Error_Entity (Node).Description & ")";
       end case;
    end Error_Message;
 

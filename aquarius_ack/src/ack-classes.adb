@@ -251,9 +251,9 @@ package body Ack.Classes is
                   begin
                      for Redefine of Inherited.Redefined_Features loop
                         if Redefine.Feature_Name = Feature.Entity_Name_Id then
---                             Ada.Text_IO.Put_Line
---                               (Feature.Qualified_Name
---                                & " appears in redefine clause");
+                           --  Ada.Text_IO.Put_Line
+                           --    (Feature.Qualified_Name
+                           --     & " appears in redefine clause");
                            Feature.Set_Redefined (Class, A_Feature);
                            Found := True;
                            if A_Feature.Deferred then
@@ -279,11 +279,17 @@ package body Ack.Classes is
                      end if;
 
                      if not Found then
---                          Ada.Text_IO.Put_Line
---                            (Feature.Qualified_Name
---                             & " is effected from "
---                             & A_Feature.Qualified_Name);
-                        Feature.Set_Redefined (Class, A_Feature);
+                        if A_Feature.Is_Property then
+                           Error (Feature.Declaration_Node,
+                                  E_Redefining_Property_Not_Implemented,
+                                  A_Feature, Ancestor);
+                        else
+                           --  Ada.Text_IO.Put_Line
+                           --    (Feature.Qualified_Name
+                           --     & " is effected from "
+                           --     & A_Feature.Qualified_Name);
+                           Feature.Set_Redefined (Class, A_Feature);
+                        end if;
                      end if;
 
                   end;
