@@ -1,0 +1,10 @@
+class 
+   Lox.Checks.Literal
+
+feature
+
+   After_Numeric_Literal (N : String)
+      do
+      end
+      
+end

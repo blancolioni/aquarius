@@ -1,0 +1,36 @@
+class
+    Lox.Value.Integer_Value
+
+inherit
+    Lox.Value
+
+create
+   Make_From_Integer
+
+feature
+
+   Make_From_Integer (I : Integer)
+      do
+         Int_Value := I
+      end
+
+   To_Integer : Integer
+      do
+         Result := Int_Value
+      end
+
+   To_String : String
+      do
+         Result := Int_Value.To_String
+      end
+
+   Accept (Visitor : Lox.Value_Visitor)
+      do
+         Visitor.Visit_Integer (Current)
+      end
+
+feature
+
+    Int_Value : Integer
+    
+end

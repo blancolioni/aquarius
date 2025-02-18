@@ -1,0 +1,10 @@
+class Lox.Value_Factory
+
+feature
+
+   Make_From_Integer (I : Integer) : Lox.Value
+      do
+         create { Lox.Value.Integer_Value } Result.Make_From_Integer (I)
+      end
+
+end

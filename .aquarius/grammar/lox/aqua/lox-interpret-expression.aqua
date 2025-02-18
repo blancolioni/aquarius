@@ -1,0 +1,15 @@
+class
+    Lox.Interpret.Expression
+
+inherit
+    Lox.Has_Value
+    Aqua.Text_IO
+
+feature
+
+    After_Simple_Expression (Child : Simple_Expression)
+        do
+            Put_Line (Child.Value.To_String)
+        end
+
+end

@@ -1,0 +1,7 @@
+class Lox.Interpret.Multiplying_Operator inherit
+    Lox.Has_Operator
+    Aquarius.Trees.Program_Tree
+
+end
+
+        

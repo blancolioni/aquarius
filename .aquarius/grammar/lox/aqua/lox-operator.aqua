@@ -1,0 +1,10 @@
+deferred class
+    Lox.Operator
+
+feature
+
+    Apply (Left, Right : Lox.Value) : Lox.Value
+        deferred
+        end
+
+end

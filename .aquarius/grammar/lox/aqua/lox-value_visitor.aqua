@@ -1,0 +1,11 @@
+deferred class Lox.Value_Visitor
+
+feature
+
+    Visit_Integer (This : Lox.Value.Integer_Value)
+        deferred
+        end
+
+   Result_Value : Lox.Value
+
+end

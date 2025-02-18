@@ -1,0 +1,30 @@
+class
+   Lox.Stack
+
+feature
+
+   Is_Empty : Boolean
+      do
+         Result := Values.Is_Empty
+      end
+      
+   Push (V : Lox.Value)
+      do
+         Values.Insert (V)
+      ensure
+         not Is_Empty
+      end
+
+   Pop : Lox.Value
+      require
+         not Is_Empty
+      do
+         Result := Values.First_Element
+         Values.Delete_First
+      end
+
+feature { None }
+
+    Values : Aqua.Containers.Linked_List[Lox.Value]
+
+end

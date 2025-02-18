@@ -13,6 +13,10 @@
 			"name": "IDLE interface definition",
 			"plugin": "idle"
 		},
+		"lox": {
+			"name": "Lox programming language",
+			"plugin": "lox"
+		},
 		"ob": {
 			"name": "Oberon programming language",
 			"plugin": "oberon"

@@ -1,0 +1,15 @@
+class
+    Lox.Has_Value
+
+feature
+
+    Value : Lox.Value
+
+    Set_Value (V : Lox.Value)
+        do
+            Value := V
+        end
+
+    Value_Factory : Lox.Value_Factory
+
+end

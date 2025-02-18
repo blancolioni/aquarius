@@ -1,0 +1,13 @@
+class
+    Lox.Operator.Subtract
+
+inherit
+    Lox.Operator
+
+feature
+
+    Apply (Left, Right : Lox.Value) : Lox.Value
+        do
+            --  Result := Left.Subtract (Right)
+        end
+end

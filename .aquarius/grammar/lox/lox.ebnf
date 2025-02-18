@@ -1,0 +1,34 @@
+top_level ::= expression
+case_sensitive = false
+
+identifier         ::= standard ada_identifier
+numeric_literal    ::= standard ada_numeric_literal
+character_literal  ::= standard ada_character_literal
+string_literal     ::= standard backslash_escaped_string
+delimiter          ::= delimiters "(),;[]^."
+
+line_comment = "//"
+
+format '(' space_before no_space_after
+format ')' no_space_before space_after
+format ';' no_space_before new_line_after
+format ':' space_before space_after
+format ',' no_space_before space_after
+format '.' no_space_before no_space_after
+
+expression ::= simple_expression [relation simple_expression]
+relation ::= '==' | '!=' | '<' | '<=' | '>' | '>='
+
+simple_expression ::= [ '-' ] term { adding_operator term }
+
+adding_operator ::= '+' | '-'
+
+term ::= factor { multiplying_operator factor }
+multiplying_operator ::= '*' | '/'
+
+factor ::= literal | grouping 
+
+literal ::= numeric_literal | string_literal | 'true' | 'false' | 'nil' 
+
+grouping ::= '(' expression ')'
+

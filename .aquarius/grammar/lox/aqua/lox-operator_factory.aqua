@@ -1,0 +1,18 @@
+class Lox.Operator_Factory
+
+feature
+
+    From_String (S : String) : Lox.Operator
+    do
+        if S = "+" then
+           create { Lox.Operator.Add } Result
+        elsif S = "-" then
+           create { Lox.Operator.Subtract } Result
+        elsif S = "*" then
+           create { Lox.Operator.Multiply } Result
+        elsif S = "/" then
+           create { Lox.Operator.Divide } Result
+        end
+    end
+
+end

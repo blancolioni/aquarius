@@ -1,0 +1,27 @@
+class
+   Lox.Interpret.Term
+
+inherit
+    Lox.Has_Value
+    Aqua.Text_IO
+    
+feature
+
+Factory : Lox.Operator_Factory
+Op : detachable Lox.Operator
+
+    After_Multiplying_Operator (Child : Multiplying_Operator)
+    do
+        Op := Factory.From_String (Child.Concatenated_Image)
+    end
+
+    After_Factor (Child : Factor)
+    do
+        if attached Op then
+            Set_Value (Op.Apply (Value, Child.Value))
+        else
+            Set_Value (Child.Value)
+        end
+    end
+
+end

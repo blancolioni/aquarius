@@ -1,0 +1,10 @@
+class 
+   Lox.Checks.Expression 
+
+feature
+
+   After_Literal (Child : Literal)
+      do
+      end
+      
+end

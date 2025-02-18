@@ -1,0 +1,6 @@
+class Lox.Has_Operator
+
+feature
+   Operator : Lox.Operator
+
+end

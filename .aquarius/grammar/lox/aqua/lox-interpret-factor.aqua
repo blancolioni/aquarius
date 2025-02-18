@@ -1,0 +1,14 @@
+class
+   Lox.Interpret.Factor
+
+inherit
+    Lox.Has_Value
+
+feature
+
+    After_Literal (Child : Literal)
+       do
+           Set_Value (Child.Value)
+       end
+
+end

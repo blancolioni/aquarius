@@ -1,0 +1,24 @@
+class Lox.Value_Visitor.Add
+
+inherit Lox.Value_Visitor
+
+create Make
+
+feature
+
+   Make (Right : Lox.Value)
+      do
+         Right_Value := Right
+      end
+
+   Right_Value : Lox.Value
+
+   Visit_Integer (This : Lox.Value.Integer_Value)
+      local
+         Right : Integer
+      do
+         Right := Right_Value.To_Integer
+         create { Lox.Value.Integer_Value } Result_Value.Make_From_Integer (This.To_Integer + Right)
+      end
+
+end

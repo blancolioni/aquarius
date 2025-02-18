@@ -1,0 +1,13 @@
+class
+    Lox.Operator.Divide
+
+inherit
+    Lox.Operator
+
+feature
+
+    Apply (Left, Right : Lox.Value) : Lox.Value
+        do
+            --  Result := Left.Divide (Right)
+        end
+end

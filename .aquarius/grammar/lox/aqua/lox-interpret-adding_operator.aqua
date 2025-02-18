@@ -1,0 +1,19 @@
+class Lox.Interpret.Adding_Operator inherit
+    Lox.Has_Operator
+    Aquarius.Trees.Program_Tree
+    Aqua.Text_IO
+feature
+
+    After
+        local
+            Img : String
+        do
+            Img := Concatenated_Image
+            Put_Line (Img)
+            if Img = "+" then
+               create { Lox.Operator.Add } Operator
+            end
+        end
+end
+
+        

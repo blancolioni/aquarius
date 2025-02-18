@@ -1,0 +1,18 @@
+deferred class
+   Lox.Value
+
+feature
+
+   Accept (Visitor : Lox.Value_Visitor)
+      deferred
+      end
+
+   To_Integer : Integer
+      deferred
+      end
+
+   To_String : String
+      deferred
+      end
+
+end

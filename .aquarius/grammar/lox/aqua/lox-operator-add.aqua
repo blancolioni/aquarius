@@ -1,0 +1,17 @@
+class
+    Lox.Operator.Add
+
+inherit
+    Lox.Operator
+
+feature
+
+    Apply (Left, Right : Lox.Value) : Lox.Value
+        local
+            Visitor : Lox.Value_Visitor.Add
+        do
+            create Visitor.Make (Right)
+            Left.Accept (Visitor)
+            Result := Visitor.Result_Value
+        end
+end

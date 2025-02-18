@@ -1,0 +1,14 @@
+class 
+   Lox.Interpret.Literal
+
+inherit
+   Lox.Has_Value
+
+feature
+
+   After_Numeric_Literal (N : String)
+      do
+         Set_Value (Value_Factory.Make_From_Integer (N.To_Integer))
+      end
+      
+end
