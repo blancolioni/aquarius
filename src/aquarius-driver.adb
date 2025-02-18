@@ -32,6 +32,7 @@ begin
 
    if Aquarius.Options.Self_Test then
       Aquarius.Tests.Run_Tests;
+      Aquarius.Library.Shut_Down;
       return;
    end if;
 
@@ -60,6 +61,7 @@ begin
             Server.Load (Object_Path);
             Server.Run (Trace => Aquarius.Options.Aqua_Trace);
          end;
+         Aquarius.Library.Shut_Down;
          return;
       end if;
    end;
@@ -114,9 +116,15 @@ begin
             end if;
          end;
       end loop;
+      Aquarius.Library.Shut_Down;
       return;
    end if;
 
    Ada.Text_IO.Put_Line (Aquarius.Version.Version_String);
+   Aquarius.Library.Shut_Down;
 
+exception
+   when others =>
+      Aquarius.Library.Shut_Down;
+      raise;
 end Aquarius.Driver;

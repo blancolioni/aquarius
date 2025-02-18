@@ -8,6 +8,7 @@ with Ack.Loader;
 with Aquarius.Configuration;
 with Aquarius.Devices.Text_Writer;
 with Aquarius.Grammars.Manager;
+with Aquarius.Logging;
 with Aquarius.Reader;
 with Aquarius.Options;
 with Aquarius.Plugins.Manager;
@@ -150,6 +151,10 @@ package body Aquarius.Library is
          end if;
       end if;
 
+      Aquarius.Logging.Start_Logging;
+
+      Tagatha.Code.Set_Trace_Callback (Aquarius.Logging.Log'Access);
+
       Tagatha.Code.Enable_Trace
         (Enable_P_Code       => Aquarius.Options.Tagatha_Trace_P_Code,
          Enable_Transfers    => Aquarius.Options.Tagatha_Trace_Transfers,
@@ -179,5 +184,14 @@ package body Aquarius.Library is
    begin
       return Program;
    end Load_Aqua_Class;
+
+   ---------------
+   -- Shut_Down --
+   ---------------
+
+   procedure Shut_Down is
+   begin
+      Aquarius.Logging.Stop_Logging;
+   end Shut_Down;
 
 end Aquarius.Library;
