@@ -14,6 +14,12 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+    - name: Checkout WL_Lib
+      uses: actions/checkout@v4
+      with:
+        repository: blancolioni/wl_lib
+        path: ./wl_lib
+        
     - name: Checkout Aqua VM
       uses: actions/checkout@v4
       with:

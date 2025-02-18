@@ -14,12 +14,14 @@ aquarius_base = "*"
 aquarius_devices = "*"
 aquarius_trees = "*"
 aquarius_syntax = "*"
+wl_lib = "*"
 
 [[pins]]
 aquarius_base = { path = "../aquarius_base" }
 aquarius_devices = { path = "../aquarius_devices" }
 aquarius_trees = { path = "../aquarius_trees" }
 aquarius_syntax = { path = "../aquarius_syntax" }
+wl_lib = { path = "../wl_lib" }
 
 [build-switches]
 "*".ada_version = "ada2022"
@@ -27,6 +29,3 @@ Development.Runtime_Checks = "Everything"
 "*".Style_Checks = "yes"
 development.contracts = "yes"
 "*".compile_checks = "errors"
-
-[[depends-on]]
-wl_lib = "~0.1.4"

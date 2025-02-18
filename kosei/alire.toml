@@ -17,4 +17,8 @@ development.contracts = "yes"
 "*".compile_checks = "errors"
 
 [[depends-on]]
-wl_lib = "~0.1.4"
+wl_lib = "*"
+
+[[pins]]
+wl_lib = { path = "../wl_lib" }
+

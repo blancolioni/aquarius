@@ -29,6 +29,7 @@ aquarius_ui = "*"
 
 [[pins]]
 tagatha = { path = "./tagatha" }
+wl_lib = { path = "./wl_lib" }
 aqua_vm = { path = "./aqua_vm" }
 aquarius_ack = { path = "./aquarius_ack" }
 aquarius_base = { path = "./aquarius_base" }
@@ -51,4 +52,4 @@ development.contracts = "yes"
 parse_args = "~0.9.0"
 
 [[depends-on]]
-wl_lib = "~0.1.4"
+wl_lib = "*"
