@@ -1,6 +1,20 @@
 # aquarius
  An EBNF compiler
 
+## Build
+
+```
+git clone https://github.com/blancolioni/aquarius.git
+cd aquarius
+git clone https://github.com/blancolioni/aqua_as.git
+git clone https://github.com/blancolioni/aqua_vm.git
+git clone https://github.com/blancolioni/tagatha.git
+git clone https://github.com/blancolioni/wl_lib.git
+(cd aqua_as ; alr build)
+alr build
+./bin/aquarius --start-class ./share/aquarius/tests/aqua/test.aqua
+```
+
 ## Aqua
 
 ### Object Layout
