@@ -1,25 +1,31 @@
-expanded class 
+expanded class
    Integer
-   
-inherit  
-   Aqua.Algebra.Additive redefine Subtract, Negate, Equal end 
+
+inherit
+   Aqua.Algebra.Additive redefine Subtract, Negate, Equal end
    Aqua.Algebra.Multiplicative redefine Equal end
    Aqua.Algebra.Eq redefine Equal end
    Aqua.Integral redefine Equal end
    Aqua.Comparable redefine Equal end
    Aqua.Bounded redefine Equal end
-   
+
 feature
    To_String : String
       local
-         It : Integer
-         Index : Integer
-         Ch    : Character
-         Code  : System.Word_32
+         It       : Integer
+         Index    : Integer
+         Ch       : Character
+         Code     : System.Word_32
+         Negative : Boolean
+         Zero     : Integer
       do
          if Current = 0 then
             Result := "0"
          else
+            if Current < 0 then
+               Current := Zero - Current
+               Negative := true
+            end
             create Result.Create_With_Length (20)
             from
                It := Current
@@ -33,58 +39,62 @@ feature
                Index := Index - 1
                It := It / 10
             end
-            
+
+            if Negative then
+               Result.Replace_Element (Index, '-')
+               Index := Index - 1
+            end
             Result := Result.Slice (Index + 1, 20)
          end
       end
-   
+
    Add (Right : Integer) : Integer external "intrinsic"
    Subtract (Right : Integer) : Integer external "intrinsic"
    Negate : Integer external "intrinsic"
    Multiply (Right : Integer) : Integer external "intrinsic"
    Divide   (Right : Integer) : Integer external "intrinsic"
    Modulus  (Right : Integer) : Integer external "intrinsic"
-      
+
    Zero : Integer
       do
          Result := 0
       end
-      
+
    One  : Integer external "intrinsic"
-    
+
    Equal (Right : Integer) : Boolean external "intrinsic"
 
    GE (Right : Integer) : Boolean external "intrinsic"
    LE (Right : Integer) : Boolean external "intrinsic"
    GT (Right : Integer) : Boolean external "intrinsic"
    LT (Right : Integer) : Boolean external "intrinsic"
-   
+
    Minimum : Integer
       do
          Result := 0
       end
-      
+
    Maximum : Integer
       do
          Result := 2147483647
       end
-      
+
    Next : Integer
       do
          Result := Current + 1
       end
-      
+
    Previous : Integer
       do
          Result := Current - 1
       end
-      
+
    Make_With_Integer_Literal (Literal : Aqua.Integer_Literal) external "replace-current"
-   
+
    Convert_From (Other : Aqua.Integral) external "intrinsic" alias "replace-current"
-         
+
 feature { None }
 
    Internal : System.Internal_Frame_Word
-   
+
 end
