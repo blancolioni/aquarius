@@ -19,5 +19,4 @@ feature
              Set_Value (Child.Value)
           end
        end
-
 end

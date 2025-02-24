@@ -7,7 +7,11 @@ inherit
 feature
 
     Apply (Left, Right : Lox.Value) : Lox.Value
+        local
+            Visitor : Lox.Value_Visitor.Subtract
         do
-            --  Result := Left.Subtract (Right)
+            create Visitor.Make (Right)
+            Left.Accept (Visitor)
+            Result := Visitor.Result_Value
         end
 end
