@@ -1,0 +1,27 @@
+class
+   Test_Strings_Embedded_Quotes
+   
+inherit
+   Unit_Test
+      
+feature
+
+   S : String
+      do
+         Result := "this is a ""quoted"" string"
+      end
+      
+   Name : String
+      do
+         Result := "test-strings-embedded-quotes"
+      end
+      
+   Execute
+      do
+         Success := S = "this is a ""quoted"" string"
+         if not Success then
+            Fail_Message := "Embedded quotes not working"
+         end
+      end
+       
+end 

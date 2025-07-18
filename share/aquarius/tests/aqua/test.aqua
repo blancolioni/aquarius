@@ -29,6 +29,8 @@ feature
          Test_List.Append (T)
          create { Test_String_Ends_With } T
          Test_List.Append (T)
+         create { Test_Strings_Embedded_Quotes } T
+         Test_List.Append (T)
 --         create { Test_Strings_Fail } T
 --         Test_List.Append (T)
          create { Test_Or_Else } T
