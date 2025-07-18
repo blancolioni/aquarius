@@ -333,7 +333,7 @@ conditional ::=
    'end'
 
 multi_branch ::=
-         'case' expression [ when_part_list ] 'end' 'case'
+         'case' expression [ when_part_list ] 'end'
 	 
 when_part_list ::=
          < when_part >
