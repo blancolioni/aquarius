@@ -1,0 +1,25 @@
+class
+   Test_Void_2
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-void-2"
+      end
+      
+   Execute
+      local
+         S : String
+      do
+         Success := S /= Void
+         
+         if not Success then
+            Fail_Message := "Expected unitialized string to be Void"
+         end
+      end
+       
+end 
