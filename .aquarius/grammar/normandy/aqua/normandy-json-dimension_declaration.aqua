@@ -1,0 +1,56 @@
+class
+   Normandy.Json.Dimension_Declaration
+
+inherit
+   Aqua.Text_IO
+   Normandy.Json.Lists
+   Normandy.Json.Property_Lists
+
+feature
+
+    Before_Node
+        do
+            Dimensions.Append ("{")
+        end
+
+    After_Dimension_Name (Child : Normandy.Json.Dimension_Name)
+        do
+            Dimensions.Append ("  ""name"": """ & child.Concatenated_Image & """,")
+        end
+
+    Before_Dimension_Property (Child : Normandy.Json.Dimension_Property)
+        do
+            Child.Set_Lists (Attributes, Hierarchy, Sources)
+        end
+
+      After_Dimension_Property (Child : Normandy.Json.Dimension_Property)
+        do
+        end
+
+    After_Node
+        do
+            if not Attributes.Is_Empty then
+               Dimensions.Append ("  ""attributes"": [")
+               across Attributes as attr loop
+                  Dimensions.Append (attr)
+               end
+               Dimensions.Append ("  ],")
+            end
+            if not Hierarchy.Is_Empty then
+               Dimensions.Append ("  ""hierarchy"": [")
+               across Hierarchy as h loop
+                  Dimensions.Append (h)
+               end
+               Dimensions.Append ("  ],")
+            end
+            if not Sources.Is_Empty then
+               Dimensions.Append ("  ""source"": {")
+               across Sources as Source loop
+                   Dimensions.Append (Source)
+               end
+               Dimensions.Append ("  }")
+            end
+            Dimensions.Append ("},")
+        end    
+end
+   

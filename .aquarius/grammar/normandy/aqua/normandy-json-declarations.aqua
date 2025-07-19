@@ -1,0 +1,16 @@
+class
+   Normandy.Json.Declarations
+
+inherit
+   Aqua.Text_IO
+   Normandy.Json.Lists
+
+feature
+
+    Before_Declaration (Child : Normandy.Json.Declaration)
+        do
+            Child.Set_Dimensions (Dimensions)
+        end
+
+end
+   

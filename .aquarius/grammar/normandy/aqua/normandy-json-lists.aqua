@@ -1,0 +1,12 @@
+class
+    Normandy.Json.Lists
+
+feature
+
+    Dimensions : Aqua.Containers.Linked_List[String]
+
+    Set_Dimensions (A_List : Aqua.Containers.Linked_List[String])
+        do
+            Dimensions := A_List
+        end
+end

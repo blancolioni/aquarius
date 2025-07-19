@@ -1,0 +1,26 @@
+class
+   Normandy.Json.Source_Map
+
+feature
+
+   Column_Name : String
+   Field_Name  : detachable String
+   Conversion  : detachable String
+
+   After_String (S : String)
+      do
+         Column_Name := S
+      end
+
+   After_Identifier (Identifier : String)
+      do
+         Field_Name := Identifier
+      end
+
+   After_Expression (Child : Normandy.Json.Expression)
+      do
+         Conversion := Child.Concatenated_Image
+      end
+      
+end
+   

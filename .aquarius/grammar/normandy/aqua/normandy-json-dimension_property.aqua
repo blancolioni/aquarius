@@ -1,0 +1,20 @@
+class
+   Normandy.Json.Dimension_Property
+
+inherit
+   Normandy.Json.Property_Lists
+
+feature
+
+    Before_Attribute_Property (Child : Normandy.Json.Attribute_Property)
+        do
+            Child.Set_Dimensions (Attributes)
+        end
+
+    Before_Source_Property (Child : Normandy.Json.Source_Property)
+        do
+            Child.Set_Dimensions (Sources)
+        end
+        
+end
+   

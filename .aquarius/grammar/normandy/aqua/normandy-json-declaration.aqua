@@ -1,0 +1,15 @@
+class
+   Normandy.Json.Declaration
+
+inherit
+   Normandy.Json.Lists
+
+feature
+
+    Before_Dimension_Declaration (Child : Normandy.Json.Dimension_Declaration)
+        do
+            Child.Set_Dimensions (Dimensions)
+        end
+
+end
+   

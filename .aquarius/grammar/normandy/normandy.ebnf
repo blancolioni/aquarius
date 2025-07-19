@@ -1,0 +1,106 @@
+top ::= package
+
+identifier ::= standard ada_identifier
+number     ::= standard ada_numeric_literal
+string     ::= standard backslash_escaped_string
+delimiter  ::= delimiters "(),;[]."
+
+line_comment = "--"
+
+format '(' space_before no_space_after
+format ')' no_space_before space_after
+format ';' no_space_before new_line_after
+format ':' space_before space_after
+format ',' no_space_before space_after
+format '.' no_space_before no_space_after
+
+package ::= 'package' package_name [ description ] declarations 'end'
+
+package_name ::= identifier
+
+description ::= string
+
+declarations ::= { declaration }
+
+declaration ::= dimension_declaration
+
+dimension_declaration ::=
+    'dimension' dimension_name [ string ] [ aspects ]
+      { dimension_property }
+    'end'
+
+dimension_name ::= identifier
+
+dimension_property ::=
+    hierarchy_property
+  | attribute_property
+  | source_property
+
+hierarchy_property ::= 'hierarchy' < identifier >
+
+attribute_property ::= 'attribute' < measure_definition >
+
+source_property ::= 'source' source_definition
+
+measure_definition ::= identifier ':' type [ '=' expression ]
+
+source_definition ::= < source_attribute >
+
+source_attribute ::= source_type | source_file | source_connection | source_map
+
+source_type ::= 'type' identifier
+
+source_file ::= 'file' string
+
+source_connection ::= 'connection' string
+
+source_map ::= 'map' string [ 'to' identifier ] [ 'using' expression ]
+
+expression ::= if_expression | operator_expression
+
+if_expression ::= 'if' expression 'then' expression 'else' expression
+
+operator_expression ::= < conjunction_expression / 'or' >
+
+conjunction_expression ::= < relation_expression / 'and' >
+
+relation_expression ::=
+    simple_expression [ relational_operator simple_expression ]
+
+relational_operator ::= '>' | '<' | '>=' | '<=' | '=' | '/='
+
+simple_expression ::= < term / adding_operator >
+
+adding_operator ::= '+' | '-' | '&'
+
+term ::= < factor / multiplying_operator >
+
+multiplying_operator ::= '*' | '/' | 'mod'
+
+factor ::= primary [ '**' primary ]
+
+primary ::= '(' expression ')'
+          | object_reference
+	  | number
+	  | string
+	  | 'na'
+
+object_reference ::= identifier { qualifier }
+
+qualifier ::= selection | call | attribute
+
+selection ::= '[' < identifier ':' expression > ']'
+
+call ::= '(' { expression / ',' } ')'
+
+attribute ::= '.' identifier
+
+type ::= 'decimal'
+       | 'integer'
+       | 'text'
+       | 'boolean'
+       | identifier
+
+aspects ::= 'with' < aspect / ',' >
+
+aspect ::= identifier [ '=>' expression ]

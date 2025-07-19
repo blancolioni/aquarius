@@ -1,0 +1,29 @@
+class
+   Normandy.Json.Source_Definition
+
+inherit
+   Normandy.Json.Lists
+
+feature
+
+    Map_List : Aqua.Containers.Linked_List[String]
+
+
+    Before_Source_Attribute (Child : Normandy.Json.Source_Attribute)
+        do
+            Child.Set_Dimensions (Dimensions)
+            Child.Set_Map_List (Map_List)
+        end
+
+    After_Node
+        do
+            if not Map_List.Is_Empty then
+                Dimensions.Append ("      ""map"": [")
+                across Map_List as Item loop
+                    Dimensions.Append (Item)
+                end
+                Dimensions.Append ("      ]")
+            end
+
+end
+   

@@ -1,0 +1,42 @@
+class
+   Normandy.Json.Measure_Definition
+
+inherit
+   Normandy.Json.Lists
+
+feature
+
+    After_Identifier (Text : String)
+        do
+            Measure_Name := Text
+        end
+
+    After_Type (Child : Normandy.Json.Type)
+        do
+            Measure_Type := Child.Concatenated_Image
+        end
+
+    After_Expression (Child : Normandy.Json.Expression)
+        do
+            Measure_Value := Child.Concatenated_Image
+        end
+
+    After_Node
+        do
+            Dimensions.Append ("    {")
+            Dimensions.Append ("      ""name"": """ & Measure_Name & """,")
+            Dimensions.Append ("      ""type"": """ & Measure_Type & """,")
+            if attached Measure_Value as Value then
+                Dimensions.Append ("      ""value"": """ & Value & """")
+            end
+            Dimensions.Append ("    },")
+        end
+
+feature {None}
+
+    Measure_Name  : String
+    Measure_Type  : String
+    Measure_Value : detachable String;
+
+end
+   
