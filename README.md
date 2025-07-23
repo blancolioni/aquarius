@@ -12,7 +12,7 @@ git clone https://github.com/blancolioni/tagatha.git
 git clone https://github.com/blancolioni/wl_lib.git
 (cd aqua_as ; alr build)
 alr build
-./bin/aquarius --start-class ./share/aquarius/tests/aqua/test.aqua
+./bin/aquarius-driver --start-class ./share/aquarius/tests/aqua/test.aqua
 ```
 
 ## Aqua

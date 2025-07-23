@@ -1,3 +1,4 @@
+with Ada.Exceptions;
 with Ada.Text_IO;
 
 with Ack.Variables;
@@ -102,6 +103,14 @@ package body Ack.Semantic.Analysis.Statements is
             when N_Retry =>
                Analyse_Retry (Class, Container, Attachment, Node);
          end case;
+      exception
+         when E : others =>
+            Ada.Text_IO.Put_Line
+              (Ada.Text_IO.Standard_Error,
+               Get_Program (Node).Show_Location
+               & ": "
+               & Ada.Exceptions.Exception_Message (E));
+            raise;
       end Analyse;
 
    begin

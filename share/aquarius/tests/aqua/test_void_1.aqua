@@ -1,0 +1,25 @@
+class
+   Test_Void_1
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-void-1"
+      end
+      
+   Execute
+      local
+         S : detachable String
+      do
+         Success := S = Void
+         
+         if not Success then
+            Fail_Message := "Expected unitialized string to be Void"
+         end
+      end
+       
+end 
