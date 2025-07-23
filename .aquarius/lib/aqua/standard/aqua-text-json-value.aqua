@@ -1,0 +1,10 @@
+deferred class
+    Aqua.Text.Json.Value
+
+feature
+
+    To_String : String
+        deferred
+        end
+
+end

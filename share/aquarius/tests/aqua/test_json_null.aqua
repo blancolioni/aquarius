@@ -1,0 +1,29 @@
+class
+    Test_Json_Null
+
+inherit
+    Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-json-null-to-string"
+      end
+
+   Execute
+      local
+         Json_Value : Aqua.Text.Json.Value
+         Json_Image : String
+      do
+         create { Aqua.Text.Json.Null } Json_Value
+
+        Json_Image := Json_Value.To_String
+
+         Success := Json_Image = "null"
+         if not Success then
+            Fail_Message := "Expected Value = null; found " & Json_Image
+         end
+      end
+
+end
