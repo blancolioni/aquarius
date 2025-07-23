@@ -1,0 +1,54 @@
+class
+    Aqua.Text.Json.Array
+
+inherit
+    Aqua.Text.Json.Value
+
+feature
+
+    To_String : String
+        local
+            Body : String_List
+        do
+            Result := "["
+            across Internal as V loop
+                Body.Append (V.To_String)
+            end
+            Result := Result & Body.Interpolate(",")
+            Result := Result & "]"
+        end
+
+    Put (Value: Aqua.Text.Json.Value)
+        do
+            Internal.Append (Value)
+        end
+
+    Put_String (Value: String)
+        local
+            Json_Value : Aqua.Text.Json.String_Value
+        do
+            create Json_Value.Make (Value)
+            Put(Json_Value)
+        end
+
+    Put_Integer (Value: Integer)
+        local
+            Json_Value : Aqua.Text.Json.Integer_Value
+        do
+            create Json_Value.Make (Value)
+            Put(Json_Value)
+        end
+
+    Put_Boolean (Value: Boolean)
+        local
+            Json_Value : Aqua.Text.Json.Boolean_Value
+        do
+            create Json_Value.Make (Value)
+            Put(Json_Value)
+        end
+
+feature {None}
+
+    Internal : Aqua.Containers.Linked_List[Aqua.Text.Json.Value]
+
+end

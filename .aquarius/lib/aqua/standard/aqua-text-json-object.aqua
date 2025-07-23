@@ -1,0 +1,68 @@
+class
+    Aqua.Text.Json.Object
+
+inherit
+    Aqua.Text.Json.Value
+
+feature
+
+    To_String : String
+        local
+            Body : String_List
+        do
+            Result := "{"
+            across Internal as KV loop
+                Body.Append ("""" & KV.Key & """:" & KV.Value.To_String)
+            end
+            if not Body.Is_Empty then
+                Result := Result & Body.Interpolate(",")
+            end
+            Result := Result & "}"
+        end
+
+    Put (Key: String; Value: Aqua.Text.Json.Value)
+        local
+            Key_Value : Aqua.Text.Json.Key_Value
+        do
+            create Key_Value.Make (Key, Value)
+            Internal.Append (Key_Value)
+        end
+
+    Put_String (Key: String; Value: String)
+        local
+            Json_Value : Aqua.Text.Json.String_Value
+        do
+            create Json_Value.Make (Value)
+            Put(Key, Json_Value)
+        end
+
+    Put_Integer (Key: String; Value: Integer)
+        local
+            Json_Value : Aqua.Text.Json.Integer_Value
+        do
+            create Json_Value.Make (Value)
+            Put(Key, Json_Value)
+        end
+
+    Put_Boolean (Key: String; Value: Boolean)
+        local
+            Json_Value : Aqua.Text.Json.Boolean_Value
+        do
+            create Json_Value.Make (Value)
+            Put(Key, Json_Value)
+        end
+
+    Get (Key: String): detachable Aqua.Text.Json.Value
+        do
+            across Internal as KV loop
+               if KV.Key = Key then
+                  Result := KV.Value
+               end
+            end
+        end
+
+feature {None}
+
+    Internal : Aqua.Containers.Linked_List[Aqua.Text.Json.Key_Value]
+
+end

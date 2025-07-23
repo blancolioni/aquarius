@@ -2,15 +2,25 @@ class
    Test
 inherit
    Aqua.Text_IO
-   
+
 feature
 
    Test_List : Aqua.Containers.Linked_List [Unit_Test]
-   
+
    Create_Test_List
       local
          T : Unit_Test
       do
+         create { Test_Json_Null } T
+         Test_List.Append (T)
+         create { Test_Json_Integer } T
+         Test_List.Append (T)
+         create { Test_Json_Object } T
+         Test_List.Append (T)
+         create { Test_Json_Array } T
+         Test_List.Append (T)
+         create { Test_Visitor_Pattern } T
+         Test_List.Append (T)
          create { Test_Current } T
          Test_List.Append (T)
          create { Test_Class_Load } T
@@ -119,9 +129,9 @@ feature
                Failed_Tests := Failed_Tests + 1
             end
          end
-         
+
          Pass_Ratio := Passed_Tests * 100 / Number_Of_Tests
-         
+
          Put ("Tests: ")
          Put (Number_Of_Tests.To_String)
          Put ("; failed: ")
@@ -130,7 +140,7 @@ feature
          Put (Passed_Tests.To_String)
          Put (" (" & Pass_Ratio.To_String & "%)")
          New_Line
-         
+
          create A
          Put_Line ("A(2, 1) = " & A.fn (2, 1).To_String);
          Put_Line ("A(2, 2) = " & A.fn (2, 2).To_String);
@@ -151,5 +161,5 @@ feature {None}
             Result := N.To_String & " " & Item & "s"
          end
       end
-      
+
 end

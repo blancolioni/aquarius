@@ -1,0 +1,16 @@
+class
+    Aqua.Text.Json.Key_Value
+
+create Make
+
+feature
+
+    Key: String
+    Value: Aqua.Text.Json.Value
+
+    Make (K : String; V : Aqua.Text.Json.Value)
+        do
+            Key := K
+            Value := V
+        end
+end

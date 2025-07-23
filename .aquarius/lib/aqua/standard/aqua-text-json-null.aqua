@@ -1,0 +1,13 @@
+class
+    Aqua.Text.Json.Null
+
+inherit
+    Aqua.Text.Json.Value
+
+feature
+    To_String : String
+        do
+            Result := "null"
+        end
+
+end

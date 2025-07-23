@@ -1,0 +1,32 @@
+class
+    Test_Json_Object
+
+inherit
+    Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-json-object-to-string"
+      end
+
+   Execute
+      local
+         Json_Value : Aqua.Text.Json.Object
+         Json_Image : String
+      do
+         create { Aqua.Text.Json.Object } Json_Value
+         Json_Value.Put_String ("key1", "value1")
+         Json_Value.Put_Integer ("key2", 42)
+         Json_Value.Put_Boolean ("key3", True)
+
+        Json_Image := Json_Value.To_String
+
+         Success := Json_Image = "{""key1"":""value1"",""key2"":42,""key3"":true}"
+         if not Success then
+            Fail_Message := "Expected Value = {""key1"":""value1"",""key2"":42,""key3"":true}; found " & Json_Image
+         end
+      end
+
+end
