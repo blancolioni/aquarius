@@ -1,0 +1,27 @@
+class
+    Aqua.Text.Json.Boolean_Value
+
+inherit
+    Aqua.Text.Json.Value
+
+create
+    Make
+
+feature
+    To_String : String
+        do
+            if Internal then
+                Result := "true"
+            else
+                Result := "false"
+            end
+        end
+
+    Make (Value : Boolean)
+        do
+            Internal := Value
+        end
+
+feature { NONE }
+    Internal : Boolean
+end

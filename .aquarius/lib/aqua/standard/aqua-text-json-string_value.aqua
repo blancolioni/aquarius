@@ -1,0 +1,23 @@
+class
+    Aqua.Text.Json.String_Value
+
+inherit
+    Aqua.Text.Json.Value
+
+create
+    Make
+
+feature
+    To_String : String
+        do
+            Result := """" & Internal & """"
+        end
+
+    Make (Value : String)
+        do
+            Internal := Value
+        end
+
+feature { NONE }
+    Internal : String
+end

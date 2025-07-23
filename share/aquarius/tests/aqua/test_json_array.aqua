@@ -1,0 +1,35 @@
+class
+    Test_Json_Array
+
+inherit
+    Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-json-array-to-string"
+      end
+
+   Execute
+      local
+         Json_Value : Aqua.Text.Json.Array
+         Json_Image : String
+         Expected   : String
+      do
+         create Json_Value
+         Json_Value.Put_String ("value1")
+         Json_Value.Put_Integer (42)
+         Json_Value.Put_Boolean (True)
+
+         Json_Image := Json_Value.To_String
+
+         Expected := "[""value1"",42,true]"
+         Success := Json_Image = Expected
+
+         if not Success then
+            Fail_Message := "Expected value " & Expected & "; found " & Json_Image
+         end
+      end
+
+end

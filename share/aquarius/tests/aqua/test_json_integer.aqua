@@ -1,0 +1,29 @@
+class
+    Test_Json_Integer
+
+inherit
+    Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-json-integer-to-string"
+      end
+
+   Execute
+      local
+         Json_Value : Aqua.Text.Json.Value
+         Json_Image : String
+      do
+         create { Aqua.Text.Json.Integer_Value } Json_Value.Make (42)
+
+        Json_Image := Json_Value.To_String
+
+         Success := Json_Image = "42"
+         if not Success then
+            Fail_Message := "Expected Value = 42; found " & Json_Image
+         end
+      end
+
+end
