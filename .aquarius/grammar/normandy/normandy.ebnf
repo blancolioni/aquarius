@@ -23,6 +23,7 @@ description ::= string
 declarations ::= { declaration }
 
 declaration ::= dimension_declaration
+              | cube_declaration
 
 dimension_declaration ::=
     'dimension' dimension_name [ string ] [ aspects ]
@@ -33,20 +34,35 @@ dimension_name ::= identifier
 
 dimension_property ::=
     hierarchy_property
-  | attribute_property
+  | measure_property
   | source_property
+
+cube_declaration ::=
+    'cube' cube_name [ string ] [ aspects ]
+      { cube_property }
+    'end'
+
+cube_name ::= identifier
+
+cube_property ::=
+    dimension_reference_property
+  | measure_property
+  | invariant_property
+  | source_property
+
+dimension_reference_property ::= 'dimension' < dimension_name >
 
 hierarchy_property ::= 'hierarchy' < identifier >
 
-attribute_property ::= 'attribute' < measure_definition >
+invariant_property ::= 'invariant' expression
+
+measure_property ::= 'measure' < measure_definition >
 
 source_property ::= 'source' source_definition
 
 measure_definition ::= identifier ':' type [ '=' expression ]
 
-source_definition ::= < source_attribute >
-
-source_attribute ::= source_type | source_file | source_connection | source_map
+source_definition ::= source_type [ source_file ] [ source_connection ] { source_map }
 
 source_type ::= 'type' identifier
 
