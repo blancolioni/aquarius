@@ -3,10 +3,10 @@ class
 
 feature
 
-    Dimensions : Aqua.Containers.Linked_List[String]
+    Lines : Aqua.Containers.Linked_List[String]
 
-    Set_Dimensions (A_List : Aqua.Containers.Linked_List[String])
+    Set_Lines (A_List : Aqua.Containers.Linked_List[String])
         do
-            Dimensions := A_List
+            Lines := A_List
         end
 end

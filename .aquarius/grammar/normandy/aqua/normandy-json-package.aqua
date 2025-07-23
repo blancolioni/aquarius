@@ -2,9 +2,9 @@ class
    Normandy.Json.Package
 
 inherit
-   Normandy.Json
+   Normandy.Json.Serializable
    Aqua.Text_IO
-   
+
 feature
 
    Before_Node
@@ -17,13 +17,15 @@ feature
          Put_Line ("   ""version"": ""0.1.0"",")
 	      Put_Line ("   ""author"": ""internal""")
          Put_Line ("}")
+         Put_Line (To_Json.To_String)
       end
 
    After_Package_Name (Child : Normandy.Json.Package_Name)
       do
+         Package_Name := Child.Concatenated_Image
          Put_Line ("  ""name"": """ & child.Concatenated_Image & """,")
       end
-      
+
    After_Description (Child : Normandy.Json.Description)
       do
          Put_Line ("  ""description"": " & child.Concatenated_Image & ",")
@@ -31,20 +33,37 @@ feature
 
    Before_Declarations (Child : Normandy.Json.Declarations)
       do
-         Child.Set_Dimensions (Dimensions)
+         Child.Set_Lines (Lines)
       end
-      
+
    After_Declarations (Child : Normandy.Json.Declarations)
       do
          Put_Line ("  ""dimensions"": [")
-         across Dimensions as Dimension loop
-            Put_Line ("    " & Dimension)
+         across Lines as Line loop
+            Put_Line ("    " & Line)
          end
-         Put_Line ("  ]")
+         Put_Line ("  ],")
+      end
+
+   To_Json : Aqua.Text.Json.Value
+      local
+         Pkg_Json : Aqua.Text.Json.Object
+         Name     : Aqua.Text.Json.String_Value
+         Version  : Aqua.Text.Json.String_Value
+         Author   : Aqua.Text.Json.String_Value
+      do
+         create Name.Make (Package_Name)
+         create Version.Make ("0.1.0")
+         create Author.Make ("internal")
+         Pkg_Json.Put ("name", Name)
+         Pkg_Json.Put ("version", Version)
+         Pkg_Json.Put ("author", Author)
+         Result := Pkg_Json
       end
 
 feature {None}
 
-   Dimensions : Aqua.Containers.Linked_List[String]
+   Package_Name : String
+   Lines : Aqua.Containers.Linked_List[String]
 
 end

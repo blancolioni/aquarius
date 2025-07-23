@@ -9,8 +9,7 @@ feature
 
     Before_Declaration (Child : Normandy.Json.Declaration)
         do
-            Child.Set_Dimensions (Dimensions)
+            Child.Set_Lines (Lines)
         end
 
 end
-   

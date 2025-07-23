@@ -8,22 +8,48 @@ feature
 
     Map_List : Aqua.Containers.Linked_List[String]
 
-
-    Before_Source_Attribute (Child : Normandy.Json.Source_Attribute)
+    Before_Node
         do
-            Child.Set_Dimensions (Dimensions)
-            Child.Set_Map_List (Map_List)
+            Lines.Append ("      {")
+        end
+
+    After_Source_Type (Child : Normandy.Json.Source_Type)
+        do
+            Lines.Append ("      ""type"": """ & Child.Type & """,")
+        end
+
+    After_Source_File (Child : Normandy.Json.Source_File)
+        do
+            Lines.Append ("      ""fileName"": " & Child.Path & ",")
+        end
+
+    After_Source_Connection (Child : Normandy.Json.Source_Connection)
+        do
+            Lines.Append ("      ""connectionString"": """ & Child.Connection_String & """,")
+        end
+
+    After_Source_Map (Child : Normandy.Json.Source_Map)
+        do
+            Map_List.Append ("         {")
+            Map_List.Append ("            ""sourceName"": " & Child.Column_Name & ",")
+            if attached Child.Field_Name as Field then
+                Map_List.Append ("            ""sinkName"": """ & Field & """,")
+            end
+            if attached Child.Conversion as Conv then
+                Map_List.Append ("            ""conversion"": """ & Conv & """")
+            end
+            Map_List.Append ("         },")
         end
 
     After_Node
         do
             if not Map_List.Is_Empty then
-                Dimensions.Append ("      ""map"": [")
+                Lines.Append ("      ""sourceMaps"": [")
                 across Map_List as Item loop
-                    Dimensions.Append (Item)
+                    Lines.Append (Item)
                 end
-                Dimensions.Append ("      ]")
+                Lines.Append ("      ]")
             end
+            Lines.Append ("      }")
 
 end
-   

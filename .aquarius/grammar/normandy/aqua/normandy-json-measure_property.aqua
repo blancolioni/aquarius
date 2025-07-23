@@ -1,0 +1,14 @@
+class
+   Normandy.Json.Measure_Property
+
+inherit
+   Normandy.Json.Lists
+
+feature
+
+   Before_Measure_Definition (Child : Normandy.Json.Measure_Definition)
+      do
+         Child.Set_Lines (Lines)
+      end
+
+end

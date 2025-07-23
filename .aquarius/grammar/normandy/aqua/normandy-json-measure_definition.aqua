@@ -23,13 +23,13 @@ feature
 
     After_Node
         do
-            Dimensions.Append ("    {")
-            Dimensions.Append ("      ""name"": """ & Measure_Name & """,")
-            Dimensions.Append ("      ""type"": """ & Measure_Type & """,")
+            Lines.Append ("    {")
+            Lines.Append ("      ""name"": """ & Measure_Name & """,")
+            Lines.Append ("      ""type"": """ & Measure_Type & """,")
             if attached Measure_Value as Value then
-                Dimensions.Append ("      ""value"": """ & Value & """")
+                Lines.Append ("      ""value"": """ & Value & """")
             end
-            Dimensions.Append ("    },")
+            Lines.Append ("    },")
         end
 
 feature {None}
@@ -39,4 +39,3 @@ feature {None}
     Measure_Value : detachable String;
 
 end
-   

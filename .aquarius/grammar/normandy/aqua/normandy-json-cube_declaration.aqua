@@ -1,8 +1,7 @@
 class
-   Normandy.Json.Dimension_Declaration
+   Normandy.Json.Cube_Declaration
 
 inherit
-   Aqua.Text_IO
    Normandy.Json.Lists
    Normandy.Json.Property_Lists
 
@@ -20,7 +19,7 @@ feature
 
     Before_Dimension_Property (Child : Normandy.Json.Dimension_Property)
         do
-            Child.Set_Dimension_Lists (Measures, Hierarchy, Sources)
+            Child.Set_Cube_Lists (Dimensions, Measures, Hierarchy, Sources)
         end
 
       After_Dimension_Property (Child : Normandy.Json.Dimension_Property)

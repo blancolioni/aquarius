@@ -8,8 +8,7 @@ feature
 
     Before_Dimension_Declaration (Child : Normandy.Json.Dimension_Declaration)
         do
-            Child.Set_Dimensions (Dimensions)
+            Child.Set_Lines (Lines)
         end
 
 end
-   

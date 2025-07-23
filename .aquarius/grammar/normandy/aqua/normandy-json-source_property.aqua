@@ -8,8 +8,7 @@ feature
 
    Before_Source_Definition (Child : Normandy.Json.Source_Definition)
       do
-         Child.Set_Dimensions (Dimensions)
+         Child.Set_Lines (Lines)
       end
 
 end
-   

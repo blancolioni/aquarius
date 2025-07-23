@@ -6,15 +6,14 @@ inherit
 
 feature
 
-    Before_Attribute_Property (Child : Normandy.Json.Attribute_Property)
+    Before_Measure_Property (Child : Normandy.Json.Measure_Property)
         do
-            Child.Set_Dimensions (Attributes)
+            Child.Set_Lines (Measures)
         end
 
     Before_Source_Property (Child : Normandy.Json.Source_Property)
         do
-            Child.Set_Dimensions (Sources)
+            Child.Set_Lines (Sources)
         end
-        
+
 end
-   

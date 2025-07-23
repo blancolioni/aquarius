@@ -1,0 +1,12 @@
+class
+   Normandy.Json.Source_Connection
+
+feature
+
+   Connection_String : String
+
+   After_String(S : String)
+      do
+         Connection_String := S
+      end
+end
