@@ -33,10 +33,20 @@
 		},
 		"tools": {
 			"as": "./aqua_as/bin/aqua_as"
-		}
+		},
     },
 	"plugins": {
-		
+
+	},
+	"filesystem":{
+		".": {
+			"path": "./fs",
+			"read": true,
+			"write": true
+		},
+		"log": {
+			"path": "./log",
+			"write": true
+		}
 	}
 }
-    

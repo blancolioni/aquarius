@@ -19,7 +19,7 @@ package body Aquarius.Devices.Meta is
    type Instance is new Parent with
       record
          Server : Aqua.Server.Reference;
-         Top    : Address_Type   := 16#FFFF_F400#;
+         Top    : Address_Type   := 16#FFFF_0000#;
          Rs     : Register_Array := [others => 0];
       end record;
 
@@ -83,9 +83,6 @@ package body Aquarius.Devices.Meta is
          Ch := Character'Val (This.Rs (Index));
          Index := Index + 1;
       end loop;
-      Ada.Text_IO.Put_Line ("installing: " & Id
-                            & " at " & Aqua.Images.Hex_Image (This.Top));
-
       declare
          Device : constant Aquarius.Devices.Reference :=
                     Aquarius.Devices.Get (Id);
@@ -93,6 +90,11 @@ package body Aquarius.Devices.Meta is
          Bound  : constant Address_Type :=
                     This.Top + Word_32 (Device.Word_Count * 4);
       begin
+         Ada.Text_IO.Put_Line
+           ("installing: " & Id
+            & " at " & Aqua.Images.Hex_Image (Base)
+            & ":" & Aqua.Images.Hex_Image (Bound));
+
          This.Server.Install_Device
            (Base, Bound, Aqua.Devices.Reference (Device));
 
