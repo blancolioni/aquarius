@@ -33,7 +33,7 @@
 		},
 		"tools": {
 			"as": "./aqua_as/bin/aqua_as"
-		},
+		}
     },
 	"plugins": {
 
