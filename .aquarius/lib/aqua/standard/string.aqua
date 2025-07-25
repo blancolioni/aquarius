@@ -251,7 +251,34 @@ feature
       ensure
          Result implies Slice (Length - Other.Length + 1, Length) = Other
       end
+
+   Trim_End_With (Ch : Character) : String
+      local
+         Start_Index : Integer
+      do
+         
+         from
+            Start_Index := Length;
+         invariant
+            Start_Index >= 0 and then Start_Index <= Length
+            and then Start_Index = Length or else Element (Start_Index + 1) = Ch
+         until
+            Start_Index = 0 or else Element (Start_Index) /= Ch
+         loop
+            Start_Index := Start_Index - 1
+         end
+         if Start_Index < 0 then
+            Result := ""
+         else
+            Result := Slice (1, Start_Index)
+         end
+      end
    
+   Trim_End : String
+      do
+         Result := Trim_End_With (' ')
+      end
+
 feature { None }  --  string literals
 
    Create_From_String_Literal (Addr : System.Address)

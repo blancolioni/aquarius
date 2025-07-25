@@ -50,6 +50,18 @@ package body Aquarius.Configuration is
       return Get_Path ("/install/paths/assembly");
    end Assembly_Path;
 
+   --------------------
+   -- Directory_Path --
+   --------------------
+
+   function Directory_Path
+     (Directory_Name : String)
+      return String
+   is
+   begin
+      return Get_Path ("/filesystem/" & Directory_Name & "/path");
+   end Directory_Path;
+
    -------------------------
    -- Generated_File_Path --
    -------------------------
