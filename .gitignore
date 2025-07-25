@@ -5,10 +5,11 @@
 /.aquarius/tmp
 /share/aqua_vm/asm
 /share/aqua_vm/obj
-/logs
 *~
 *.lst
 /aqua_as/
 /aqua_vm/
 /tagatha/
 /wl_lib/
+/log/
+*.log
