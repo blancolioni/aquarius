@@ -14,12 +14,12 @@ feature
 
     After_Source_Type (Child : Normandy.Json.Source_Type)
         do
-            Dimensions.Append ("      ""type"": """ & Child.Type & """,")
+            Lines.Append ("      ""type"": """ & Child.Type & """,")
         end
 
     After_Source_File (Child : Normandy.Json.Source_File)
         do
-            Dimensions.Append ("      ""file"": """ & Child.Path & """,")
+            Lines.Append ("      ""file"": """ & Child.Path & """,")
         end
 
     After_Source_Map (Child : Normandy.Json.Source_Map)
@@ -36,4 +36,3 @@ feature
         end
 
 end
-   

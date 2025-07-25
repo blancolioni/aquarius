@@ -28,7 +28,8 @@ feature
 
    After_Description (Child : Normandy.Json.Description)
       do
-         Put_Line ("  ""description"": " & child.Concatenated_Image & ",")
+         Put_Line ("  ""description"": " & Child.Concatenated_Image & ",")
+         Package_Description := Child.Concatenated_Image
       end
 
    Before_Declarations (Child : Normandy.Json.Declarations)
@@ -58,12 +59,18 @@ feature
          Pkg_Json.Put ("name", Name)
          Pkg_Json.Put ("version", Version)
          Pkg_Json.Put ("author", Author)
+         if attached Package_Description as Desc then
+            Pkg_Json.Put_String ("description", Desc)
+         end
          Result := Pkg_Json
       end
 
 feature {None}
 
    Package_Name : String
+   Package_Description : detachable String
+   Declarations        : Aqua.Text.Json.Value
+
    Lines : Aqua.Containers.Linked_List[String]
 
 end
