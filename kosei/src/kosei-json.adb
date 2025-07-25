@@ -187,12 +187,25 @@ package body Kosei.Json is
                   return;
                end if;
 
-               Current_Line :=
-                 Ada.Strings.Unbounded.To_Unbounded_String
-                   (Ada.Text_IO.Get_Line (File));
-               Current_Last :=
-                 Ada.Strings.Unbounded.Length (Current_Line);
+               declare
+                  Next_Line : constant String :=
+                                Ada.Text_IO.Get_Line (File);
+                  Trimmed_Line : constant String :=
+                                   (if Next_Line'Length > 0
+                                    and then Next_Line (Next_Line'Last)
+                                    = Character'Val (13)
+                                    then Next_Line
+                                      (Next_Line'First ..
+                                         Next_Line'Last - 1)
+                                    else Next_Line);
+               begin
 
+                  Current_Line :=
+                    Ada.Strings.Unbounded.To_Unbounded_String
+                      (Trimmed_Line);
+                  Current_Last :=
+                    Ada.Strings.Unbounded.Length (Current_Line);
+               end;
             end;
             Current_Index := 0;
             Next_Character;
