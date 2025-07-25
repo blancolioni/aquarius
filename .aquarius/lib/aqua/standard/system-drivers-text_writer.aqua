@@ -1,23 +1,33 @@
-expanded class 
+expanded class
    System.Drivers.Text_Writer
-   
+
 feature
 
    Put (Ch : Character)
       local
          Mem : System.Memory.Mem
+         Len : System.Word_32
       do
-         Mem.Put_Word_32 (Character_Addr, Ch.UTF_32_Code)
+         Len := Mem.Get_Word_32 (Length_Addr)
+         Mem.Put_Word_32 (Buffer_Addr.Offset_Words (Len), Ch.UTF_32_Code)
+         Len := Len + 1
+         if Ch.UTF_32_Code = 10 or else Len = 200 then
+            Mem.Put_Word_32 (Length_Addr, Len)
+            Mem.Put_Word_32 (File_Addr, 1)
+            Mem.Put_Word_32 (Command_Addr, 3)
+            Len := 0
+         end
+         Mem.Put_Word_32 (Length_Addr, Len)
       end
 
     Set_Output (Name : String)
        local
           Mem : System.Memory.Mem
        do
-          Name.Write_To_Memory (Name_Addr)
-          Mem.Put_Word_32 (Output_Addr, 1)
+         --  Name.Write_To_Memory (Name_Addr)
+         --  Mem.Put_Word_32 (Output_Addr, 1)
        end
-       
+
 feature { None }
 
    Base : System.Address
@@ -27,21 +37,25 @@ feature { None }
          Result := Meta.Install_Driver ("aqua-text-writer")
          --  Result := 16#FFFF_F000#
       end
-      
-   Character_Addr : System.Address
+
+   Command_Addr : System.Address
       once
          Result := Base
       end
-      
-   Output_Addr : System.Address
+
+   File_Addr : System.Address
       once
          Result := Base.Offset_Words (1)
       end
-      
-   Name_Addr : System.Address
+
+   Length_Addr : System.Address
       once
          Result := Base.Offset_Words (2)
       end
-      
+
+   Buffer_Addr : System.Address
+      once
+         Result := Base.Offset_Words (3)
+      end
 
 end

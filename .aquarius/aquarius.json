@@ -36,7 +36,17 @@
 		}
     },
 	"plugins": {
-		
+
+	},
+	"filesystem":{
+		".": {
+			"path": "./fs",
+			"read": true,
+			"write": true
+		},
+		"log": {
+			"path": "./log",
+			"write": true
+		}
 	}
 }
-    
