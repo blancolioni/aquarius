@@ -13,18 +13,6 @@ feature
       do
          create { Test_Integer_Compare } T
          Test_List.Append (T)
-         create { Test_File_Writer } T
-         Test_List.Append (T)
-         create { Test_Json_Null } T
-         Test_List.Append (T)
-         create { Test_Json_Integer } T
-         Test_List.Append (T)
-         create { Test_Json_Object } T
-         Test_List.Append (T)
-         create { Test_Json_Array } T
-         Test_List.Append (T)
-         create { Test_Visitor_Pattern } T
-         Test_List.Append (T)
          create { Test_Current } T
          Test_List.Append (T)
          create { Test_Class_Load } T
@@ -102,6 +90,18 @@ feature
          create { Test_Inherited_Attached } T
          Test_List.Append (T)
          create { Test_Visitor_Pattern } T
+         Test_List.Append (T)
+         create { Test_String_Writer } T
+         Test_List.Append (T)
+         create { Test_File_Writer } T
+         Test_List.Append (T)
+         create { Test_Json_Null } T
+         Test_List.Append (T)
+         create { Test_Json_Integer } T
+         Test_List.Append (T)
+         create { Test_Json_Object } T
+         Test_List.Append (T)
+         create { Test_Json_Array } T
          Test_List.Append (T)
       end
 

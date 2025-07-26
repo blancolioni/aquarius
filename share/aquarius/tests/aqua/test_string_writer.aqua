@@ -1,0 +1,26 @@
+class
+    Test_String_Writer
+
+inherit
+    Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-string-writer"
+      end
+
+   Execute
+      local
+         Writer : Aqua.Stream.String_Writer
+      do
+         Writer.Put_String ("Hello, World!")
+         Writer.Put_String (" This is a test string.")
+         Success := Writer.Content = "Hello, World! This is a test string."
+         if not Success then
+            Fail_Message := "Expected content 'Hello, World! This is a test string.', but found '" & Writer.Content & "'"
+         end
+      end
+
+end

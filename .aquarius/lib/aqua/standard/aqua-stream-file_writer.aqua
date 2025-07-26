@@ -3,7 +3,7 @@ class
 
 inherit
     Aqua.Stream.Writer
-        redefine Open, Close, Flush end
+        redefine Close, Flush end
 
 create
     Open, Open_FD
