@@ -1,4 +1,5 @@
 with Ada.Containers.Indefinite_Vectors;
+with Ada.Text_IO;
 with Aquarius.Filesystem;
 
 package body Aquarius.Devices.Text_Writer is
@@ -113,7 +114,7 @@ package body Aquarius.Devices.Text_Writer is
             declare
                Count : Natural := 0;
                Path  : String (1 .. Natural (This.Rs (R_Buffer_Length)));
-               First : constant Register_Index := R_Buffer_Start;
+               First : constant Register_Index := R_Buffer_Start + 1;
                Last  : constant Register_Index :=
                          First
                            + Register_Index (This.Rs (R_Buffer_Length)) - 1;
@@ -129,6 +130,7 @@ package body Aquarius.Devices.Text_Writer is
                  and then (Write or else Create)
                  and then not Replace
                then
+                  Ada.Text_IO.Put_Line ("file exists replace not set");
                   This.Rs (R_Command) := E_File_Exists;
                   return;
                end if;
@@ -136,22 +138,26 @@ package body Aquarius.Devices.Text_Writer is
                if not Exists
                  and then not Create
                then
+                  Ada.Text_IO.Put_Line
+                    ("file does not exist but create not set");
                   This.Rs (R_Command) := E_File_Not_Found;
                   return;
                end if;
 
-               if not Exists then
-                  if not Filesystem.Create (Path) then
+               if Exists and then Replace then
+                  if not Filesystem.Delete (Path) then
+                     Ada.Text_IO.Put_Line
+                       ("cannot delete " & Path);
                      This.Rs (R_Command) := E_Operation_Failed;
                      return;
                   end if;
                end if;
 
-               if Exists and then Replace then
-                  if not Filesystem.Delete (Path) then
-                     This.Rs (R_Command) := E_Operation_Failed;
-                     return;
-                  end if;
+               if not Filesystem.Create (Path) then
+                  Ada.Text_IO.Put_Line
+                    ("cannot create " & Path);
+                  This.Rs (R_Command) := E_Operation_Failed;
+                  return;
                end if;
 
                declare
@@ -199,6 +205,9 @@ package body Aquarius.Devices.Text_Writer is
                if File_Index > This.Files.Last_Index
                  or else This.Files (File_Index) = ""
                then
+                  Ada.Text_IO.Put_Line
+                    ("File" & File_Index'Image & " not open");
+
                   This.Rs (R_Command) := E_File_Not_Open;
                   return;
                end if;

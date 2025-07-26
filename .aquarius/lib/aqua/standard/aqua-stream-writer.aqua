@@ -1,0 +1,57 @@
+deferred class
+    Aqua.Stream.Writer
+inherit
+    Aqua.Stream
+
+feature
+
+    Put_Word_32 (Value : System.Word_32)
+        deferred
+        end
+
+    Close
+        do
+            -- This method should be overridden to close the stream.
+        end
+
+    Flush
+        do
+            -- This method should be overridden to flush the stream.
+        end
+
+    Put_Character (Ch : Character)
+        do
+            Put_Word_32 (Ch.UTF_32_Code)
+        end
+
+    Put_String (Text : String)
+        local
+            I : Integer
+        do
+            from
+                I := 1
+            until
+                I > Text.Length
+            loop
+                Put_Character (Text.Element (I))
+                I := I + 1
+            end
+        end
+
+    Put_Line (Text : String)
+        local
+            Ch : Character
+        do
+            Put_String (Text)
+            Put_Character (Ch.New_Line)
+        end
+
+    Has_Error : Boolean
+    Error_Message : String
+
+    Set_Error (Message : String)
+        do
+            Has_Error := True
+            Error_Message := Message
+        end
+end

@@ -41,7 +41,7 @@ feature
             Src := 0
             Dst := Start
          until
-            Src >= Count
+            Src >= Count or else Dst >= To_Block.Count
          loop
             X := Get (Src)
             To_Block.Put (Dst, X)

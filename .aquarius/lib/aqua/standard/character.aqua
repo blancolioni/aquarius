@@ -35,4 +35,11 @@ feature
 
    UTF_32_Code : System.Word_32
 
+feature
+
+    New_Line : Character
+      once
+         Result.Create_From_UTF_32 (10)
+      end
+
 end
