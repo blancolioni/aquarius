@@ -1,0 +1,21 @@
+class
+    Aqua.Stream.String_Writer
+
+inherit
+    Aqua.Stream.Writer
+
+feature
+
+    Content : String
+
+    Put_Word_32 (Value : System.Word_32)
+        local
+            Ch : Character
+            S  : String
+        do
+            Ch.Create_From_UTF_32 (Value)
+            S.Create_From_Character (Ch)
+            Content := Content & S
+        end
+
+end

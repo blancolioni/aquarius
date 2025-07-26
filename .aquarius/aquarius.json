@@ -43,7 +43,7 @@
 
 	},
 	"filesystem":{
-		".": {
+		"data": {
 			"path": "./fs",
 			"read": true,
 			"write": true

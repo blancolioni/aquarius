@@ -59,7 +59,7 @@ package body Aquarius.Configuration is
       return String
    is
    begin
-      return Get_Path ("/filesystem/" & Directory_Name & "/path");
+      return Kosei.Get ("/filesystem/" & Directory_Name & "/path");
    end Directory_Path;
 
    -------------------------

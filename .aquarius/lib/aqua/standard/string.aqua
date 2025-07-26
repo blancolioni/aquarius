@@ -6,7 +6,7 @@ inherit
    
 create
     Create_With_Size, Create_From_String_Literal,
-    Create_With_Length, Create_From_String,
+    Create_With_Length, Create_From_String, Create_From_Character,
     Create_Empty_String
     
 feature
@@ -39,6 +39,12 @@ feature
             Replace_Element (Index, S.Element (Index))
             Index := Index + 1
          end
+      end
+      
+   Create_From_Character (Ch : Character)
+      do
+         Create_With_Length (1)
+         Replace_Element (1, Ch)
       end
       
    Equal (Other : like Current) : Boolean
