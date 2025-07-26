@@ -1,0 +1,26 @@
+class
+   Test_Integer_Compare
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-integer-compare"
+      end
+      
+   Execute
+      local
+         X : Integer
+      do
+         X := 0
+         X := X - 1
+         Success := X < 0
+         if not Success then
+            Fail_Message := "Expected integer to be less than zero, but found " & X.To_String
+         end
+      end
+       
+end 

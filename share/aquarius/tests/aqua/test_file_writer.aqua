@@ -1,0 +1,29 @@
+class
+    Test_File_Writer
+
+inherit
+    Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-file-writer"
+      end
+
+   Execute
+      local
+         Writer : Aqua.Stream.Writer
+      do
+        Success := True
+        create {Aqua.Stream.File_Writer} Writer.Open ("data/test_output.txt")
+        if Writer.Has_Error then
+            Success := False
+            Fail_Message := Writer.Error_Message
+        else
+            Writer.Put_Line ("Hello, World! This is a test file.")
+            Writer.Close
+        end
+      end
+
+end

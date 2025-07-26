@@ -11,6 +11,10 @@ feature
       local
          T : Unit_Test
       do
+         create { Test_Integer_Compare } T
+         Test_List.Append (T)
+         create { Test_File_Writer } T
+         Test_List.Append (T)
          create { Test_Json_Null } T
          Test_List.Append (T)
          create { Test_Json_Integer } T

@@ -3,22 +3,64 @@ expanded class
 
 feature
 
-   Put (Ch : Character)
+   Write (File : Integer; Buffer : System.Memory.Block_32; Buffer_Len : System.Word_32)
       local
          Mem : System.Memory.Mem
          Len : System.Word_32
+         FD  : System.Word_32
+         Dst : System.Memory.Block_32
+      do
+         FD.Convert_From (File)
+         create Dst.Make_From_Base_And_Bound (Buffer_Addr, Buffer_Addr.Offset_Words (Buffer_Len))
+         Buffer.Copy (Dst, 0)
+         Mem.Put_Word_32 (Length_Addr, Dst.Count)
+         Mem.Put_Word_32 (File_Addr, FD)
+         Mem.Put_Word_32 (Command_Addr, 3)
+      end
+
+    Open (Path : String) : Integer
+        local
+            Mem : System.Memory.Mem
+            Len : System.Word_32
+            R   : System.Word_32
+        do
+            Len.Convert_From (Path.Length)
+            Path.Write_To_Memory (Buffer_Addr)
+            Mem.Put_Word_32 (Length_Addr, Len)
+            Mem.Put_Word_32 (Command_Addr, 16#0501#)   -- open file, create if not exists, replace if exists
+            R := Mem.Get_Word_32 (Command_Addr)
+            if R /= 0 then
+                Error_Code := R
+                Result := 0
+                Result := Result - 1
+            else
+                Result.Convert_From (Mem.Get_Word_32 (File_Addr))
+            end
+        end
+
+    Flush (File : Integer)
+      local
+         Mem : System.Memory.Mem
+         Len : System.Word_32
+         FD : System.Word_32
       do
          Len := Mem.Get_Word_32 (Length_Addr)
-         Mem.Put_Word_32 (Buffer_Addr.Offset_Words (Len), Ch.UTF_32_Code)
-         Len := Len + 1
-         if Ch.UTF_32_Code = 10 or else Len = 200 then
-            Mem.Put_Word_32 (Length_Addr, Len)
-            Mem.Put_Word_32 (File_Addr, 1)
-            Mem.Put_Word_32 (Command_Addr, 3)
-            Len := 0
-         end
+         FD.Convert_From (File)
          Mem.Put_Word_32 (Length_Addr, Len)
+         Mem.Put_Word_32 (File_Addr, FD)
+         Mem.Put_Word_32 (Command_Addr, 3)
+         Mem.Put_Word_32 (Length_Addr, 0)
       end
+
+    Close (File : Integer)
+        local
+            Mem : System.Memory.Mem
+            FD  : System.Word_32
+        do
+            FD.Convert_From (File)
+            Mem.Put_Word_32 (File_Addr, FD)
+            Mem.Put_Word_32 (Command_Addr, 2)
+        end
 
     Set_Output (Name : String)
        local
@@ -27,6 +69,8 @@ feature
          --  Name.Write_To_Memory (Name_Addr)
          --  Mem.Put_Word_32 (Output_Addr, 1)
        end
+
+   Error_Code : System.Word_32
 
 feature { None }
 

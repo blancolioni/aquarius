@@ -3,10 +3,8 @@ class Aqua.Text_IO
 feature
 
    Put_Char (Ch : Character)
-      local
-         Writer : System.Drivers.Text_Writer
       do
-         Writer.Put (ch)
+         Standard_Output.Put_Character (Ch)
          if ch.UTF_32_Code = 10 then
             Col := 0
          else
@@ -44,13 +42,6 @@ feature
          Put_Char (Ch)
       end
       
-   Set_Output (Path : String)
-      local
-         Writer : System.Drivers.Text_Writer
-      do
-         Writer.Set_Output (Path)
-      end
-   
    Set_Col (New_Column : Integer)
       do
          if Col > New_Column then
@@ -63,4 +54,8 @@ feature
    
    Col : Integer
 
+   Standard_Output : Aqua.Stream.Writer
+      once
+         create {Aqua.Stream.File_Writer} Result.Open_FD (1)
+      end
 end

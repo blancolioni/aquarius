@@ -1,0 +1,89 @@
+class
+    Aqua.Stream.File_Writer
+
+inherit
+    Aqua.Stream.Writer
+        redefine Open, Close, Flush end
+
+create
+    Open, Open_FD
+feature
+
+    Open (Path : String)
+        local
+            Writer : System.Drivers.Text_Writer
+        do
+            create Block.Allocate_Count (64)
+            FD := Writer.Open (Path)
+            if FD < 0 then
+                Set_Error_Code (Writer.Error_Code)
+            end
+        end
+
+    Open_FD (File : Integer)
+        local
+            Writer : System.Drivers.Text_Writer
+        do
+            create Block.Allocate_Count (64)
+            FD := File
+        end
+
+    Put_Word_32 (Value : System.Word_32)
+        require
+            File_Open : FD >= 0
+        local
+            Mem : System.Memory.Mem
+            Writer : System.Drivers.Text_Writer
+        do
+            Mem.Put_Word_32 (Block.Base.Offset_Words (Last), Value)
+            Last := Last + 1
+            if Value = 10 or else Last = Block.Count then
+                Flush
+            end
+        end
+
+    Close
+        local
+            Writer : System.Drivers.Text_Writer
+        do
+            Flush
+            Writer.Close (FD)
+            FD := 0
+            FD := FD - 1
+        end
+
+    Flush
+        local
+            Writer : System.Drivers.Text_Writer
+        do
+            Writer.Write (FD, Block, Last)
+            Last := 0
+        end
+
+feature { None }
+
+
+    FD : Integer
+    Last : System.Word_32
+    Block : System.Memory.Block_32
+
+    Set_Error_Code (Code : System.Word_32)
+        do
+            if Code = 1 then
+                Set_Error ("bad command")
+            elsif Code = 2 then
+                Set_Error ("file not found")
+            elsif Code = 3 then
+                Set_Error ("file not open")
+            elsif Code = 4 then
+                Set_Error ("file exists")
+            elsif Code = 5 then
+                Set_Error ("operation failed")
+            elsif Code = 6 then
+                Set_Error ("not implemented")
+            else
+                Set_Error ("unknown error: " & Code.To_String)
+            end
+        end
+
+end
