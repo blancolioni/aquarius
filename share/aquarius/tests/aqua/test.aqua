@@ -27,6 +27,8 @@ feature
          Test_List.Append (T)
          create { Test_Strings_3 } T
          Test_List.Append (T)
+         create { Test_String_Replace } T
+         Test_List.Append (T)
          create { Test_String_Ends_With } T
          Test_List.Append (T)
          create { Test_Strings_Embedded_Quotes } T
@@ -50,6 +52,8 @@ feature
          create { Test_Manual_Iterator } T
          Test_List.Append (T)
          create { Test_Simple_Loop } T
+         Test_List.Append (T)
+         create { Test_Empty_List_Loop } T
          Test_List.Append (T)
          create { Test_Integer_Bounds } T
          Test_List.Append (T)

@@ -11,8 +11,10 @@ feature
             Body : String_List
         do
             Result := "["
-            across Internal as V loop
-                Body.Append (V.To_String)
+            if not Internal.Is_Empty then
+                across Internal as V loop
+                    Body.Append (V.To_String)
+                end
             end
             Result := Result & Body.Interpolate(",")
             Result := Result & "]"
