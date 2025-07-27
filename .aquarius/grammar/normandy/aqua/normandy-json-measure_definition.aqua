@@ -2,7 +2,7 @@ class
    Normandy.Json.Measure_Definition
 
 inherit
-   Normandy.Json.Lists
+    Normandy.Json.Serializable
 
 feature
 
@@ -21,15 +21,16 @@ feature
             Measure_Value := Child.Concatenated_Image
         end
 
-    After_Node
+    To_Json : Aqua.Text.Json.Value
+        local
+            Object : Aqua.Text.Json.Object
         do
-            Lines.Append ("    {")
-            Lines.Append ("      ""name"": """ & Measure_Name & """,")
-            Lines.Append ("      ""type"": """ & Measure_Type & """,")
+            Object.Put_String ("name", Measure_Name)
+            Object.Put_String ("type", Measure_Type)
             if attached Measure_Value as Value then
-                Lines.Append ("      ""value"": """ & Value & """")
+                Object.Put_String ("value", Value)
             end
-            Lines.Append ("    },")
+            Result := Object
         end
 
 feature {None}

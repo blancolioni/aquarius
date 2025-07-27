@@ -2,13 +2,15 @@ class
    Normandy.Json.Measure_Property
 
 inherit
-   Normandy.Json.Lists
+   Normandy.Json.Serializable
 
 feature
 
-   Before_Measure_Definition (Child : Normandy.Json.Measure_Definition)
+   After_Measure_Definition (Child : Normandy.Json.Measure_Definition)
       do
-         Child.Set_Lines (Lines)
+         To_Json := Child.To_Json
       end
+
+   To_Json : Aqua.Text.Json.Value
 
 end

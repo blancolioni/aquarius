@@ -5,9 +5,9 @@ feature
 
    Path : String
 
-   After_String(S : String)
+   After_String (S : String)
       do
-         Path := S
+         Path := S.Slice (2, S.Length - 1)
       end
 end
    

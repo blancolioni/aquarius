@@ -2,53 +2,53 @@ class
    Normandy.Json.Cube_Declaration
 
 inherit
-   Normandy.Json.Lists
-   Normandy.Json.Property_Lists
+   Normandy.Json.Serializable
 
 feature
 
-    Before_Node
+    To_Json : Aqua.Text.Json.Value
+         local
+               Object : Aqua.Text.Json.Object
+         do
+               Object.Put_String ("name", Cube_Name)
+               Object.Put_String ("description", Cube_Description)
+               Object.Put ("dimensions", Dimensions)
+               Object.Put ("measures", Measures)
+               Object.Put ("invariants", Invariants)
+               Object.Put ("sources", Sources)
+               Result := Object
+         end
+
+   Cube_Name : String
+   Cube_Description : String
+
+   Dimensions : Aqua.Text.Json.Array
+   Measures   : Aqua.Text.Json.Array
+   Invariants : Aqua.Text.Json.Array
+   Sources    : Aqua.Text.Json.Array
+
+    After_Cube_Name (Child : Normandy.Json.Cube_Name)
         do
-            Lines.Append ("{")
+            Cube_Name := Child.Concatenated_Image
         end
 
-    After_Dimension_Name (Child : Normandy.Json.Dimension_Name)
+    After_String (Text : String)
         do
-            Lines.Append ("  ""name"": """ & child.Concatenated_Image & """,")
+            Cube_Description := Text.Slice (2, Text.Length - 1) -- Remove quotes
         end
 
-    Before_Dimension_Property (Child : Normandy.Json.Dimension_Property)
-        do
-            Child.Set_Cube_Lists (Dimensions, Measures, Hierarchy, Sources)
-        end
 
-      After_Dimension_Property (Child : Normandy.Json.Dimension_Property)
-        do
-        end
-
-    After_Node
-        do
-            if not Measures.Is_Empty then
-               Lines.Append ("  ""Measures"": [")
-               across Measures as attr loop
-                  Lines.Append (attr)
-               end
-               Lines.Append ("  ],")
+      After_Cube_Property (Child : Normandy.Json.Cube_Property)
+         do
+            if Child.Is_Dimension then
+                Dimensions.Put (Child.To_Json)
+            elsif Child.Is_Invariant then
+                Invariants.Put (Child.To_Json)
+            elsif Child.Is_Measure then
+                Measures.Put (Child.To_Json)
+            elsif Child.Is_Source then
+                Sources.Put (Child.To_Json)
             end
-            if not Hierarchy.Is_Empty then
-               Lines.Append ("  ""hierarchy"": [")
-               across Hierarchy as h loop
-                  Lines.Append (h)
-               end
-               Lines.Append ("  ],")
-            end
-            if not Sources.Is_Empty then
-               Lines.Append ("  ""sources"": [")
-               across Sources as Source loop
-                   Lines.Append (Source)
-               end
-               Lines.Append ("  ]")
-            end
-            Lines.Append ("},")
-        end
+         end
+
 end

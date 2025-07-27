@@ -9,7 +9,7 @@ feature
 
    After_String (S : String)
       do
-         Column_Name := S
+         Column_Name := S.Slice (2, S.Length - 1)
       end
 
    After_Identifier (Identifier : String)
@@ -20,6 +20,20 @@ feature
    After_Expression (Child : Normandy.Json.Expression)
       do
          Conversion := Child.Concatenated_Image
+      end
+
+   To_Json : Aqua.Text.Json.Value
+      local
+         Object : Aqua.Text.Json.Object
+      do
+         Object.Put_String ("sourceName", Column_Name)
+         if attached Field_Name as Field then
+            Object.Put_String ("sinkName", Field) 
+         end
+         if attached Conversion as Conv then
+            Object.Put_String ("conversion", Conv)
+         end
+         Result := Object
       end
       
 end

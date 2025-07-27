@@ -2,54 +2,52 @@ class
    Normandy.Json.Dimension_Declaration
 
 inherit
-   Aqua.Text_IO
-   Normandy.Json.Lists
-   Normandy.Json.Property_Lists
-
+    Normandy.Json.Serializable
+    Aqua.Text_IO
 feature
+
+    Dimension_Name : String
 
     Before_Node
         do
-            Lines.Append ("{")
+            create Measures
+            create Hierarchy
+            create Sources
         end
-
+        
     After_Dimension_Name (Child : Normandy.Json.Dimension_Name)
         do
-            Lines.Append ("  ""name"": """ & child.Concatenated_Image & """,")
+            Dimension_Name := Child.Concatenated_Image
         end
 
-    Before_Dimension_Property (Child : Normandy.Json.Dimension_Property)
+    After_Dimension_Property (Child : Normandy.Json.Dimension_Property)
+    do
+        if Child.Is_Measure then
+            Measures.Put (Child.To_Json)
+        elsif Child.Is_Hierarchy then
+            Hierarchy.Put (Child.To_Json)
+        elsif Child.Is_Source then
+            Sources.Put (Child.To_Json)
+        end
+    end
+
+    To_Json : Aqua.Text.Json.Value
+        local
+            Object_Json : Aqua.Text.Json.Object
         do
-            Child.Set_Dimension_Lists (Measures, Hierarchy, Sources)
+            Object_Json.Put_String ("name", Dimension_Name)
+            Object_Json.Put_String ("version", "0.1.0")
+            Object_Json.Put_String ("author", "internal")
+            Object_Json.Put ("measures", Measures)
+            Object_Json.Put ("hierarchy", Hierarchy)
+            Object_Json.Put ("sources", Sources)
+            Result := Object_Json
         end
 
-      After_Dimension_Property (Child : Normandy.Json.Dimension_Property)
-        do
-        end
+feature { None }
 
-    After_Node
-        do
-            if not Measures.Is_Empty then
-               Lines.Append ("  ""Measures"": [")
-               across Measures as attr loop
-                  Lines.Append (attr)
-               end
-               Lines.Append ("  ],")
-            end
-            if not Hierarchy.Is_Empty then
-               Lines.Append ("  ""hierarchy"": [")
-               across Hierarchy as h loop
-                  Lines.Append (h)
-               end
-               Lines.Append ("  ],")
-            end
-            if not Sources.Is_Empty then
-               Lines.Append ("  ""sources"": [")
-               across Sources as Source loop
-                   Lines.Append (Source)
-               end
-               Lines.Append ("  ]")
-            end
-            Lines.Append ("},")
-        end
+    Measures : Aqua.Text.Json.Array
+    Hierarchy : Aqua.Text.Json.Array
+    Sources : Aqua.Text.Json.Array
+
 end

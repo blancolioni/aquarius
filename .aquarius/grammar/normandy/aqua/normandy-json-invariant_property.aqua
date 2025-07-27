@@ -1,0 +1,21 @@
+class
+   Normandy.Json.Invariant_Property
+
+inherit
+   Normandy.Json.Serializable
+
+feature
+
+   Invariant_Text : String
+
+   After_Expression (Child : Normandy.Json.Expression)
+      do
+         Invariant_Text := Child.Concatenated_Image
+      end
+
+   To_Json : Aqua.Text.Json.Value
+      do
+         create { Aqua.Text.Json.String_Value } Result.Make (Invariant_Text)
+      end
+
+end
