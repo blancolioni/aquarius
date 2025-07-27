@@ -1,0 +1,30 @@
+class
+   Test_Empty_List_Loop
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-empty-list-loop"
+      end
+      
+   Execute
+      local
+         Vs : Aqua.Containers.Linked_List[Integer]
+         Sum : Integer   
+      do
+         Sum := 10
+         across Vs as V loop
+            Sum := Sum + V
+         end
+         Success := Sum = 10
+         if not Success then
+            Fail_Message := "Expected Sum = 10; found " & Sum.To_String
+         end
+      end
+      
+       
+end 

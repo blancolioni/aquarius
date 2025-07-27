@@ -195,6 +195,29 @@ feature
          end
       end
       
+   Replace (Old_String, New_String : String) : String
+      do
+         Result := Internal_Replace (Current, Old_String, New_String)
+      end
+
+      --    Start_Index : Integer
+      --    End_Index   : Integer
+      -- do
+      --    Start_Index := Current.Index_Of (Old_String.Element (1), 1)
+      --    if Start_Index = 0 then
+      --       Result := Current
+      --    else
+      --       End_Index := Start_Index + Old_String.Length - 1
+      --       if End_Index > Current.Length then
+      --          Result := Current
+      --       elsif Current.Slice (Start_Index, End_Index) /= Old_String then
+      --          Result := Current.Slice (1, Start_Index) & Current.Slice (Start_Index + 1, Current.Length).Replace (Old_String, New_String)
+      --       else
+      --          Result := Current.Slice (1, Start_Index - 1) & New_String & Current.Slice (End_Index + 1, Current.Length).Replace (Old_String, New_String)
+      --       end
+      --    end
+      -- end
+
 feature
 
    Length : Integer
@@ -319,4 +342,25 @@ feature { System.Drivers.Meta_Driver }
 feature { None }
 
    Can_Change : Boolean
+
+   Internal_Replace (S, Old_String, New_String : String) : String
+      local
+         Start_Index : Integer
+         End_Index   : Integer
+      do
+         Start_Index := S.Index_Of (Old_String.Element (1), 1)
+         if Start_Index = 0 then
+            Result := S
+         else
+            End_Index := Start_Index + Old_String.Length - 1
+            if End_Index > S.Length then
+               Result := S
+            elsif S.Slice (Start_Index, End_Index) /= Old_String then
+               Result := S.Slice (1, Start_Index) & Internal_Replace (S.Slice (Start_Index + 1, S.Length), Old_String, New_String)
+            else
+               Result := S.Slice (1, Start_Index - 1) & New_String & Internal_Replace (S.Slice (End_Index + 1, S.Length), Old_String, New_String)
+            end
+         end
+      end
+
 end

@@ -10,7 +10,7 @@ create
 feature
     To_String : String
         do
-            Result := """" & Internal & """"
+            Result := """" & Escape (Internal) & """"
         end
 
     Make (Value : String)
@@ -20,4 +20,13 @@ feature
 
 feature { NONE }
     Internal : String
+
+    Escape (Value : String): String
+        do
+            -- This method should escape special characters in the JSON string.
+            -- For example, it should replace double quotes with escaped quotes,
+            -- and handle other special characters like backslashes, newlines, etc.
+
+            Result := Value.Replace("""", "\""")
+        end
 end
