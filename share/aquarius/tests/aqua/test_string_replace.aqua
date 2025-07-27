@@ -1,0 +1,42 @@
+class
+   Test_String_Replace
+   
+inherit
+   Unit_Test
+   Aqua.Text_IO
+
+feature
+
+   Name : String
+      do
+         Result := "test-string-replace"
+      end
+      
+   Execute
+      local
+         S : String
+      do
+         S := "abcd"
+         S := S.Replace("x", "y")
+         Success := S = "abcd"
+         if not Success then
+            Fail_Message := "Expected S = abcd; found " & S
+         else
+            S := "abcdabcd"
+            S := S.Replace("b", "x")
+            Success := S = "axcdaxcd"
+            if not Success then
+               Fail_Message := "Expected S = xbcd; found " & S
+            else
+               S := "There was a wild colonial boy, Jack Duggan was his name"
+               S := S.Replace("a wild colonial", "an Irish")
+               S := S.Replace("Jack Duggan", "John Doe")
+               Success := S = "There was an Irish boy, John Doe was his name"
+               if not Success then
+                  Fail_Message := "Expected S = 'There was an Irish boy, John Doe was his name'; found " & S
+               end
+            end
+         end
+      end
+       
+end 
