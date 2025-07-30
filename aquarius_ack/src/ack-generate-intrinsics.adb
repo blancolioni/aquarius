@@ -10,6 +10,12 @@ package body Ack.Generate.Intrinsics is
 
    procedure Create_Builtin_Generators;
 
+   function Aqua_Command_Line_Set_Exit_Status
+     (Unit       : in out Tagatha.Code.Instance'Class;
+      Push       : not null access
+        procedure (Argument_Index : Positive))
+      return Boolean;
+
    function System_Memory_Block_32_Get
      (Unit       : in out Tagatha.Code.Instance'Class;
       Push       : not null access
@@ -58,6 +64,22 @@ package body Ack.Generate.Intrinsics is
       Generator_Map.Insert (Name, Generator);
    end Add_Intrinsic;
 
+   ---------------------------------------
+   -- Aqua_Command_Line_Set_Exit_status --
+   ---------------------------------------
+
+   function Aqua_Command_Line_Set_Exit_Status
+     (Unit       : in out Tagatha.Code.Instance'Class;
+      Push       : not null access
+        procedure (Argument_Index : Positive))
+      return Boolean
+   is
+   begin
+      Push (1);
+      Unit.Call ("system.os.set_exit_status", 1, 0);
+      return True;
+   end Aqua_Command_Line_Set_Exit_Status;
+
    -------------------------------
    -- Create_Builtin_Generators --
    -------------------------------
@@ -76,6 +98,9 @@ package body Ack.Generate.Intrinsics is
         ("system-memory-block_32-put", System_Memory_Block_32_Put'Access);
       Add_Intrinsic
         ("mm_allocate", System_Memory_Mem_Allocate'Access);
+      Add_Intrinsic
+        ("set_exit_status",
+         Aqua_Command_Line_Set_Exit_Status'Access);
    end Create_Builtin_Generators;
 
    ------------------------
