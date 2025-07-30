@@ -9,12 +9,13 @@ private
 
    type Instance is new Parent with
       record
-         Server : Aqua.Server.Reference;
+         Server    : Aqua.Server.Reference;
       end record;
 
-   overriding procedure Load
+   overriding function Load
      (This : in out Instance;
-      Name : String);
+      Name : String)
+      return Boolean;
 
    procedure Bind_Action
      (This        : in out Instance;
