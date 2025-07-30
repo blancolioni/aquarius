@@ -1,3 +1,4 @@
+with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Text_IO;
 
@@ -60,6 +61,13 @@ begin
 
             Server.Load (Object_Path);
             Server.Run (Trace => Aquarius.Options.Aqua_Trace);
+            declare
+               Exit_Status : constant Natural :=
+                               Natural (Server.Exit_Status);
+            begin
+               Ada.Command_Line.Set_Exit_Status
+                 (Ada.Command_Line.Exit_Status (Exit_Status));
+            end;
          end;
          Aquarius.Library.Shut_Down;
          return;
@@ -76,7 +84,10 @@ begin
                           (File_Name => Path);
          begin
             if Grammar /= null then
-               Aquarius.Plugins.Manager.Load (Grammar);
+               if not Aquarius.Plugins.Manager.Load (Grammar) then
+                  Ada.Command_Line.Set_Exit_Status (1);
+                  return;
+               end if;
 
                declare
                   Source : constant Aquarius.Sources.Source_Reference :=

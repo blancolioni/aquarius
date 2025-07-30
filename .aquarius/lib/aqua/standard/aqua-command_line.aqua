@@ -1,0 +1,8 @@
+class
+    Aqua.Command_Line
+
+feature
+
+    Set_Exit_Status (Status : Integer) external "intrinsic"
+
+end

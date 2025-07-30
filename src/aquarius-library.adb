@@ -142,8 +142,12 @@ package body Aquarius.Library is
         ("aquarius-program-tree",
          Aquarius.Programs.Device.Aquarius_Tree_Driver);
 
-      Aquarius.Plugins.Manager.Load
-        (Aquarius.Grammars.Manager.Get_Grammar ("ebnf"));
+      if not Aquarius.Plugins.Manager.Load
+        (Aquarius.Grammars.Manager.Get_Grammar ("ebnf"))
+      then
+         raise Program_Error with
+           "failed to creat EBNF Grammar";
+      end if;
 
       if Aquarius.Options.Aqua_Trace then
          if Ada.Directories.Exists ("trace.txt") then

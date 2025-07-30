@@ -41,6 +41,13 @@ jobs:
     - name: Set up alire
       uses: alire-project/setup-alire@v2
 
-    - name: Build      
+    - name: Build Assembler
       run: alr build
+      working-directory: ./aqua_as
+      
+    - name: Build Aquarius
+      run: alr build
+      
+    - name: Run tests
+      run: mkdir ./fs; ./bin/aquarius-driver --start-class ./share/aquarius/tests/aqua/test.aqua
       

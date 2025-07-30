@@ -15,10 +15,11 @@ package Aquarius.Plugins is
    function Version (This : Instance) return String;
    function Description (This : Instance) return String;
 
-   procedure Load
+   function Load
      (This : in out Instance;
       Name : String)
-   is abstract;
+      return Boolean
+      is abstract;
 
    procedure Report_State
      (This : Instance)
