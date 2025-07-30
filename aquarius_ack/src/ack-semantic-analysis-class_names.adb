@@ -36,7 +36,36 @@ package body Ack.Semantic.Analysis.Class_Names is
       Parent        : Ack.Classes.Class_Entity;
       Referrer : constant Aquarius.Programs.Program_Tree :=
                         Get_Program (Class_Name);
+
+      function Expected_File_Name
+         return String;
+
+      ------------------------
+      -- Expected_File_Name --
+      ------------------------
+
+      function Expected_File_Name
+        return String
+      is
+         use Ada.Characters.Handling;
+         Declared_Name : constant String := Referrer.Concatenate_Children;
+         File_Name     : String := To_Lower (Declared_Name);
+      begin
+         for Ch of File_Name loop
+            if Ch = '.' then
+               Ch := '-';
+            end if;
+         end loop;
+         return File_Name & ".aqua";
+      end Expected_File_Name;
+
    begin
+
+      if Defining_Name then
+         if Expected_File_Name /= Referrer.Source_File_Name then
+            Error (Class_Name, E_Class_Name_Does_Not_Match_File_Name);
+         end if;
+      end if;
 
       if not Defining_Name
         and then Natural (List.Length) = 1
