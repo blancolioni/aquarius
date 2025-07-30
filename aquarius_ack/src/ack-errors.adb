@@ -140,6 +140,8 @@ package body Ack.Errors is
          when E_Redefining_Property_Not_Implemented =>
             return "redefining or effecting properties not implemented"
               & " (property " & Get_Error_Entity (Node).Description & ")";
+         when E_Class_Name_Does_Not_Match_File_Name =>
+            return "class name does not match file name";
       end case;
    end Error_Message;
 
