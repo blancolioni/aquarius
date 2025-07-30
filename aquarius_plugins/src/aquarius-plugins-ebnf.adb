@@ -7,9 +7,10 @@ package body Aquarius.Plugins.EBNF is
    -- Load --
    ----------
 
-   overriding procedure Load
+   overriding function Load
      (This : in out Instance;
       Name : String)
+      return Boolean
    is
       Analysis : Aquarius.Actions.Action_Group;
    begin
@@ -131,6 +132,8 @@ package body Aquarius.Plugins.EBNF is
          Analyse.After_Terminal_Rule'Access);
 
       Global_EBNF_Plugin := This;
+
+      return True;
 
    end Load;
 

@@ -18,8 +18,8 @@ package body Aquarius.Plugins.Aqua_Plugin is
    type Aqua_Action_Instance is
      new Aquarius.Actions.Action_Execution_Interface with
       record
-         Server : Aqua.Server.Reference;
-         Start  : Aqua.Address_Type;
+         Server    : Aqua.Server.Reference;
+         Start     : Aqua.Address_Type;
       end record;
 
    overriding procedure Execute
@@ -148,9 +148,10 @@ package body Aquarius.Plugins.Aqua_Plugin is
    -- Load --
    ----------
 
-   overriding procedure Load
+   overriding function Load
      (This : in out Instance;
       Name : String)
+      return Boolean
    is
       Plugin_Dir : constant String :=
                      Aquarius.Configuration.Grammar_Path (Name);
@@ -159,6 +160,7 @@ package body Aquarius.Plugins.Aqua_Plugin is
       Grammar     : constant Aquarius.Grammars.Aquarius_Grammar :=
                       Aquarius.Grammars.Manager.Get_Grammar (Name);
       Kosei_Path  : constant String := "/plugins/" & Name;
+      Success     : Boolean := True;
    begin
       Kosei.Json.Add_Json_Config (Plugin_File, Kosei_Path);
 
@@ -235,6 +237,8 @@ package body Aquarius.Plugins.Aqua_Plugin is
                   Ada.Text_IO.Put_Line
                     ("Failed to load "
                      & Aquarius.Actions.Action_Group_Name (Group));
+                  Success := False;
+                  return;
                end if;
 
                declare
@@ -319,6 +323,8 @@ package body Aquarius.Plugins.Aqua_Plugin is
          Kosei.Get (Kosei_Path & "/groups")
            .Iterate_Children (Load_Group'Access);
       end;
+
+      return Success;
 
    end Load;
 

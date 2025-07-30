@@ -33,12 +33,15 @@ package body Aquarius.Plugins.Manager is
    -- Load --
    ----------
 
-   procedure Load (From_Grammar : Aquarius.Grammars.Aquarius_Grammar) is
+   function Load
+     (From_Grammar : Aquarius.Grammars.Aquarius_Grammar)
+      return Boolean
+   is
       Name   : constant String := From_Grammar.Name;
       Plugin : Reference;
    begin
       if Loaded_Plugins.Contains (Name) then
-         return; -- n Loaded_Plugins.Element (To_Plugin_Map_Name (Name));
+         return True;
       end if;
 
       if Name = "ebnf" then
@@ -50,9 +53,12 @@ package body Aquarius.Plugins.Manager is
          Plugin := new Aquarius.Plugins.Aqua_Plugin.Instance;
       end if;
 
-      Plugin.Load (Name);
-
-      Loaded_Plugins.Insert (Name, Plugin);
+      if Plugin.Load (Name) then
+         Loaded_Plugins.Insert (Name, Plugin);
+         return True;
+      else
+         return False;
+      end if;
    end Load;
 
    --------------------------

@@ -12,9 +12,10 @@ private
          Separator : Aquarius.Properties.Property_Type;
       end record;
 
-   overriding procedure Load
+   overriding function Load
      (This : in out Instance;
-      Name : String);
+      Name : String)
+      return Boolean;
 
    Global_EBNF_Plugin : aliased Instance;
 

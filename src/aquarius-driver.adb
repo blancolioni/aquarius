@@ -1,3 +1,4 @@
+with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Text_IO;
 
@@ -76,7 +77,10 @@ begin
                           (File_Name => Path);
          begin
             if Grammar /= null then
-               Aquarius.Plugins.Manager.Load (Grammar);
+               if not Aquarius.Plugins.Manager.Load (Grammar) then
+                  Ada.Command_Line.Set_Exit_Status (1);
+                  return;
+               end if;
 
                declare
                   Source : constant Aquarius.Sources.Source_Reference :=
