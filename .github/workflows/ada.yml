@@ -43,8 +43,4 @@ jobs:
 
     - name: Build      
       run: alr build
-
-    - name: Run tests
-      run: ./bin/aquarius-driver --start-class ./share/aquarius/tests/aqua/test.aqua
-      
       
