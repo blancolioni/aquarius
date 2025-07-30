@@ -1,6 +1,7 @@
 class
    Test
 inherit
+   Aqua.Command_Line
    Aqua.Text_IO
 
 feature
@@ -157,6 +158,8 @@ feature
          Put_Line ("A(3, 2) = " & A.fn (3, 2).To_String);
          Put_Line ("A(3, 3) = " & A.fn (3, 3).To_String);
          Put_Line ("A(3, 4) = " & A.fn (3, 4).To_String);
+
+         Set_Exit_Status (Failed_Tests)
       end
 
 feature {None}

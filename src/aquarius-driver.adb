@@ -61,6 +61,13 @@ begin
 
             Server.Load (Object_Path);
             Server.Run (Trace => Aquarius.Options.Aqua_Trace);
+            declare
+               Exit_Status : constant Natural :=
+                               Natural (Server.Exit_Status);
+            begin
+               Ada.Command_Line.Set_Exit_Status
+                 (Ada.Command_Line.Exit_Status (Exit_Status));
+            end;
          end;
          Aquarius.Library.Shut_Down;
          return;
