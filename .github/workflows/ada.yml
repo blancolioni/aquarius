@@ -49,5 +49,5 @@ jobs:
       run: alr build
       
     - name: Run tests
-      run: mkdir ./fs; ./bin/aquarius-driver --start-class ./share/aquarius/tests/aqua/test.aqua
+      run: mkdir ./fs; ./bin/aquarius --start-class ./share/aquarius/tests/aqua/test.aqua
       
