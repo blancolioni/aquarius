@@ -53,3 +53,6 @@ parse_args = "~0.9.0"
 
 [[depends-on]]
 wl_lib = "*"
+
+[[depends-on]]
+resources = "~0.1.0"

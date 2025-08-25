@@ -11,6 +11,10 @@ project Aquarius is
       for Default_Switches ("Ada") use Aquarius_Config.Ada_Compiler_Switches;
    end Compiler;
 
+  package Builder is
+    for Executable ("aquarius-driver.adb") use "aquarius";
+  end Builder;
+
    package Binder is
       for Switches ("Ada") use ("-Es"); --  Symbolic traceback
    end Binder;

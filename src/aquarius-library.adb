@@ -1,5 +1,4 @@
 with Ada.Directories;
-with Ada.Environment_Variables;
 with Ada.Text_IO;
 
 with Ack.Compile;
@@ -18,6 +17,9 @@ with Aquarius.Streams.Files;
 
 with Kosei.Json;
 
+with Resources;
+with Aquarius_Config;
+
 with Tagatha.Code;
 
 package body Aquarius.Library is
@@ -31,6 +33,9 @@ package body Aquarius.Library is
    procedure Check_Assembly_Package (Name : String);
 
    procedure Check_Directory (Path : String);
+
+   package Aquarius_Resources is
+     new Resources (Aquarius_Config.Crate_Name);
 
    ----------------------------
    -- Check_Assembly_Package --
@@ -61,6 +66,15 @@ package body Aquarius.Library is
    end Check_Directory;
 
    ------------------------
+   -- Configuration_Path --
+   ------------------------
+
+   function Configuration_Path return String is
+   begin
+      return Aquarius_Resources.Resource_Path;
+   end Configuration_Path;
+
+   ------------------------
    -- Find_Configuration --
    ------------------------
 
@@ -81,19 +95,7 @@ package body Aquarius.Library is
 
    begin
       declare
-         Path : constant String := ".aquarius";
-      begin
-         if Try (Path) then
-            return Path;
-         end if;
-      end;
-
-      declare
-         Home : constant String :=
-                  Ada.Environment_Variables.Value
-                    ("HOME", "");
-         Path : constant String :=
-                  Ada.Directories.Compose (Home, ".aquarius");
+         Path : constant String := Aquarius_Resources.Resource_Path;
       begin
          if Try (Path) then
             return Path;

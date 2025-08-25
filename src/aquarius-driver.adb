@@ -46,13 +46,17 @@ begin
 
          declare
             Server : constant Aqua.Server.Reference :=
-                       Aqua.Server.Create ("./share/aqua_vm/aqua.config",
-                                           "./.aquarius/tmp/obj");
+              Aqua.Server.Create
+                (Aquarius.Library.Configuration_Path
+                 & "/aqua_vm/aqua.config",
+                 Aquarius.Library.Configuration_Path
+                 & "/tmp/obj");
             Base_Name : constant String :=
                           Ada.Directories.Base_Name (Start_Class);
             Object_Path : constant String :=
-                            Ada.Directories.Compose
-                              ("./.aquarius/tmp/obj/", Base_Name, "o");
+              Ada.Directories.Compose
+                (Aquarius.Library.Configuration_Path & "/tmp/obj",
+                 Base_Name, "o");
          begin
             Server.Install_Device
               (Base   => 16#FFFF_F200#,

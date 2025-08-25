@@ -5,4 +5,6 @@ package Aquarius.Library is
    procedure Initialize;
    procedure Shut_Down;
 
+   function Configuration_Path return String;
+
 end Aquarius.Library;
