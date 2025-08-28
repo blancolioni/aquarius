@@ -26,6 +26,8 @@ package Aquarius.Configuration is
 
    function Tool_Path (Name : String) return String;
 
+   function Aqua_Configuration_Path return String;
+
    function Aqua_Standard_Library_Path return String;
 
    function Aqua_Standard_Assembly_Path return String;

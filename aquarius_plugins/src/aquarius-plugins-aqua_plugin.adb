@@ -78,9 +78,9 @@ package body Aquarius.Plugins.Aqua_Plugin is
    is
    begin
       return Server : constant Aqua.Server.Reference :=
-        Aqua.Server.Create
-          ("./share/aqua_vm/aqua.config",
-           "./.aquarius/tmp/obj")
+           Aqua.Server.Create
+          (Aquarius.Configuration.Aqua_Configuration_Path,
+           Aquarius.Configuration.Object_Path)
       do
          Server.Install_Device
            (Base   => 16#FFFF_F200#,

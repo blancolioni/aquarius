@@ -11,6 +11,15 @@ package body Aquarius.Configuration is
        & "/"
        & Kosei.Get (Config_Name));
 
+   -----------------------------
+   -- Aqua_Configuration_Path --
+   -----------------------------
+
+   function Aqua_Configuration_Path return String is
+   begin
+      return Kosei.Get ("/path") & "/aqua_vm/aqua.config";
+   end Aqua_Configuration_Path;
+
    ---------------------------------
    -- Aqua_Standard_Assembly_Path --
    ---------------------------------
