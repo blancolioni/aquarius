@@ -1,0 +1,20 @@
+class
+   Normandy.Json.Dimension_Reference_Property
+
+inherit
+   Normandy.Json.Serializable
+
+feature
+
+   Dimension_Names : Aqua.Text.Json.Array
+
+   After_Dimension_Name (Child : Normandy.Json.Dimension_Name)
+      do
+         Dimension_Names.Put_String (Child.Concatenated_Image)
+      end
+
+   To_Json : Aqua.Text.Json.Value
+      do
+         Result := Dimension_Names
+      end
+end

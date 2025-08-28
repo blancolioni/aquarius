@@ -1,0 +1,6 @@
+class
+   Normandy.Json.Dimension_Name
+inherit
+   Aquarius.Trees.Program_Tree
+end
+   

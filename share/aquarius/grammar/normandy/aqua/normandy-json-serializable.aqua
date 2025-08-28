@@ -1,0 +1,13 @@
+-- Normandy.Json.Serializable
+
+deferred class
+    Normandy.Json.Serializable
+
+feature
+
+    To_Json : Aqua.Text.Json.Value
+        deferred
+        end
+
+end -- Normandy.Json.Serializable
+

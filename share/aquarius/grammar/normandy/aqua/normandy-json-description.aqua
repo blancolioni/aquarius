@@ -1,0 +1,7 @@
+class
+   Normandy.Json.Description
+
+inherit
+   Aquarius.Trees.Program_Tree
+   
+end

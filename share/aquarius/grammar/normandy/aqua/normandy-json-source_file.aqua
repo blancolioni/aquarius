@@ -1,0 +1,13 @@
+class
+   Normandy.Json.Source_File
+
+feature
+
+   Path : String
+
+   After_String (S : String)
+      do
+         Path := S.Slice (2, S.Length - 1)
+      end
+end
+   

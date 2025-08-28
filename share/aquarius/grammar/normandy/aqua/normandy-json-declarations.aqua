@@ -1,0 +1,30 @@
+class
+   Normandy.Json.Declarations
+
+inherit
+   Normandy.Json.Serializable
+
+feature
+
+    After_Declaration (Child : Normandy.Json.Declaration)
+        do
+            if Child.Is_Dimension then
+                Dimensions.Put (Child.To_Json)
+            elsif Child.Is_Cube then
+                Cubes.Put (Child.To_Json)
+            end
+        end
+
+    To_Json : Aqua.Text.Json.Value
+        local
+            Decls : Aqua.Text.Json.Object
+        do
+            Decls.Put ("dimensions", Dimensions)
+            Decls.Put ("cubes", Cubes)
+            Result := Decls
+        end
+        
+    Dimensions : Aqua.Text.Json.Array
+    Cubes      : Aqua.Text.Json.Array
+
+end

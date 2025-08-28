@@ -1,0 +1,24 @@
+class
+    Normandy.Json.Property_Lists
+
+feature
+
+    Dimensions : Aqua.Containers.Linked_List[String]
+    Hierarchy  : Aqua.Containers.Linked_List[String]
+    Measures   : Aqua.Containers.Linked_List[String]
+    Sources    : Aqua.Containers.Linked_List[String]
+
+    Set_Cube_Lists (D_List, M_List, H_List, S_List : Aqua.Containers.Linked_List[String])
+        do
+            Dimensions := D_List
+            Measures := M_List
+            Hierarchy := H_List
+            Sources := S_List
+        end
+    Set_Dimension_Lists (M_List, H_List, S_List : Aqua.Containers.Linked_List[String])
+        do
+            Measures := M_List
+            Hierarchy := H_List
+            Sources := S_List
+        end
+end
