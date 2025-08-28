@@ -1,0 +1,33 @@
+class
+    Normandy.Json.Dimension_Property
+
+inherit
+    Normandy.Json.Serializable
+
+feature
+
+    After_Measure_Property (Child : Normandy.Json.Measure_Property)
+        do
+            Prop_Json := Child.To_Json
+            Is_Measure := True
+        end
+
+    After_Source_Property (Child : Normandy.Json.Source_Property)
+        do
+            Prop_Json := Child.To_Json
+            Is_Source := True
+        end
+
+    To_Json : Aqua.Text.Json.Value
+        do
+            Result := Prop_Json
+        end
+        
+feature { Normandy.Json.Dimension_Declaration }
+
+    Prop_Json : Aqua.Text.Json.Value
+    Is_Hierarchy : Boolean
+    Is_Measure : Boolean
+    Is_Source  : Boolean
+
+end

@@ -1,0 +1,26 @@
+class
+   Normandy.Json.Declaration
+
+inherit
+   Normandy.Json.Serializable
+    
+feature
+
+    After_Dimension_Declaration (Child : Normandy.Json.Dimension_Declaration)
+        do
+            Is_Dimension := True
+            To_Json := Child.To_Json
+        end
+
+    After_Cube_Declaration (Child : Normandy.Json.Cube_Declaration)
+        do
+            Is_Cube := True
+            To_Json := Child.To_Json
+        end
+
+    To_Json : Aqua.Text.Json.Value
+
+    Is_Dimension : Boolean
+    Is_Cube : Boolean
+
+end

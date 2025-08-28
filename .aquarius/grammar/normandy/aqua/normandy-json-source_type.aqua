@@ -1,0 +1,13 @@
+class
+   Normandy.Json.Source_Type
+
+feature
+
+   Type : String
+
+   After_Identifier(Identifier : String)
+      do
+         Type := Identifier
+      end
+end
+   

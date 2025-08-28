@@ -1,0 +1,11 @@
+{
+    "name": "normandy",
+    "description": "Anago application definition language",
+    "version": "0.1.0",
+    "groups": [
+	{
+	    "name": "json",
+	    "stage": "code"
+	}
+    ]
+}

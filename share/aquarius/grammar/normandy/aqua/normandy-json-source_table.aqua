@@ -1,0 +1,17 @@
+class
+   Normandy.Json.Source_Table
+
+feature
+
+   Table : String
+
+   After_Identifier(Identifier : String)
+      do
+         Table := Identifier
+      end
+
+   After_String (S : String)
+      do
+         Table := S.Slice (2, S.Length - 1)
+      end
+end

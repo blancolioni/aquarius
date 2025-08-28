@@ -1,0 +1,68 @@
+class
+   Normandy.Json.Package
+
+inherit
+   Normandy.Json.Serializable
+   Aqua.Text_IO
+
+feature
+
+   After_Node
+      local
+         Writer : Aqua.Stream.Writer
+         Json   : Aqua.Text.Json.Value
+         Text   : String
+      do
+         Json := To_Json
+         Put_Line ("Writing package: " & Package_Name & " to data/" & Package_Name & ".json")
+         create {Aqua.Stream.File_Writer} Writer.Open ("data/" & Package_Name & ".json")
+         Text := Json.To_String
+         Put_Line ("content length: " & Text.Length.To_String)
+         Writer.Put_String (Text)
+         Writer.Close
+      end
+
+   After_Package_Name (Child : Normandy.Json.Package_Name)
+      do
+         Package_Name := Child.Concatenated_Image
+      end
+
+   After_Description (Child : Normandy.Json.Description)
+      do
+         Package_Description := Child.Concatenated_Image
+      end
+
+   After_Declarations (Child : Normandy.Json.Declarations)
+      do
+         Declarations := Child.To_Json
+      end
+
+   To_Json : Aqua.Text.Json.Value
+      local
+         Pkg_Json : Aqua.Text.Json.Object
+         Name     : Aqua.Text.Json.String_Value
+         Version  : Aqua.Text.Json.String_Value
+         Author   : Aqua.Text.Json.String_Value
+      do
+         create Name.Make (Package_Name)
+         create Version.Make ("0.1.0")
+         create Author.Make ("internal")
+         Pkg_Json.Put ("name", Name)
+         Pkg_Json.Put ("version", Version)
+         Pkg_Json.Put ("author", Author)
+         if attached Package_Description as Desc then
+            Pkg_Json.Put_String ("description", Desc.Slice (2, Desc.Length - 1))
+         end
+         Pkg_Json.Put ("declarations", Declarations)
+         Result := Pkg_Json
+      end
+
+feature {None}
+
+   Package_Name : String
+   Package_Description : detachable String
+   Declarations        : Aqua.Text.Json.Value
+
+   Lines : Aqua.Containers.Linked_List[String]
+
+end

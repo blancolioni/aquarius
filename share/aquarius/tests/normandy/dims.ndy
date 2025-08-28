@@ -1,0 +1,42 @@
+package Sales "Simple demonstration package"
+
+    dimension Location end
+
+    dimension Product_Group end
+
+    dimension Month with Time
+        hierarchy Year Month
+    end
+
+    dimension Function
+        attribute
+            Name : text
+        source
+            type csv
+            file "Functions.txt"
+            map "Function" to Name
+    end
+
+    dimension Product
+        "Product dimension"
+        attribute
+            Name               : text
+            Sale_Price         : decimal
+            Raw_Material_Price : decimal
+        source
+            type csv
+            file "Prices_per_product.txt"
+            map "Products" to Name
+            map "Sales Price" to Sale_Price
+            map "Raw Material Price" to Raw_Material_Price
+    end
+
+    dimension Employee
+        attribute
+            Full_Name : text
+            Location  : Location
+            Salary    : decimal
+            Function  : Function
+    end
+
+end

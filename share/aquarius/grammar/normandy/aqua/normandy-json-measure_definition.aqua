@@ -1,0 +1,42 @@
+class
+   Normandy.Json.Measure_Definition
+
+inherit
+    Normandy.Json.Serializable
+
+feature
+
+    After_Identifier (Text : String)
+        do
+            Measure_Name := Text
+        end
+
+    After_Type (Child : Normandy.Json.Type)
+        do
+            Measure_Type := Child.Concatenated_Image
+        end
+
+    After_Expression (Child : Normandy.Json.Expression)
+        do
+            Measure_Value := Child.Concatenated_Image
+        end
+
+    To_Json : Aqua.Text.Json.Value
+        local
+            Object : Aqua.Text.Json.Object
+        do
+            Object.Put_String ("name", Measure_Name)
+            Object.Put_String ("type", Measure_Type)
+            if attached Measure_Value as Value then
+                Object.Put_String ("value", Value)
+            end
+            Result := Object
+        end
+
+feature {None}
+
+    Measure_Name  : String
+    Measure_Type  : String
+    Measure_Value : detachable String;
+
+end

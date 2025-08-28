@@ -1,0 +1,12 @@
+class
+    Normandy.Json.Lists
+
+feature
+
+    Lines : Aqua.Containers.Linked_List[String]
+
+    Set_Lines (A_List : Aqua.Containers.Linked_List[String])
+        do
+            Lines := A_List
+        end
+end

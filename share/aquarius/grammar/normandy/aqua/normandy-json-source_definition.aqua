@@ -1,0 +1,60 @@
+class
+   Normandy.Json.Source_Definition
+
+inherit
+   Normandy.Json.Serializable
+
+feature { None }
+
+    Source_Type       : String
+    Source_File       : detachable String
+    Source_Connection : detachable String
+    Source_Table      : detachable String
+    Source_Map        : Aqua.Text.Json.Array
+
+feature
+
+    After_Source_Type (Child : Normandy.Json.Source_Type)
+        do
+            Source_Type := Child.Type
+        end
+
+    After_Source_File (Child : Normandy.Json.Source_File)
+        do
+            Source_File := Child.Path
+        end
+
+    After_Source_Connection (Child : Normandy.Json.Source_Connection)
+        do
+            Source_Connection := Child.Connection_String
+        end
+
+    After_Source_Table (Child : Normandy.Json.Source_Table)
+        do
+            Source_Table := Child.Table
+        end
+
+    After_Source_Map (Child : Normandy.Json.Source_Map)
+        do
+            Source_Map.Put (Child.To_Json)
+        end
+
+    To_Json : Aqua.Text.Json.Value
+        local
+            Object : Aqua.Text.Json.Object
+        do
+            Object.Put_String ("type", Source_Type)
+            if attached Source_File as File then
+                Object.Put_String ("file", File)
+            end
+            if attached Source_Connection as Connection then
+                Object.Put_String ("connection", Connection)
+            end
+            if attached Source_Table as Table then
+                Object.Put_String ("table", Table)
+            end
+            Object.Put ("sourceMaps", Source_Map)
+            Result := Object
+        end
+
+end

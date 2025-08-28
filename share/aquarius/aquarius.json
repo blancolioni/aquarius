@@ -5,6 +5,10 @@
 			"name": "Aqua source",
 			"plugin": "aqua"
 		},
+		"ndy": {
+			"name": "Project Normandy",
+			"plugin": "normandy"
+		},
 		"json": {
 			"name": "JSON file",
 			"plugin": "json"

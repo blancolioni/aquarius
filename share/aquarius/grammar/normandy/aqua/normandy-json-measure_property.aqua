@@ -1,0 +1,21 @@
+class
+   Normandy.Json.Measure_Property
+
+inherit
+   Normandy.Json.Serializable
+
+feature
+
+   After_Measure_Definition (Child : Normandy.Json.Measure_Definition)
+      do
+         Measure_Json.Put (Child.To_Json)
+      end
+
+   Measure_Json : Aqua.Text.Json.Array
+
+   To_Json : Aqua.Text.Json.Value
+      do
+         Result := Measure_Json
+      end
+
+end

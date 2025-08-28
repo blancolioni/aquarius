@@ -1,0 +1,46 @@
+class
+    Normandy.Json.Cube_Property
+
+inherit
+    Normandy.Json.Serializable
+
+feature
+
+    After_Measure_Property (Child : Normandy.Json.Measure_Property)
+        do
+            Prop_Json := Child.To_Json
+            Is_Measure := True
+        end
+
+    After_Source_Property (Child : Normandy.Json.Source_Property)
+        do
+            Prop_Json := Child.To_Json
+            Is_Source := True
+        end
+
+    After_Dimension_Reference_Property (Child : Normandy.Json.Dimension_Reference_Property)
+        do
+            Prop_Json := Child.To_Json
+            Is_Dimension := True
+        end
+
+    After_Invariant_Property (Child : Normandy.Json.Invariant_Property)
+        do
+            Prop_Json := Child.To_Json
+            Is_Invariant := True
+        end
+
+    To_Json : Aqua.Text.Json.Value
+        do
+            Result := Prop_Json
+        end
+        
+feature { Normandy.Json.Cube_Declaration }
+
+    Prop_Json : Aqua.Text.Json.Value
+    Is_Dimension : Boolean
+    Is_Invariant : Boolean
+    Is_Measure   : Boolean
+    Is_Source    : Boolean
+
+end
