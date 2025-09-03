@@ -1,1 +1,1 @@
-./bin/aquarius-driver --start-class ./share/aquarius/tests/aqua/test.aqua
+./bin/aquarius --start-class ./share/aquarius/tests/aqua/test.aqua
