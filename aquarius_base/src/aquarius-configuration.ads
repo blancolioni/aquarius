@@ -30,6 +30,10 @@ package Aquarius.Configuration is
 
    function Aqua_Standard_Library_Path return String;
 
+   function Aqua_Extension_Library_Path
+     (Name : String)
+     return String;
+
    function Aqua_Standard_Assembly_Path return String;
 
    function Directory_Path

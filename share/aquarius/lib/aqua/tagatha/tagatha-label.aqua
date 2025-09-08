@@ -1,0 +1,16 @@
+class
+    Tagatha.Label
+
+create
+    Make
+
+feature { Tagatha.Driver }
+    Make (Index : Integer)
+      do
+         Label_Index := Index
+      end
+
+feature { Tagatha.Driver }
+
+    Label_Index : Integer
+end

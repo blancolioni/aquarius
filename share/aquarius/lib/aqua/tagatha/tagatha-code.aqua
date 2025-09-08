@@ -1,6 +1,53 @@
 class
    Tagatha.Code
 
+create
+   Make
+
 feature
+
+   Make
+      do
+         Driver.Initialize
+      end
+
+   Dispose
+      do
+         Driver.Dispose
+      end
+
+   Push_Constant (Value : Integer)
+      do
+         Driver.Set_integer_2 (0)
+         Driver.Send_Integer (7, Value)
+      end
+
+   Pop_Local (Index : Integer)
+      do
+         Driver.Send_Integer (11, Index)
+      end
+
+   Begin_Routine (Name      : String
+                  Arg_Count : Integer
+                  Is_Public : Boolean)
+      do
+         Driver.Set_Integer (Arg_Count)
+         if Is_Public then
+            Driver.Set_Integer_2 (1)
+         else
+            Driver.Set_Integer_2 (0)
+         end
+         Driver.Set_String (Name)
+         Driver.Set_Command (12)
+      end
+
+   End_Routine
+      do
+         Driver.Set_Command (13)
+      end
+
+feature { None }
+
+   Driver : Tagatha.Driver
 
 end

@@ -1,0 +1,27 @@
+class
+   Test_Tagatha_1
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-tagatha-1"
+      end
+
+   Execute
+      local
+         This : Tagatha.Code
+      do
+         create This.Make
+         This.Begin_Routine ("test_tagatha_1", 1, True)
+         This.Push_Constant (42)
+         This.Pop_Local (1)
+         This.End_Routine
+         This.Dispose
+         Success := True
+      end
+
+end

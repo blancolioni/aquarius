@@ -1,0 +1,31 @@
+class
+   Ast.Expression.Literal
+inherit
+   Ast.Expression
+create
+   Make_Integer
+feature
+
+   Make_Integer
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      V   : Integer)
+      do
+         Parent := P
+         Source := Src
+         Value := V
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Code.Push_Constant (Value)
+      end
+
+   Set_Value (Code : Tagatha.Code)
+      do
+         Error ("Cannot set value of a literal")
+      end
+
+   Value : Integer
+
+end

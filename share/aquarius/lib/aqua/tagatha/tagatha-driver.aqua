@@ -1,0 +1,157 @@
+note
+   Routine_Update: Never
+
+class
+
+   Tagatha.Driver
+
+feature
+
+   Initialize
+      local
+         Mem : System.Memory.Mem
+      do
+         Set_Command (1)
+         External_Code_Index := Mem.Get_Word_32 (Current_Code_Address)
+      end
+
+   Dispose
+      do
+         Set_Command (2)
+         External_Code_Index := 0
+      end
+
+   Next_Label : Label
+      do
+         Set_Command (3)
+         Result.Make (Get_Integer)
+      end
+
+   Named_Label (Name : String) : Label
+      do
+         Send_String (4, Name)
+         Result.Make (Get_Integer)
+      end
+
+   Set_Label (L : Label)
+      do
+         Send_Integer (5, L.Label_Index)
+      end
+
+   Source_Location (Line, Column : Integer)
+      local
+         Mem : System.Memory.Mem
+         W : System.Word_32
+      do
+         W.Convert_From (Column)
+         Mem.Put_Word_32 (Argument_2_Address, W)
+         Send_Integer (6, Line)
+      end
+
+
+feature { None }
+
+   Make_From_Index (Index : System.Word_32)
+      do
+         External_Code_Index := Index
+      end
+
+   Send_Integer (Command : System.Word_32
+                 Value   : Integer)
+      do
+         Set_Integer (Value)
+         Set_Command (Command)
+      end
+
+   Set_Integer (Value   : Integer)
+      local
+         Mem : System.Memory.Mem
+         W : System.Word_32
+      do
+         W.Convert_From (Value)
+         Mem.Put_Word_32 (Argument_Address, W)
+      end
+
+   Set_Integer_2 (Value   : Integer)
+      local
+         Mem : System.Memory.Mem
+         W : System.Word_32
+      do
+         W.Convert_From (Value)
+         Mem.Put_Word_32 (Argument_2_Address, W)
+      end
+
+   Set_String (Text    : String)
+      do
+         Text.Write_To_Memory (Text_Address)
+      end
+
+   Send_String (Command : System.Word_32
+                Text    : String)
+      do
+         Text.Write_To_Memory (Text_Address)
+         Set_Command (Command)
+      end
+
+   Get_Integer : Integer
+      local
+         Mem : System.Memory.Mem
+         W : System.Word_32
+      do
+         W := Mem.Get_Word_32 (Argument_Address)
+         Result.Convert_From (W)
+      end
+
+   Get_String : String
+      local
+         S : String
+      do
+         create S.Create_From_String_Literal (Text_Address)
+         create Result.Create_From_String (S)
+      end
+
+   Set_Command (Command : System.Word_32)
+      local
+         Mem : System.Memory.Mem
+      do
+         Mem.Put_Word_32 (Current_Code_Address, External_Code_Index)
+         Mem.Put_Word_32 (Command_Address, Command)
+      end
+
+feature { None }
+
+   Base : System.Address
+      local
+         Meta : System.Drivers.Meta_Driver
+      once
+         Result := Meta.Install_Driver ("tagatha")
+      end
+
+   Current_Code_Address : System.Address
+      once
+         Result := Base.Offset_Words (0)
+      end
+
+   Command_Address : System.Address
+      once
+         Result := Base.Offset_Words (1)
+      end
+
+   Argument_Address : System.Address
+      once
+         Result := Base.Offset_Words (2)
+      end
+
+   Argument_2_Address : System.Address
+      once
+         Result := Base.Offset_Words (3)
+      end
+
+   Text_Address : System.Address
+      once
+         Result := Base.Offset_Words (4)
+      end
+
+   External_Code_Index : System.Word_32
+
+end
