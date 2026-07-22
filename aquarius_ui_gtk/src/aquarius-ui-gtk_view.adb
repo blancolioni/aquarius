@@ -1,4 +1,10 @@
+with Ada.Strings.Fixed;
+
 with Glib;                      use Glib;
+with Glib.Error;                use Glib.Error;
+with Glib.Object;               use Glib.Object;
+
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Drawing_Area;          use Gtk.Drawing_Area;
@@ -70,12 +76,47 @@ package body Aquarius.UI.Gtk_View is
    -- Launch --
    ------------
 
-   procedure Launch is
+   procedure Launch (Icon_Dir : String := "") is
       Window        : Gtk_Window;
       Box           : Gtk_Box;
       Miniview      : Gtk_Drawing_Area;
       Bubble_Area   : Gtk_Layout;
       Bubble_Scroll : Gtk_Scrolled_Window;
+
+      procedure Set_Window_Icons (Dir : String);
+      --  Load the "aquarius-<size>.png" icons from Dir into an icon list.
+
+      ----------------------
+      -- Set_Window_Icons --
+      ----------------------
+
+      procedure Set_Window_Icons (Dir : String) is
+         use type Object_Simple_List.Glist;
+         Sizes : constant array (Positive range <>) of Positive :=
+           [16, 24, 32, 48, 256];
+         Icons  : Object_Simple_List.Glist := Object_Simple_List.Null_List;
+         Pixbuf : Gdk_Pixbuf;
+         Error  : GError;
+      begin
+         for S of Sizes loop
+            declare
+               Path : constant String :=
+                 Dir & "/aquarius-"
+                 & Ada.Strings.Fixed.Trim (S'Image, Ada.Strings.Both)
+                 & ".png";
+            begin
+               Gdk_New_From_File (Pixbuf, Path, Error);
+               if Pixbuf /= null then
+                  Object_Simple_List.Append (Icons, GObject (Pixbuf));
+               end if;
+            end;
+         end loop;
+
+         if Icons /= Object_Simple_List.Null_List then
+            Window.Set_Icon_List (Icons);
+         end if;
+      end Set_Window_Icons;
+
    begin
       Gtk.Main.Init;
 
@@ -83,6 +124,10 @@ package body Aquarius.UI.Gtk_View is
       Window.Set_Title ("Aquarius");
       Window.Set_Default_Size (1200, 800);
       Window.On_Destroy (On_Destroy'Access);
+
+      if Icon_Dir /= "" then
+         Set_Window_Icons (Icon_Dir);
+      end if;
 
       Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 0);
       Window.Add (Box);
