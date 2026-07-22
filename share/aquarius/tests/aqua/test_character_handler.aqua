@@ -1,0 +1,26 @@
+class
+   Test_Character_Handler
+   
+inherit
+   Unit_Test
+      
+feature
+
+   Name : String
+      do
+         Result := "test-character-handler"
+      end
+      
+   Execute
+      local
+         S : String
+      do
+         S := "HELLO"
+	 S := S.To_Lower
+	 Success := S = "hello"
+	 if not Success then
+	    Fail_Message := "Expected S = 'hello'; found " & S
+	 end
+      end
+       
+end 
