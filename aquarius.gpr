@@ -8,8 +8,7 @@ project Aquarius is
    for Main use ("aquarius-driver.adb");
 
    package Compiler is
-      for Default_Switches ("Ada") use Aquarius_Config.Ada_Compiler_Switches &
-        ("-gnatyN", "-gnatp");
+      for Default_Switches ("Ada") use Aquarius_Config.Ada_Compiler_Switches;
    end Compiler;
 
   package Builder is

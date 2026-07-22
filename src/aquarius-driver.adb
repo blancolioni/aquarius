@@ -20,7 +20,7 @@ with Aquarius.Rendering.Text;
 with Aquarius.Sources.Files;
 with Aquarius.Streams.Files;
 with Aquarius.Tests;
-with Aquarius.Version;
+with Aquarius.UI.Gtk_View;
 
 procedure Aquarius.Driver is
 begin
@@ -135,7 +135,7 @@ begin
       return;
    end if;
 
-   Ada.Text_IO.Put_Line (Aquarius.Version.Version_String);
+   Aquarius.UI.Gtk_View.Launch;
    Aquarius.Library.Shut_Down;
 
 exception

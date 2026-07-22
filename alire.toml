@@ -26,11 +26,13 @@ aquarius_trees = "*"
 aquarius_syntax = "*"
 aquarius_programs = "*"
 aquarius_ui = "*"
+aquarius_ui_gtk = "*"
 
 [[pins]]
 tagatha = { path = "./tagatha" }
 wl_lib = { path = "./wl_lib" }
 aqua_vm = { path = "./aqua_vm" }
+parse_args = { path = "./parse_args" }
 aquarius_ack = { path = "./aquarius_ack" }
 aquarius_base = { path = "./aquarius_base" }
 aquarius_devices = { path = "./aquarius_devices" }
@@ -40,6 +42,7 @@ aquarius_trees = { path = "./aquarius_trees" }
 aquarius_syntax = { path = "./aquarius_syntax" }
 aquarius_programs = { path = "./aquarius_programs" }
 aquarius_ui = { path = "./aquarius_ui" }
+aquarius_ui_gtk = { path = "./aquarius_ui_gtk" }
 
 [build-switches]
 "*".ada_version = "ada2022"

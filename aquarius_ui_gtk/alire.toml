@@ -1,0 +1,27 @@
+name = "aquarius_ui_gtk"
+description = "GtkAda code-bubbles frontend for aquarius"
+version = "0.1.0-dev"
+
+authors = ["Fraser Wilson"]
+maintainers = ["Fraser Wilson <fraser@thewhitelion.eu>"]
+maintainers-logins = ["blancolioni"]
+licenses = "GPL-3.0-or-later"
+website = ""
+tags = ["ui", "gtk"]
+
+[[depends-on]]
+gtkada = "*"
+aquarius_ui = "*"
+
+[[pins]]
+aquarius_ui = { path = "../aquarius_ui" }
+aquarius_base = { path = "../aquarius_base" }
+aquarius_io = { path = "../aquarius_io" }
+aquarius_programs = { path = "../aquarius_programs" }
+
+[build-switches]
+"*".ada_version = "ada2022"
+Development.Runtime_Checks = "Everything"
+"*".Style_Checks = "yes"
+development.contracts = "yes"
+"*".compile_checks = "errors"
