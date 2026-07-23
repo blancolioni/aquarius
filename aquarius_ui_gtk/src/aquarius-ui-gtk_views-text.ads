@@ -1,3 +1,4 @@
+with Gtk.Scrolled_Window;
 with Gtk.Text_View;
 with Gtk.Widget;
 
@@ -32,6 +33,10 @@ private
 
    type Text_View is new Gtk_View_Base with record
       Text_Widget : Gtk.Text_View.Gtk_Text_View;
+      Scroller    : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
    end record;
+   --  Widget returns Scroller (which contains Text_Widget) so the view is
+   --  clipped to the bubble's content area and scrolls when the text is
+   --  larger, rather than growing the bubble to fit the whole file.
 
 end Aquarius.UI.Gtk_Views.Text;
