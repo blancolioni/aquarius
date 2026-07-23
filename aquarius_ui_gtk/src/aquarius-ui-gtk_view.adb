@@ -98,9 +98,12 @@ package body Aquarius.UI.Gtk_View is
    New_Bubble_Count : Natural := 0;
 
    --  Overview interaction state: on press we defer; a click repositions on
-   --  release, a drag repositions live.
+   --  release, a drag repositions live. Grab_Off_X/Y keep the grabbed point
+   --  fixed relative to the viewport rectangle while dragging.
    Overview_Pressed : Boolean := False;
    Overview_Dragged : Boolean := False;
+   Grab_Off_X       : Gdouble := 0.0;
+   Grab_Off_Y       : Gdouble := 0.0;
 
    Main_Window   : Gtk_Window;
    Overview      : Gtk_Drawing_Area;
@@ -403,15 +406,16 @@ package body Aquarius.UI.Gtk_View is
       end if;
    end On_Scroll;
 
-   -----------------------
-   -- Recenter_Viewport --
-   -----------------------
+   ---------------
+   -- Scroll_To --
+   ---------------
 
-   procedure Recenter_Viewport (Ox, Oy : Gdouble);
-   --  Centre the canvas viewport on the canvas point corresponding to the
-   --  overview point (Ox, Oy), keeping the viewport within the content.
+   procedure Scroll_To (Ox, Oy, Off_X, Off_Y : Gdouble);
+   --  Scroll so the canvas point under the overview point (Ox, Oy) sits at
+   --  Off_X/Off_Y from the viewport's top-left (kept within the content).
+   --  Off = page/2 centres; Off = grab offset preserves the grab position.
 
-   procedure Recenter_Viewport (Ox, Oy : Gdouble) is
+   procedure Scroll_To (Ox, Oy, Off_X, Off_Y : Gdouble) is
       Cx   : constant Gdouble := (Ox - Overview_Pad) / Overview_Scale;
       Cy   : constant Gdouble := (Oy - Overview_Pad) / Overview_Scale;
       Hadj : constant Gtk_Adjustment := Bubble_Scroll.Get_Hadjustment;
@@ -426,9 +430,9 @@ package body Aquarius.UI.Gtk_View is
       end Clamp;
 
    begin
-      Hadj.Set_Value (Clamp (Hadj, Cx - Get_Page_Size (Hadj) / 2.0));
-      Vadj.Set_Value (Clamp (Vadj, Cy - Get_Page_Size (Vadj) / 2.0));
-   end Recenter_Viewport;
+      Hadj.Set_Value (Clamp (Hadj, Cx - Off_X));
+      Vadj.Set_Value (Clamp (Vadj, Cy - Off_Y));
+   end Scroll_To;
 
    -------------------------
    -- On_Overview_Click --
@@ -442,12 +446,31 @@ package body Aquarius.UI.Gtk_View is
      (Self  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event_Button) return Boolean
    is
-      pragma Unreferenced (Self, Event);
+      pragma Unreferenced (Self);
+      Cx   : constant Gdouble := (Event.X - Overview_Pad) / Overview_Scale;
+      Cy   : constant Gdouble := (Event.Y - Overview_Pad) / Overview_Scale;
+      Hadj : constant Gtk_Adjustment := Bubble_Scroll.Get_Hadjustment;
+      Vadj : constant Gtk_Adjustment := Bubble_Scroll.Get_Vadjustment;
+      Hval : constant Gdouble := Get_Value (Hadj);
+      Vval : constant Gdouble := Get_Value (Vadj);
+      Pw   : constant Gdouble := Get_Page_Size (Hadj);
+      Ph   : constant Gdouble := Get_Page_Size (Vadj);
    begin
       --  Defer: don't move on press. A drag moves live; a plain click moves
       --  on release (see On_Overview_Motion / On_Overview_Release).
       Overview_Pressed := True;
       Overview_Dragged := False;
+      --  If the press is inside the viewport rectangle, keep the grabbed
+      --  point fixed relative to it while dragging; otherwise grab its centre.
+      if Cx >= Hval and then Cx <= Hval + Pw
+        and then Cy >= Vval and then Cy <= Vval + Ph
+      then
+         Grab_Off_X := Cx - Hval;
+         Grab_Off_Y := Cy - Vval;
+      else
+         Grab_Off_X := Pw / 2.0;
+         Grab_Off_Y := Ph / 2.0;
+      end if;
       return True;
    end On_Overview_Click;
 
@@ -466,9 +489,10 @@ package body Aquarius.UI.Gtk_View is
       pragma Unreferenced (Self);
    begin
       --  Only delivered while button 1 is held (Button1_Motion_Mask): a drag.
+      --  Keep the grabbed point fixed relative to the viewport rectangle.
       if Overview_Pressed then
          Overview_Dragged := True;
-         Recenter_Viewport (Event.X, Event.Y);
+         Scroll_To (Event.X, Event.Y, Grab_Off_X, Grab_Off_Y);
       end if;
       return True;
    end On_Overview_Motion;
@@ -486,10 +510,14 @@ package body Aquarius.UI.Gtk_View is
       Event : Gdk_Event_Button) return Boolean
    is
       pragma Unreferenced (Self);
+      Hadj : constant Gtk_Adjustment := Bubble_Scroll.Get_Hadjustment;
+      Vadj : constant Gtk_Adjustment := Bubble_Scroll.Get_Vadjustment;
    begin
-      --  A plain click (no drag) repositions on release.
+      --  A plain click (no drag) centres the viewport on the clicked point.
       if Overview_Pressed and then not Overview_Dragged then
-         Recenter_Viewport (Event.X, Event.Y);
+         Scroll_To
+           (Event.X, Event.Y,
+            Get_Page_Size (Hadj) / 2.0, Get_Page_Size (Vadj) / 2.0);
       end if;
       Overview_Pressed := False;
       return True;
