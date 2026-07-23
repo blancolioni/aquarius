@@ -4,6 +4,26 @@ package body Aquarius.UI.Gtk_Views is
 
    use type Aquarius.Models.Model_Reference;
 
+   Open_Target_Handler : Open_Target_Callback := null;
+
+   ---------------------
+   -- Set_Open_Target --
+   ---------------------
+
+   procedure Set_Open_Target (Callback : Open_Target_Callback) is
+   begin
+      Open_Target_Handler := Callback;
+   end Set_Open_Target;
+
+   -----------------
+   -- Open_Target --
+   -----------------
+
+   function Open_Target return Open_Target_Callback is
+   begin
+      return Open_Target_Handler;
+   end Open_Target;
+
    ---------------
    -- Set_Model --
    ---------------

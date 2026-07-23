@@ -44,6 +44,7 @@ with Aquarius.Streams.Files;
 
 with Aquarius.Models;
 with Aquarius.Models.Text;
+with Aquarius.Models.Trees.Filesystem;
 with Aquarius.UI.Layout;
 with Aquarius.UI.Views;
 with Aquarius.UI.Views.Registry;
@@ -1024,6 +1025,34 @@ package body Aquarius.UI.Gtk_View is
       Dialog.Destroy;
    end Choose_And_Open_File;
 
+   ------------------------------
+   -- Choose_And_Open_Directory --
+   ------------------------------
+
+   procedure Choose_And_Open_Directory;
+
+   procedure Choose_And_Open_Directory is
+      Dialog : Gtk_File_Chooser_Dialog;
+      Dummy  : Gtk_Widget;
+      pragma Unreferenced (Dummy);
+   begin
+      Gtk_New
+        (Dialog, "Open Directory", Main_Window, Action_Select_Folder);
+      Dummy := Dialog.Add_Button ("Cancel", Gtk_Response_Cancel);
+      Dummy := Dialog.Add_Button ("Open", Gtk_Response_Accept);
+      if Dialog.Run = Gtk_Response_Accept then
+         declare
+            Path : constant String := Dialog.Get_Filename;
+         begin
+            Open_Model
+              (Models.Model_Reference
+                 (Aquarius.Models.Trees.Filesystem.Create (Path)),
+               Ada.Directories.Simple_Name (Path));
+         end;
+      end if;
+      Dialog.Destroy;
+   end Choose_And_Open_Directory;
+
    ------------------
    -- On_Key_Press --
    ------------------
@@ -1047,6 +1076,10 @@ package body Aquarius.UI.Gtk_View is
          elsif Event.Keyval = GDK_LC_o then
             --  Ctrl+O: open a file as a plain-text bubble.
             Choose_And_Open_File;
+            return True;
+         elsif Event.Keyval = GDK_LC_d then
+            --  Ctrl+D: open a directory as a tree bubble.
+            Choose_And_Open_Directory;
             return True;
          end if;
       end if;
@@ -1106,6 +1139,8 @@ package body Aquarius.UI.Gtk_View is
    begin
       Gtk.Main.Init;
       Aquarius.UI.Gtk_Views.Register.Register_All;
+      --  Let views (e.g. the tree view) open a locator in a new bubble.
+      Aquarius.UI.Gtk_Views.Set_Open_Target (Open_File'Access);
 
       Gdk_New (Move_Cursor, Fleur);
       Gdk_New (Close_Cursor, Hand2);

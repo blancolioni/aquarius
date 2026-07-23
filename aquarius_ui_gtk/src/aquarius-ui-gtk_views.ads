@@ -17,6 +17,16 @@ package Aquarius.UI.Gtk_Views is
 
    type Gtk_View_Reference is access all Gtk_View_Interface'Class;
 
+   --  Hook so a view can ask the frontend to open a locator (path/URI) in a
+   --  new bubble, without depending on the frontend package (which would be a
+   --  cycle: the frontend withs the views). The frontend installs this at
+   --  startup; views invoke it, e.g. the tree view when a file node is
+   --  activated.
+   type Open_Target_Callback is access procedure (Target : String);
+
+   procedure Set_Open_Target (Callback : Open_Target_Callback);
+   function Open_Target return Open_Target_Callback;
+
    --  Base implementing model storage + subscription. Concrete views add
    --  Id, Accepts, Widget and Update.
    type Gtk_View_Base is abstract new Gtk_View_Interface with private;
