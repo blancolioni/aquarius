@@ -31,6 +31,7 @@ with Gtk.Window;                use Gtk.Window;
 
 with Aquarius.Models;
 with Aquarius.Models.Text;
+with Aquarius.UI.Layout;
 with Aquarius.UI.Views;
 with Aquarius.UI.Views.Registry;
 with Aquarius.UI.Gtk_Views;      use Aquarius.UI.Gtk_Views;
@@ -58,6 +59,8 @@ package body Aquarius.UI.Gtk_View is
 
    Default_Bubble_W : constant Gdouble := 340.0;
    Default_Bubble_H : constant Gdouble := 190.0;
+
+   Bubble_Gap : constant := 12.0;   --  min space kept between bubbles
 
    type Colour is record
       R, G, B : Gdouble;
@@ -120,6 +123,10 @@ package body Aquarius.UI.Gtk_View is
    --  model and call it. Open_File is one such producer.
    procedure Open_Model (Model : Models.Model_Reference; Title : String);
    procedure Open_File (Path : String);
+
+   procedure Resolve_Overlaps (Seed : Positive);
+   --  Move bubbles so none overlap, treating Seed as anchored (frozen
+   --  wavefront), then reposition the affected content widgets.
 
    ----------------
    -- Set_Colour --
@@ -244,6 +251,60 @@ package body Aquarius.UI.Gtk_View is
       return True;
    end Draw_Overview;
 
+   ----------------------
+   -- Resolve_Overlaps --
+   ----------------------
+
+   procedure Resolve_Overlaps (Seed : Positive) is
+      use type Views.View_Reference;
+      N     : constant Natural := Natural (Bubbles.Length);
+      Rects : Aquarius.UI.Layout.Rectangle_Array (1 .. N);
+   begin
+      if N = 0 then
+         return;
+      end if;
+
+      for I in 1 .. N loop
+         Rects (I) :=
+           (X => Long_Float (Bubbles (I).X),
+            Y => Long_Float (Bubbles (I).Y),
+            W => Long_Float (Bubbles (I).W),
+            H => Long_Float (Bubbles (I).H));
+      end loop;
+
+      Aquarius.UI.Layout.Remove_Overlaps (Rects, Seed, Bubble_Gap);
+      --  Keep everything at non-negative coordinates (GtkLayout can't place
+      --  children at negative positions); grows the whole scene if needed.
+      Aquarius.UI.Layout.Normalize (Rects, Bubble_Gap);
+
+      declare
+         Max_X, Max_Y : Gdouble := 0.0;
+      begin
+         for I in 1 .. N loop
+            Bubbles (I).X := Gdouble (Rects (I).X);
+            Bubbles (I).Y := Gdouble (Rects (I).Y);
+            Max_X := Gdouble'Max (Max_X, Bubbles (I).X + Bubbles (I).W);
+            Max_Y := Gdouble'Max (Max_Y, Bubbles (I).Y + Bubbles (I).H);
+            if Bubbles (I).View /= null
+              and then Bubbles (I).View.all in Gtk_View_Interface'Class
+            then
+               Bubble_Area.Move
+                 (Gtk_View_Interface'Class (Bubbles (I).View.all).Widget,
+                  Gint (Bubbles (I).X + Content_Inset),
+                  Gint (Bubbles (I).Y + Title_Height));
+            end if;
+         end loop;
+
+         --  Grow the scrollable area to fit (never shrink below the default).
+         Bubble_Area.Set_Size
+           (Guint (Gint'Max (Canvas_W, Gint (Max_X + Bubble_Gap))),
+            Guint (Gint'Max (Canvas_H, Gint (Max_Y + Bubble_Gap))));
+      end;
+
+      Bubble_Area.Queue_Draw;
+      Overview.Queue_Draw;
+   end Resolve_Overlaps;
+
    ----------------
    -- Open_Model --
    ----------------
@@ -286,8 +347,8 @@ package body Aquarius.UI.Gtk_View is
       end if;
 
       Bubbles.Append (B);
-      Bubble_Area.Queue_Draw;
-      Overview.Queue_Draw;
+      --  Shove any bubbles the new one overlaps out of the way.
+      Resolve_Overlaps (Positive (Bubbles.Last_Index));
    end Open_Model;
 
    ---------------
