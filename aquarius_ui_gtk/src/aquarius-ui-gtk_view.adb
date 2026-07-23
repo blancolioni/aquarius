@@ -32,6 +32,16 @@ with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
+with Aquarius.Grammars;
+with Aquarius.Grammars.Manager;
+with Aquarius.Programs;
+with Aquarius.Programs.Models;
+with Aquarius.Reader;
+with Aquarius.Sources;
+with Aquarius.Sources.Files;
+with Aquarius.Streams;
+with Aquarius.Streams.Files;
+
 with Aquarius.Models;
 with Aquarius.Models.Text;
 with Aquarius.UI.Layout;
@@ -43,6 +53,9 @@ with Aquarius.UI.Gtk_Views.Register;
 package body Aquarius.UI.Gtk_View is
 
    package Models renames Aquarius.Models;
+   package Tree_Models renames Aquarius.Programs.Models;
+
+   use type Aquarius.Programs.Program_Tree;
    package Views renames Aquarius.UI.Views;
    package Text_Models renames Aquarius.Models.Text;
 
@@ -467,9 +480,37 @@ package body Aquarius.UI.Gtk_View is
    ---------------
 
    procedure Open_File (Path : String) is
+      Name    : constant String := Ada.Directories.Simple_Name (Path);
       Content : Unbounded_String := Null_Unbounded_String;
       File    : Ada.Text_IO.File_Type;
    begin
+      --  If a grammar matches this file, parse it into a program tree and show
+      --  it in the (syntax-styled) source view. Any failure (no grammar, parse
+      --  error) falls through to the plain-text view below.
+      begin
+         declare
+            Grammar : constant Aquarius.Grammars.Aquarius_Grammar :=
+                        Aquarius.Grammars.Manager.Get_Grammar_For_File (Name);
+            Source  : constant Aquarius.Sources.Source_Reference :=
+                        Aquarius.Sources.Files.File_Source (Path);
+            Stream  : constant Aquarius.Streams.Reader_Reference :=
+                        Aquarius.Streams.Files.File_Reader (Path);
+            Program : constant Aquarius.Programs.Program_Tree :=
+                        Aquarius.Reader.Read (Grammar, Source, Stream);
+         begin
+            if Program /= null then
+               Open_Model
+                 (Models.Model_Reference
+                    (Tree_Models.Create (Program, Grammar)),
+                  Name);
+               return;
+            end if;
+         end;
+      exception
+         when others =>
+            null;  --  fall through to plain text
+      end;
+
       begin
          Ada.Text_IO.Open (File, Ada.Text_IO.In_File, Path);
          while not Ada.Text_IO.End_Of_File (File) loop
@@ -489,7 +530,7 @@ package body Aquarius.UI.Gtk_View is
       Open_Model
         (Models.Model_Reference
            (Text_Models.Create (To_String (Content))),
-         Ada.Directories.Simple_Name (Path));
+         Name);
    end Open_File;
 
    ---------------

@@ -12,12 +12,17 @@ tags = ["ui", "gtk"]
 [[depends-on]]
 gtkada = "*"
 aquarius_ui = "*"
+aquarius_base = "*"
+aquarius_io = "*"
+aquarius_programs = "*"
+aquarius_plugins = "*"
 
 [[pins]]
 aquarius_ui = { path = "../aquarius_ui" }
 aquarius_base = { path = "../aquarius_base" }
 aquarius_io = { path = "../aquarius_io" }
 aquarius_programs = { path = "../aquarius_programs" }
+aquarius_plugins = { path = "../aquarius_plugins" }
 
 [build-switches]
 "*".ada_version = "ada2022"
