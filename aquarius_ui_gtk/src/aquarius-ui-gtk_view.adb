@@ -12,6 +12,7 @@ with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Gdk.Window;                use Gdk.Window;
 
 with Cairo;                     use Cairo;
 with Cairo.Pattern;             use Cairo.Pattern;
@@ -104,6 +105,12 @@ package body Aquarius.UI.Gtk_View is
    Overview_Dragged : Boolean := False;
    Grab_Off_X       : Gdouble := 0.0;
    Grab_Off_Y       : Gdouble := 0.0;
+
+   --  Bubble drag state: index of the bubble being dragged by its title bar
+   --  (0 = none) and the grab offset from the bubble's top-left.
+   Dragging_Bubble : Natural := 0;
+   Bubble_Grab_X   : Gdouble := 0.0;
+   Bubble_Grab_Y   : Gdouble := 0.0;
 
    Main_Window   : Gtk_Window;
    Overview      : Gtk_Drawing_Area;
@@ -523,6 +530,131 @@ package body Aquarius.UI.Gtk_View is
       return True;
    end On_Overview_Release;
 
+   ---------------
+   -- To_Canvas --
+   ---------------
+
+   procedure To_Canvas (Root_X, Root_Y : Gdouble; Cx, Cy : out Gdouble);
+   --  Map a root (screen) point to canvas coordinates, accounting for the
+   --  layout's on-screen position and the scroll offset.
+
+   procedure To_Canvas (Root_X, Root_Y : Gdouble; Cx, Cy : out Gdouble) is
+      Ox, Oy : Gint;
+   begin
+      Get_Origin (Bubble_Area.Get_Window, Ox, Oy);
+      Cx := Root_X - Gdouble (Ox)
+        + Get_Value (Bubble_Scroll.Get_Hadjustment);
+      Cy := Root_Y - Gdouble (Oy)
+        + Get_Value (Bubble_Scroll.Get_Vadjustment);
+   end To_Canvas;
+
+   ---------------------
+   -- Move_Bubble_View --
+   ---------------------
+
+   procedure Move_Bubble_View (Index : Positive);
+   --  Reposition bubble Index's content widget to match its geometry.
+
+   procedure Move_Bubble_View (Index : Positive) is
+      use type Views.View_Reference;
+   begin
+      if Bubbles (Index).View /= null
+        and then Bubbles (Index).View.all in Gtk_View_Interface'Class
+      then
+         Bubble_Area.Move
+           (Gtk_View_Interface'Class (Bubbles (Index).View.all).Widget,
+            Gint (Bubbles (Index).X + Content_Inset),
+            Gint (Bubbles (Index).Y + Title_Height));
+      end if;
+   end Move_Bubble_View;
+
+   -----------------------
+   -- On_Canvas_Press --
+   -----------------------
+
+   function On_Canvas_Press
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean;
+
+   function On_Canvas_Press
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean
+   is
+      pragma Unreferenced (Self);
+      Cx, Cy : Gdouble;
+   begin
+      To_Canvas (Event.X_Root, Event.Y_Root, Cx, Cy);
+      --  Topmost bubble whose title bar contains the point starts a drag.
+      for I in reverse Bubbles.First_Index .. Bubbles.Last_Index loop
+         declare
+            B : Bubble renames Bubbles (I);
+         begin
+            if Cx >= B.X and then Cx <= B.X + B.W
+              and then Cy >= B.Y and then Cy <= B.Y + Title_Height
+            then
+               Dragging_Bubble := I;
+               Bubble_Grab_X := Cx - B.X;
+               Bubble_Grab_Y := Cy - B.Y;
+               Bubble_Area.Grab_Add;
+               return True;
+            end if;
+         end;
+      end loop;
+      return False;
+   end On_Canvas_Press;
+
+   ------------------------
+   -- On_Canvas_Motion --
+   ------------------------
+
+   function On_Canvas_Motion
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Motion) return Boolean;
+
+   function On_Canvas_Motion
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Motion) return Boolean
+   is
+      pragma Unreferenced (Self);
+      Cx, Cy : Gdouble;
+   begin
+      if Dragging_Bubble = 0 then
+         return False;
+      end if;
+      To_Canvas (Event.X_Root, Event.Y_Root, Cx, Cy);
+      Bubbles (Dragging_Bubble).X := Gdouble'Max (0.0, Cx - Bubble_Grab_X);
+      Bubbles (Dragging_Bubble).Y := Gdouble'Max (0.0, Cy - Bubble_Grab_Y);
+      Move_Bubble_View (Dragging_Bubble);
+      Bubble_Area.Queue_Draw;
+      Overview.Queue_Draw;
+      return True;
+   end On_Canvas_Motion;
+
+   -------------------------
+   -- On_Canvas_Release --
+   -------------------------
+
+   function On_Canvas_Release
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean;
+
+   function On_Canvas_Release
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean
+   is
+      pragma Unreferenced (Self, Event);
+      Dragged : constant Natural := Dragging_Bubble;
+   begin
+      if Dragged = 0 then
+         return False;
+      end if;
+      Dragging_Bubble := 0;
+      Bubble_Area.Grab_Remove;
+      --  Shove other bubbles out of the way of the one just dropped.
+      Resolve_Overlaps (Dragged);
+      return True;
+   end On_Canvas_Release;
+
    ------------------------
    -- Choose_And_Open_File --
    ------------------------
@@ -656,6 +788,11 @@ package body Aquarius.UI.Gtk_View is
       Gtk_New (Bubble_Area);
       Bubble_Area.Set_Size (Guint (Canvas_W), Guint (Canvas_H));
       Bubble_Area.On_Draw (Draw_Canvas'Access);
+      Bubble_Area.Add_Events
+        (Button_Press_Mask + Button_Release_Mask + Button1_Motion_Mask);
+      Bubble_Area.On_Button_Press_Event (On_Canvas_Press'Access);
+      Bubble_Area.On_Button_Release_Event (On_Canvas_Release'Access);
+      Bubble_Area.On_Motion_Notify_Event (On_Canvas_Motion'Access);
       Bubble_Scroll.Add (Bubble_Area);
       Box.Pack_Start
         (Bubble_Scroll, Expand => True, Fill => True, Padding => 0);
