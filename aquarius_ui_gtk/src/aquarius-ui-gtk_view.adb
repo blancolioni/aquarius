@@ -398,9 +398,36 @@ package body Aquarius.UI.Gtk_View is
       end if;
    end On_Scroll;
 
-   ------------------------
+   -----------------------
+   -- Recenter_Viewport --
+   -----------------------
+
+   procedure Recenter_Viewport (Ox, Oy : Gdouble);
+   --  Centre the canvas viewport on the canvas point corresponding to the
+   --  overview point (Ox, Oy), keeping the viewport within the content.
+
+   procedure Recenter_Viewport (Ox, Oy : Gdouble) is
+      Cx   : constant Gdouble := (Ox - Overview_Pad) / Overview_Scale;
+      Cy   : constant Gdouble := (Oy - Overview_Pad) / Overview_Scale;
+      Hadj : constant Gtk_Adjustment := Bubble_Scroll.Get_Hadjustment;
+      Vadj : constant Gtk_Adjustment := Bubble_Scroll.Get_Vadjustment;
+
+      function Clamp (Adj : Gtk_Adjustment; Target : Gdouble) return Gdouble is
+         Hi : constant Gdouble :=
+           Gdouble'Max
+             (Get_Lower (Adj), Get_Upper (Adj) - Get_Page_Size (Adj));
+      begin
+         return Gdouble'Min (Gdouble'Max (Target, Get_Lower (Adj)), Hi);
+      end Clamp;
+
+   begin
+      Hadj.Set_Value (Clamp (Hadj, Cx - Get_Page_Size (Hadj) / 2.0));
+      Vadj.Set_Value (Clamp (Vadj, Cy - Get_Page_Size (Vadj) / 2.0));
+   end Recenter_Viewport;
+
+   -------------------------
    -- On_Overview_Click --
-   ------------------------
+   -------------------------
 
    function On_Overview_Click
      (Self  : access Gtk_Widget_Record'Class;
@@ -411,17 +438,30 @@ package body Aquarius.UI.Gtk_View is
       Event : Gdk_Event_Button) return Boolean
    is
       pragma Unreferenced (Self);
-      --  Overview point -> canvas point.
-      Cx   : constant Gdouble := (Event.X - Overview_Pad) / Overview_Scale;
-      Cy   : constant Gdouble := (Event.Y - Overview_Pad) / Overview_Scale;
-      Hadj : constant Gtk_Adjustment := Bubble_Scroll.Get_Hadjustment;
-      Vadj : constant Gtk_Adjustment := Bubble_Scroll.Get_Vadjustment;
    begin
-      --  Centre the viewport on the clicked canvas point (Set_Value clamps).
-      Hadj.Set_Value (Cx - Get_Page_Size (Hadj) / 2.0);
-      Vadj.Set_Value (Cy - Get_Page_Size (Vadj) / 2.0);
+      Recenter_Viewport (Event.X, Event.Y);
       return True;
    end On_Overview_Click;
+
+   --------------------------
+   -- On_Overview_Motion --
+   --------------------------
+
+   function On_Overview_Motion
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Motion) return Boolean;
+
+   function On_Overview_Motion
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Motion) return Boolean
+   is
+      pragma Unreferenced (Self);
+   begin
+      --  Only delivered while button 1 is held (Button1_Motion_Mask), so this
+      --  drags the viewport.
+      Recenter_Viewport (Event.X, Event.Y);
+      return True;
+   end On_Overview_Motion;
 
    ------------------------
    -- Choose_And_Open_File --
@@ -543,8 +583,9 @@ package body Aquarius.UI.Gtk_View is
       Gtk_New (Overview);
       Overview.Set_Size_Request (-1, 100);
       Overview.On_Draw (Draw_Overview'Access);
-      Overview.Add_Events (Button_Press_Mask);
+      Overview.Add_Events (Button_Press_Mask + Button1_Motion_Mask);
       Overview.On_Button_Press_Event (On_Overview_Click'Access);
+      Overview.On_Motion_Notify_Event (On_Overview_Motion'Access);
       Box.Pack_Start (Overview, Expand => False, Fill => True, Padding => 0);
 
       --  Bubble canvas: a large scrollable layout filling the remaining space.
