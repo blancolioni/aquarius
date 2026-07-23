@@ -399,6 +399,31 @@ package body Aquarius.UI.Gtk_View is
    end On_Scroll;
 
    ------------------------
+   -- On_Overview_Click --
+   ------------------------
+
+   function On_Overview_Click
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean;
+
+   function On_Overview_Click
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean
+   is
+      pragma Unreferenced (Self);
+      --  Overview point -> canvas point.
+      Cx   : constant Gdouble := (Event.X - Overview_Pad) / Overview_Scale;
+      Cy   : constant Gdouble := (Event.Y - Overview_Pad) / Overview_Scale;
+      Hadj : constant Gtk_Adjustment := Bubble_Scroll.Get_Hadjustment;
+      Vadj : constant Gtk_Adjustment := Bubble_Scroll.Get_Vadjustment;
+   begin
+      --  Centre the viewport on the clicked canvas point (Set_Value clamps).
+      Hadj.Set_Value (Cx - Get_Page_Size (Hadj) / 2.0);
+      Vadj.Set_Value (Cy - Get_Page_Size (Vadj) / 2.0);
+      return True;
+   end On_Overview_Click;
+
+   ------------------------
    -- Choose_And_Open_File --
    ------------------------
 
@@ -518,6 +543,8 @@ package body Aquarius.UI.Gtk_View is
       Gtk_New (Overview);
       Overview.Set_Size_Request (-1, 100);
       Overview.On_Draw (Draw_Overview'Access);
+      Overview.Add_Events (Button_Press_Mask);
+      Overview.On_Button_Press_Event (On_Overview_Click'Access);
       Box.Pack_Start (Overview, Expand => False, Fill => True, Padding => 0);
 
       --  Bubble canvas: a large scrollable layout filling the remaining space.
