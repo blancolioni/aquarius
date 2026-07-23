@@ -78,6 +78,12 @@ package body Aquarius.UI.Gtk_View is
 
    Bubble_Gap : constant := 12.0;   --  min space kept between bubbles
 
+   --  Border grab band for resizing, and minimum bubble size. The band matches
+   --  the chrome outside the content widget, so it never overlaps the content.
+   Resize_Margin  : constant Gdouble := Content_Inset;
+   Min_Bubble_W   : constant Gdouble := 160.0;
+   Min_Bubble_H   : constant Gdouble := 120.0;
+
    type Colour is record
       R, G, B : Gdouble;
    end record;
@@ -131,12 +137,30 @@ package body Aquarius.UI.Gtk_View is
    Bubble_Grab_X   : Gdouble := 0.0;
    Bubble_Grab_Y   : Gdouble := 0.0;
 
-   --  Cursors and hover state for the title-bar affordances.
-   Move_Cursor    : Gdk.Gdk_Cursor;
-   Close_Cursor   : Gdk.Gdk_Cursor;
-   Default_Cursor : Gdk.Gdk_Cursor;
+   --  Bubble resize state: index of the bubble being resized by a border
+   --  (0 = none), which edges are being dragged, and the anchored (fixed)
+   --  edges at the start of the drag. The top edge is never resized (it is
+   --  the title bar, used for moving), so the top is always the anchor.
+   Resizing_Bubble : Natural := 0;
+   Resize_L        : Boolean := False;
+   Resize_R        : Boolean := False;
+   Resize_B        : Boolean := False;
+   Anchor_L        : Gdouble := 0.0;
+   Anchor_T        : Gdouble := 0.0;
+   Anchor_R        : Gdouble := 0.0;
 
-   type Hover_Zone is (Zone_None, Zone_Title, Zone_Close);
+   --  Cursors and hover state for the title-bar and border affordances.
+   Move_Cursor      : Gdk.Gdk_Cursor;
+   Close_Cursor     : Gdk.Gdk_Cursor;
+   Default_Cursor   : Gdk.Gdk_Cursor;
+   Resize_H_Cursor  : Gdk.Gdk_Cursor;   --  left / right edge
+   Resize_V_Cursor  : Gdk.Gdk_Cursor;   --  bottom edge
+   Resize_BR_Cursor : Gdk.Gdk_Cursor;   --  bottom-right corner
+   Resize_BL_Cursor : Gdk.Gdk_Cursor;   --  bottom-left corner
+
+   type Hover_Zone is
+     (Zone_None, Zone_Title, Zone_Close,
+      Zone_Resize_H, Zone_Resize_V, Zone_Resize_BR, Zone_Resize_BL);
    Current_Zone : Hover_Zone := Zone_None;
 
    Main_Window   : Gtk_Window;
@@ -705,6 +729,66 @@ package body Aquarius.UI.Gtk_View is
       end if;
    end Move_Bubble_View;
 
+   ----------------------
+   -- Size_Bubble_View --
+   ----------------------
+
+   procedure Size_Bubble_View (Index : Positive);
+   --  Resize AND reposition bubble Index's content widget to match its
+   --  geometry (used while resizing; Move_Bubble_View only repositions).
+
+   procedure Size_Bubble_View (Index : Positive) is
+      use type Views.View_Reference;
+      B : Bubble renames Bubbles (Index);
+   begin
+      if B.View /= null
+        and then B.View.all in Gtk_View_Interface'Class
+      then
+         declare
+            W  : constant Gtk_Widget :=
+                   Gtk_View_Interface'Class (B.View.all).Widget;
+            Cw : constant Gdouble := B.W - 2.0 * Content_Inset;
+            Ch : constant Gdouble := B.H - Title_Height - Content_Inset;
+         begin
+            W.Set_Size_Request
+              (Gint (Gdouble'Max (1.0, Cw)), Gint (Gdouble'Max (1.0, Ch)));
+            Bubble_Area.Move
+              (W,
+               Gint (B.X + Content_Inset),
+               Gint (B.Y + Title_Height));
+         end;
+      end if;
+   end Size_Bubble_View;
+
+   ---------------
+   -- Edge_Hits --
+   ---------------
+
+   procedure Edge_Hits
+     (B          : Bubble;
+      Cx, Cy     : Gdouble;
+      L, R, Bttm : out Boolean);
+   --  Which resizable borders of B the point (Cx, Cy) is on. The left/right
+   --  bands are only live below the title bar; the bottom band spans the full
+   --  width (its ends are the corners).
+
+   procedure Edge_Hits
+     (B          : Bubble;
+      Cx, Cy     : Gdouble;
+      L, R, Bttm : out Boolean)
+   is
+      In_X        : constant Boolean := Cx >= B.X and then Cx <= B.X + B.W;
+      In_Y        : constant Boolean := Cy >= B.Y and then Cy <= B.Y + B.H;
+      Below_Title : constant Boolean := Cy >= B.Y + Title_Height;
+   begin
+      R := In_X and then In_Y and then Below_Title
+        and then Cx >= B.X + B.W - Resize_Margin;
+      L := In_X and then In_Y and then Below_Title
+        and then Cx <= B.X + Resize_Margin;
+      Bttm := In_X and then In_Y and then Below_Title
+        and then Cy >= B.Y + B.H - Resize_Margin;
+   end Edge_Hits;
+
    ------------------
    -- Close_Bubble --
    ------------------
@@ -744,14 +828,26 @@ package body Aquarius.UI.Gtk_View is
       --  bar starts a drag.
       for I in reverse Bubbles.First_Index .. Bubbles.Last_Index loop
          declare
-            B          : constant Bubble := Bubbles (I);
-            Bx, By, Bs : Gdouble;
+            B           : constant Bubble := Bubbles (I);
+            Bx, By, Bs  : Gdouble;
+            EL, ER, EB  : Boolean;
          begin
             Close_Box (B, Bx, By, Bs);
+            Edge_Hits (B, Cx, Cy, EL, ER, EB);
             if Cx >= Bx and then Cx <= Bx + Bs
               and then Cy >= By and then Cy <= By + Bs
             then
                Close_Bubble (I);
+               return True;
+            elsif EL or else ER or else EB then
+               Resizing_Bubble := I;
+               Resize_L := EL;
+               Resize_R := ER;
+               Resize_B := EB;
+               Anchor_L := B.X;
+               Anchor_T := B.Y;
+               Anchor_R := B.X + B.W;
+               Bubble_Area.Grab_Add;
                return True;
             elsif Cx >= B.X and then Cx <= B.X + B.W
               and then Cy >= B.Y and then Cy <= B.Y + Title_Height
@@ -784,6 +880,31 @@ package body Aquarius.UI.Gtk_View is
    begin
       To_Canvas (Event.X_Root, Event.Y_Root, Cx, Cy);
 
+      if Resizing_Bubble /= 0 then
+         declare
+            New_L : Gdouble := Anchor_L;
+            New_R : Gdouble := Anchor_R;
+         begin
+            if Resize_R then
+               New_R := Gdouble'Max (Cx, Anchor_L + Min_Bubble_W);
+            end if;
+            if Resize_L then
+               New_L := Gdouble'Min
+                 (Gdouble'Max (0.0, Cx), Anchor_R - Min_Bubble_W);
+            end if;
+            Bubbles (Resizing_Bubble).X := New_L;
+            Bubbles (Resizing_Bubble).W := New_R - New_L;
+            if Resize_B then
+               Bubbles (Resizing_Bubble).H :=
+                 Gdouble'Max (Cy - Anchor_T, Min_Bubble_H);
+            end if;
+         end;
+         Size_Bubble_View (Resizing_Bubble);
+         Bubble_Area.Queue_Draw;
+         Overview.Queue_Draw;
+         return True;
+      end if;
+
       if Dragging_Bubble /= 0 then
          Bubbles (Dragging_Bubble).X := Gdouble'Max (0.0, Cx - Bubble_Grab_X);
          Bubbles (Dragging_Bubble).Y := Gdouble'Max (0.0, Cy - Bubble_Grab_Y);
@@ -793,7 +914,8 @@ package body Aquarius.UI.Gtk_View is
          return True;
       end if;
 
-      --  Not dragging: move cursor over a title bar, close cursor over its X.
+      --  Not dragging: cursor reflects the affordance under the pointer
+      --  (close X, title move, or a resize border).
       declare
          Zone : Hover_Zone := Zone_None;
       begin
@@ -801,12 +923,26 @@ package body Aquarius.UI.Gtk_View is
             declare
                B          : constant Bubble := Bubbles (I);
                Bx, By, Bs : Gdouble;
+               EL, ER, EB : Boolean;
             begin
                Close_Box (B, Bx, By, Bs);
+               Edge_Hits (B, Cx, Cy, EL, ER, EB);
                if Cx >= Bx and then Cx <= Bx + Bs
                  and then Cy >= By and then Cy <= By + Bs
                then
                   Zone := Zone_Close;
+                  exit;
+               elsif ER and then EB then
+                  Zone := Zone_Resize_BR;
+                  exit;
+               elsif EL and then EB then
+                  Zone := Zone_Resize_BL;
+                  exit;
+               elsif EB then
+                  Zone := Zone_Resize_V;
+                  exit;
+               elsif EL or else ER then
+                  Zone := Zone_Resize_H;
                   exit;
                elsif Cx >= B.X and then Cx <= B.X + B.W
                  and then Cy >= B.Y and then Cy <= B.Y + Title_Height
@@ -822,9 +958,13 @@ package body Aquarius.UI.Gtk_View is
             Set_Cursor
               (Bubble_Area.Get_Window,
                (case Zone is
-                   when Zone_Close => Close_Cursor,
-                   when Zone_Title => Move_Cursor,
-                   when Zone_None  => Default_Cursor));
+                   when Zone_Close     => Close_Cursor,
+                   when Zone_Title     => Move_Cursor,
+                   when Zone_Resize_H  => Resize_H_Cursor,
+                   when Zone_Resize_V  => Resize_V_Cursor,
+                   when Zone_Resize_BR => Resize_BR_Cursor,
+                   when Zone_Resize_BL => Resize_BL_Cursor,
+                   when Zone_None      => Default_Cursor));
          end if;
       end;
       return False;
@@ -844,7 +984,16 @@ package body Aquarius.UI.Gtk_View is
    is
       pragma Unreferenced (Self, Event);
       Dragged : constant Natural := Dragging_Bubble;
+      Resized : constant Natural := Resizing_Bubble;
    begin
+      if Resized /= 0 then
+         Resizing_Bubble := 0;
+         Bubble_Area.Grab_Remove;
+         --  Shove other bubbles out of the way of the resized one.
+         Resolve_Overlaps (Resized);
+         return True;
+      end if;
+
       if Dragged = 0 then
          return False;
       end if;
@@ -961,6 +1110,10 @@ package body Aquarius.UI.Gtk_View is
       Gdk_New (Move_Cursor, Fleur);
       Gdk_New (Close_Cursor, Hand2);
       Gdk_New (Default_Cursor, Left_Ptr);
+      Gdk_New (Resize_H_Cursor, Sb_H_Double_Arrow);
+      Gdk_New (Resize_V_Cursor, Sb_V_Double_Arrow);
+      Gdk_New (Resize_BR_Cursor, Bottom_Right_Corner);
+      Gdk_New (Resize_BL_Cursor, Bottom_Left_Corner);
 
       Gtk_New (Main_Window);
       Main_Window.Set_Title ("Aquarius");
