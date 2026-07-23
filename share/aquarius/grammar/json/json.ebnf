@@ -2,7 +2,10 @@ top_level ::= json_value
 case_sensitive = false
 
 format ':' no_space_before
-format component_value indented_child
+format ',' no_space_before new_line_after
+format '{' new_line_after
+format '}' new_line_before
+format component_value indent_before outdent_after
 
 identifier ::= !\l[\w_]*!
 integer    ::= !\d+!
@@ -12,9 +15,9 @@ delimiter  ::= delimiters "{},=:"
 json_value ::= primitive_value | array_value | object_value
 
 primitive_value ::= null_value
-                  | boolean_value
-		  | integer_value
-		  | string_value
+        | boolean_value
+		| integer_value
+		| string_value
 
 null_value ::= 'null'
 
