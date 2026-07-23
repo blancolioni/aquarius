@@ -97,6 +97,11 @@ package body Aquarius.UI.Gtk_View is
    Bubbles          : Bubble_Vectors.Vector;
    New_Bubble_Count : Natural := 0;
 
+   --  Overview interaction state: on press we defer; a click repositions on
+   --  release, a drag repositions live.
+   Overview_Pressed : Boolean := False;
+   Overview_Dragged : Boolean := False;
+
    Main_Window   : Gtk_Window;
    Overview      : Gtk_Drawing_Area;
    Bubble_Scroll : Gtk_Scrolled_Window;
@@ -437,9 +442,12 @@ package body Aquarius.UI.Gtk_View is
      (Self  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event_Button) return Boolean
    is
-      pragma Unreferenced (Self);
+      pragma Unreferenced (Self, Event);
    begin
-      Recenter_Viewport (Event.X, Event.Y);
+      --  Defer: don't move on press. A drag moves live; a plain click moves
+      --  on release (see On_Overview_Motion / On_Overview_Release).
+      Overview_Pressed := True;
+      Overview_Dragged := False;
       return True;
    end On_Overview_Click;
 
@@ -457,11 +465,35 @@ package body Aquarius.UI.Gtk_View is
    is
       pragma Unreferenced (Self);
    begin
-      --  Only delivered while button 1 is held (Button1_Motion_Mask), so this
-      --  drags the viewport.
-      Recenter_Viewport (Event.X, Event.Y);
+      --  Only delivered while button 1 is held (Button1_Motion_Mask): a drag.
+      if Overview_Pressed then
+         Overview_Dragged := True;
+         Recenter_Viewport (Event.X, Event.Y);
+      end if;
       return True;
    end On_Overview_Motion;
+
+   ---------------------------
+   -- On_Overview_Release --
+   ---------------------------
+
+   function On_Overview_Release
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean;
+
+   function On_Overview_Release
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean
+   is
+      pragma Unreferenced (Self);
+   begin
+      --  A plain click (no drag) repositions on release.
+      if Overview_Pressed and then not Overview_Dragged then
+         Recenter_Viewport (Event.X, Event.Y);
+      end if;
+      Overview_Pressed := False;
+      return True;
+   end On_Overview_Release;
 
    ------------------------
    -- Choose_And_Open_File --
@@ -583,8 +615,10 @@ package body Aquarius.UI.Gtk_View is
       Gtk_New (Overview);
       Overview.Set_Size_Request (-1, 100);
       Overview.On_Draw (Draw_Overview'Access);
-      Overview.Add_Events (Button_Press_Mask + Button1_Motion_Mask);
+      Overview.Add_Events
+        (Button_Press_Mask + Button_Release_Mask + Button1_Motion_Mask);
       Overview.On_Button_Press_Event (On_Overview_Click'Access);
+      Overview.On_Button_Release_Event (On_Overview_Release'Access);
       Overview.On_Motion_Notify_Event (On_Overview_Motion'Access);
       Box.Pack_Start (Overview, Expand => False, Fill => True, Padding => 0);
 
