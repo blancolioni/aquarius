@@ -85,6 +85,15 @@ package body Aquarius.UI.Gtk_View is
    Min_Bubble_W   : constant Gdouble := 160.0;
    Min_Bubble_H   : constant Gdouble := 120.0;
 
+   --  A bubble is either floating (placed on the canvas, scrolls with it) or
+   --  docked to a viewport edge (fixed in the visible area, excluded from the
+   --  placement algorithm and the overview).
+   type Dock_Side is (Undocked, Dock_Left, Dock_Right, Dock_Top, Dock_Bottom);
+
+   --  Thickness of a docked bubble along its attached axis.
+   Dock_Extent_W : constant Gdouble := 340.0;   --  left / right
+   Dock_Extent_H : constant Gdouble := 220.0;   --  top / bottom
+
    type Colour is record
       R, G, B : Gdouble;
    end record;
@@ -115,6 +124,7 @@ package body Aquarius.UI.Gtk_View is
       Border     : Colour;
       Model      : Models.Model_Reference := null;
       View       : Views.View_Reference := null;
+      Dock       : Dock_Side := Undocked;
    end record;
 
    package Bubble_Vectors is new Ada.Containers.Vectors (Positive, Bubble);
@@ -188,12 +198,29 @@ package body Aquarius.UI.Gtk_View is
    --  Request entry points. Open_Model is the core "give me a bubble for this
    --  model" operation; future producers (drag-and-drop, OS open) resolve to a
    --  model and call it. Open_File is one such producer.
-   procedure Open_Model (Model : Models.Model_Reference; Title : String);
+   procedure Open_Model
+     (Model : Models.Model_Reference;
+      Title : String;
+      Dock  : Dock_Side := Undocked);
    procedure Open_File (Path : String);
 
    procedure Resolve_Overlaps (Seed : Positive);
    --  Move bubbles so none overlap, treating Seed as anchored (frozen
-   --  wavefront), then reposition the affected content widgets.
+   --  wavefront), then reposition the affected content widgets. Docked bubbles
+   --  are ignored (neither moved nor treated as obstacles).
+
+   procedure Dock_Geometry
+     (Side : Dock_Side; X, Y, W, H : out Gdouble);
+   --  Canvas geometry for a bubble docked to Side, given the current scroll
+   --  position and visible viewport size (so it stays fixed in the viewport).
+
+   procedure Layout_Docked;
+   --  Re-sync every docked bubble's geometry and content widget to the current
+   --  viewport (call on scroll and on viewport resize).
+
+   procedure Size_Bubble_View (Index : Positive);
+   --  Resize AND reposition bubble Index's content widget to match its
+   --  geometry.
 
    ----------------
    -- Set_Colour --
@@ -286,8 +313,19 @@ package body Aquarius.UI.Gtk_View is
       Cairo.Fill (Cr);
       Destroy (Grad);
 
+      --  Floating bubbles first, then docked ones on top. Docked bubbles keep
+      --  their canvas coordinates synced to the scroll offset (Layout_Docked),
+      --  so drawing them in this scroll-translated pass leaves them fixed in
+      --  the viewport.
       for B of Bubbles loop
-         Draw_Bubble (Cr, B);
+         if B.Dock = Undocked then
+            Draw_Bubble (Cr, B);
+         end if;
+      end loop;
+      for B of Bubbles loop
+         if B.Dock /= Undocked then
+            Draw_Bubble (Cr, B);
+         end if;
       end loop;
 
       Restore (Cr);
@@ -313,17 +351,20 @@ package body Aquarius.UI.Gtk_View is
       Cairo.Fill (Cr);
 
       for B of Bubbles loop
-         Rectangle
-           (Cr,
-            Overview_Pad + B.X * Overview_Scale,
-            Overview_Pad + B.Y * Overview_Scale,
-            B.W * Overview_Scale,
-            B.H * Overview_Scale);
-         Set_Colour (Cr, B.Border);
-         Fill_Preserve (Cr);
-         Set_Colour (Cr, Black);
-         Set_Line_Width (Cr, 1.0);
-         Stroke (Cr);
+         --  Docked bubbles are fixed to the viewport, not part of the canvas.
+         if B.Dock = Undocked then
+            Rectangle
+              (Cr,
+               Overview_Pad + B.X * Overview_Scale,
+               Overview_Pad + B.Y * Overview_Scale,
+               B.W * Overview_Scale,
+               B.H * Overview_Scale);
+            Set_Colour (Cr, B.Border);
+            Fill_Preserve (Cr);
+            Set_Colour (Cr, Black);
+            Set_Line_Width (Cr, 1.0);
+            Stroke (Cr);
+         end if;
       end loop;
 
       --  Shaded rectangle showing the region of the canvas currently visible
@@ -355,42 +396,65 @@ package body Aquarius.UI.Gtk_View is
 
    procedure Resolve_Overlaps (Seed : Positive) is
       use type Views.View_Reference;
-      N     : constant Natural := Natural (Bubbles.Length);
-      Rects : Aquarius.UI.Layout.Rectangle_Array (1 .. N);
+      N      : constant Natural := Natural (Bubbles.Length);
+      Map    : array (1 .. N) of Natural := [others => 0];
+      F      : Natural := 0;   --  number of floating bubbles
+      Seed_K : Natural := 0;   --  seed's position among the floating ones
    begin
       if N = 0 then
          return;
       end if;
 
-      for I in 1 .. N loop
-         Rects (I) :=
-           (X => Long_Float (Bubbles (I).X),
-            Y => Long_Float (Bubbles (I).Y),
-            W => Long_Float (Bubbles (I).W),
-            H => Long_Float (Bubbles (I).H));
+      --  Only floating bubbles take part; docked ones are neither moved nor
+      --  treated as obstacles.
+      for I in Bubbles.First_Index .. Bubbles.Last_Index loop
+         if Bubbles (I).Dock = Undocked then
+            F := F + 1;
+            Map (F) := I;
+            if I = Seed then
+               Seed_K := F;
+            end if;
+         end if;
       end loop;
 
-      Aquarius.UI.Layout.Remove_Overlaps (Rects, Seed, Bubble_Gap);
-      --  Keep everything at non-negative coordinates (GtkLayout can't place
-      --  children at negative positions); grows the whole scene if needed.
-      Aquarius.UI.Layout.Normalize (Rects, Bubble_Gap);
+      if F = 0 or else Seed_K = 0 then
+         return;   --  no floating bubbles, or the seed is docked
+      end if;
 
       declare
+         Rects        : Aquarius.UI.Layout.Rectangle_Array (1 .. F);
          Max_X, Max_Y : Gdouble := 0.0;
       begin
-         for I in 1 .. N loop
-            Bubbles (I).X := Gdouble (Rects (I).X);
-            Bubbles (I).Y := Gdouble (Rects (I).Y);
-            Max_X := Gdouble'Max (Max_X, Bubbles (I).X + Bubbles (I).W);
-            Max_Y := Gdouble'Max (Max_Y, Bubbles (I).Y + Bubbles (I).H);
-            if Bubbles (I).View /= null
-              and then Bubbles (I).View.all in Gtk_View_Interface'Class
-            then
-               Bubble_Area.Move
-                 (Gtk_View_Interface'Class (Bubbles (I).View.all).Widget,
-                  Gint (Bubbles (I).X + Content_Inset),
-                  Gint (Bubbles (I).Y + Title_Height));
-            end if;
+         for K in 1 .. F loop
+            Rects (K) :=
+              (X => Long_Float (Bubbles (Map (K)).X),
+               Y => Long_Float (Bubbles (Map (K)).Y),
+               W => Long_Float (Bubbles (Map (K)).W),
+               H => Long_Float (Bubbles (Map (K)).H));
+         end loop;
+
+         Aquarius.UI.Layout.Remove_Overlaps (Rects, Seed_K, Bubble_Gap);
+         --  Keep everything at non-negative coordinates (GtkLayout can't place
+         --  children at negative positions); grows the whole scene if needed.
+         Aquarius.UI.Layout.Normalize (Rects, Bubble_Gap);
+
+         for K in 1 .. F loop
+            declare
+               I : constant Positive := Map (K);
+            begin
+               Bubbles (I).X := Gdouble (Rects (K).X);
+               Bubbles (I).Y := Gdouble (Rects (K).Y);
+               Max_X := Gdouble'Max (Max_X, Bubbles (I).X + Bubbles (I).W);
+               Max_Y := Gdouble'Max (Max_Y, Bubbles (I).Y + Bubbles (I).H);
+               if Bubbles (I).View /= null
+                 and then Bubbles (I).View.all in Gtk_View_Interface'Class
+               then
+                  Bubble_Area.Move
+                    (Gtk_View_Interface'Class (Bubbles (I).View.all).Widget,
+                     Gint (Bubbles (I).X + Content_Inset),
+                     Gint (Bubbles (I).Y + Title_Height));
+               end if;
+            end;
          end loop;
 
          --  Grow the scrollable area to fit (never shrink below the default).
@@ -407,7 +471,11 @@ package body Aquarius.UI.Gtk_View is
    -- Open_Model --
    ----------------
 
-   procedure Open_Model (Model : Models.Model_Reference; Title : String) is
+   procedure Open_Model
+     (Model : Models.Model_Reference;
+      Title : String;
+      Dock  : Dock_Side := Undocked)
+   is
       package Layout renames Aquarius.UI.Layout;
       use type Views.View_Reference;
 
@@ -448,33 +516,39 @@ package body Aquarius.UI.Gtk_View is
       B.Border := Border_Palette (New_Bubble_Count mod Border_Palette'Length);
       B.Model := Model;
       B.View := Views.Registry.Resolve (Model);
+      B.Dock := Dock;
       New_Bubble_Count := New_Bubble_Count + 1;
 
-      --  Place in the first free grid slot that fits within the visible
-      --  viewport, preferring downward before moving right, so a new bubble
-      --  appears on-screen and does not overlap (and thus shove) existing
-      --  ones. Falls back to the base position (which then shoves) if the
-      --  visible area is full.
-      B.X := Base_X;
-      B.Y := Base_Y;
-      Search :
-      for Col in 0 .. 7 loop
-         for Row in 0 .. 7 loop
-            declare
-               X : constant Gdouble := Base_X + Gdouble (Col) * Step_X;
-               Y : constant Gdouble := Base_Y + Gdouble (Row) * Step_Y;
-            begin
-               if X + B.W <= Hval + Page_W
-                 and then Y + B.H <= Vval + Page_H
-                 and then Free_At (X, Y)
-               then
-                  B.X := X;
-                  B.Y := Y;
-                  exit Search;
-               end if;
-            end;
-         end loop;
-      end loop Search;
+      if Dock /= Undocked then
+         --  Docked: geometry comes from the viewport edge, not placement.
+         Dock_Geometry (Dock, B.X, B.Y, B.W, B.H);
+      else
+         --  Place in the first free grid slot that fits within the visible
+         --  viewport, preferring downward before moving right, so a new bubble
+         --  appears on-screen and does not overlap (and thus shove) existing
+         --  ones. Falls back to the base position (which then shoves) if the
+         --  visible area is full.
+         B.X := Base_X;
+         B.Y := Base_Y;
+         Search :
+         for Col in 0 .. 7 loop
+            for Row in 0 .. 7 loop
+               declare
+                  X : constant Gdouble := Base_X + Gdouble (Col) * Step_X;
+                  Y : constant Gdouble := Base_Y + Gdouble (Row) * Step_Y;
+               begin
+                  if X + B.W <= Hval + Page_W
+                    and then Y + B.H <= Vval + Page_H
+                    and then Free_At (X, Y)
+                  then
+                     B.X := X;
+                     B.Y := Y;
+                     exit Search;
+                  end if;
+               end;
+            end loop;
+         end loop Search;
+      end if;
 
       if B.View /= null
         and then B.View.all in Gtk_View_Interface'Class
@@ -496,8 +570,12 @@ package body Aquarius.UI.Gtk_View is
       end if;
 
       Bubbles.Append (B);
-      --  Shove any bubbles the new one overlaps out of the way.
-      Resolve_Overlaps (Positive (Bubbles.Last_Index));
+      if Dock = Undocked then
+         --  Shove any bubbles the new one overlaps out of the way.
+         Resolve_Overlaps (Positive (Bubbles.Last_Index));
+      else
+         Bubble_Area.Queue_Draw;
+      end if;
    end Open_Model;
 
    ---------------
@@ -564,9 +642,25 @@ package body Aquarius.UI.Gtk_View is
 
    procedure On_Scroll (Self : access Gtk_Adjustment_Record'Class);
 
+   procedure On_Canvas_Allocate
+     (Self       : access Gtk_Widget_Record'Class;
+      Allocation : Gtk_Allocation);
+   --  Re-pin docked bubbles whenever the viewport is resized.
+
+   procedure On_Canvas_Allocate
+     (Self       : access Gtk_Widget_Record'Class;
+      Allocation : Gtk_Allocation)
+   is
+      pragma Unreferenced (Self, Allocation);
+   begin
+      Layout_Docked;
+   end On_Canvas_Allocate;
+
    procedure On_Scroll (Self : access Gtk_Adjustment_Record'Class) is
       pragma Unreferenced (Self);
    begin
+      --  Keep docked bubbles fixed in the viewport as it scrolls.
+      Layout_Docked;
       if Overview /= null then
          Overview.Queue_Draw;
       end if;
@@ -734,10 +828,6 @@ package body Aquarius.UI.Gtk_View is
    -- Size_Bubble_View --
    ----------------------
 
-   procedure Size_Bubble_View (Index : Positive);
-   --  Resize AND reposition bubble Index's content widget to match its
-   --  geometry (used while resizing; Move_Bubble_View only repositions).
-
    procedure Size_Bubble_View (Index : Positive) is
       use type Views.View_Reference;
       B : Bubble renames Bubbles (Index);
@@ -760,6 +850,54 @@ package body Aquarius.UI.Gtk_View is
          end;
       end if;
    end Size_Bubble_View;
+
+   -------------------
+   -- Dock_Geometry --
+   -------------------
+
+   procedure Dock_Geometry
+     (Side : Dock_Side; X, Y, W, H : out Gdouble)
+   is
+      Hval : constant Gdouble := Get_Value (Bubble_Scroll.Get_Hadjustment);
+      Vval : constant Gdouble := Get_Value (Bubble_Scroll.Get_Vadjustment);
+      --  Live visible viewport size (the allocation stays current through a
+      --  resize, unlike the adjustment page size which can lag).
+      Pw   : constant Gdouble := Gdouble (Bubble_Area.Get_Allocated_Width);
+      Ph   : constant Gdouble := Gdouble (Bubble_Area.Get_Allocated_Height);
+   begin
+      case Side is
+         when Dock_Right =>
+            X := Hval + Pw - Dock_Extent_W; Y := Vval;
+            W := Dock_Extent_W;             H := Ph;
+         when Dock_Left =>
+            X := Hval;            Y := Vval;
+            W := Dock_Extent_W;   H := Ph;
+         when Dock_Top =>
+            X := Hval;   Y := Vval;
+            W := Pw;     H := Dock_Extent_H;
+         when Dock_Bottom =>
+            X := Hval;   Y := Vval + Ph - Dock_Extent_H;
+            W := Pw;     H := Dock_Extent_H;
+         when Undocked =>
+            X := Hval;   Y := Vval;   W := 0.0;   H := 0.0;
+      end case;
+   end Dock_Geometry;
+
+   ------------------
+   -- Layout_Docked --
+   ------------------
+
+   procedure Layout_Docked is
+   begin
+      for I in Bubbles.First_Index .. Bubbles.Last_Index loop
+         if Bubbles (I).Dock /= Undocked then
+            Dock_Geometry
+              (Bubbles (I).Dock,
+               Bubbles (I).X, Bubbles (I).Y, Bubbles (I).W, Bubbles (I).H);
+            Size_Bubble_View (I);
+         end if;
+      end loop;
+   end Layout_Docked;
 
    ---------------
    -- Edge_Hits --
@@ -840,6 +978,14 @@ package body Aquarius.UI.Gtk_View is
             then
                Close_Bubble (I);
                return True;
+            elsif B.Dock /= Undocked then
+               --  Docked bubbles are fixed: no drag, no resize. Swallow a
+               --  press on the bubble so it doesn't fall through.
+               if Cx >= B.X and then Cx <= B.X + B.W
+                 and then Cy >= B.Y and then Cy <= B.Y + B.H
+               then
+                  return True;
+               end if;
             elsif EL or else ER or else EB then
                Resizing_Bubble := I;
                Resize_L := EL;
@@ -933,6 +1079,14 @@ package body Aquarius.UI.Gtk_View is
                then
                   Zone := Zone_Close;
                   exit;
+               elsif B.Dock /= Undocked then
+                  --  Docked: no move/resize affordance (only the close X).
+                  if Cx >= B.X and then Cx <= B.X + B.W
+                    and then Cy >= B.Y and then Cy <= B.Y + B.H
+                  then
+                     Zone := Zone_None;
+                     exit;
+                  end if;
                elsif ER and then EB then
                   Zone := Zone_Resize_BR;
                   exit;
@@ -1047,7 +1201,8 @@ package body Aquarius.UI.Gtk_View is
             Open_Model
               (Models.Model_Reference
                  (Aquarius.Models.Trees.Filesystem.Create (Path)),
-               Ada.Directories.Simple_Name (Path));
+               Ada.Directories.Simple_Name (Path),
+               Dock => Dock_Right);
          end;
       end if;
       Dialog.Destroy;
@@ -1186,6 +1341,7 @@ package body Aquarius.UI.Gtk_View is
       Bubble_Area.On_Button_Press_Event (On_Canvas_Press'Access);
       Bubble_Area.On_Button_Release_Event (On_Canvas_Release'Access);
       Bubble_Area.On_Motion_Notify_Event (On_Canvas_Motion'Access);
+      Bubble_Area.On_Size_Allocate (On_Canvas_Allocate'Access);
       Bubble_Scroll.Add (Bubble_Area);
       Box.Pack_Start
         (Bubble_Scroll, Expand => True, Fill => True, Padding => 0);
@@ -1193,6 +1349,10 @@ package body Aquarius.UI.Gtk_View is
       --  Redraw overview + chrome when the canvas scrolls.
       Bubble_Scroll.Get_Hadjustment.On_Value_Changed (On_Scroll'Access);
       Bubble_Scroll.Get_Vadjustment.On_Value_Changed (On_Scroll'Access);
+      --  "changed" fires when the page size changes (viewport resize) — keep
+      --  docked bubbles pinned to the new viewport edges.
+      Bubble_Scroll.Get_Hadjustment.On_Changed (On_Scroll'Access);
+      Bubble_Scroll.Get_Vadjustment.On_Changed (On_Scroll'Access);
 
       --  Seed one welcome bubble. Ctrl+N adds a note, Ctrl+O opens a file.
       Open_Model
