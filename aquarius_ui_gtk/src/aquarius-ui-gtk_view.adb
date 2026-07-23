@@ -8,6 +8,8 @@ with Glib;                      use Glib;
 with Glib.Error;                use Glib.Error;
 with Glib.Object;               use Glib.Object;
 
+with Gdk;
+with Gdk.Cursor;                use Gdk.Cursor;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types;                 use Gdk.Types;
@@ -72,8 +74,12 @@ package body Aquarius.UI.Gtk_View is
    Blue_Top      : constant Colour := (0.86, 0.93, 0.98);
    Blue_Bottom   : constant Colour := (0.60, 0.77, 0.90);
    Bubble_Fill   : constant Colour := (0.98, 0.98, 1.00);
+   Title_Fill    : constant Colour := (0.90, 0.91, 0.96);  --  title band
    Text_Colour   : constant Colour := (0.16, 0.16, 0.22);
    Black         : constant Colour := (0.0, 0.0, 0.0);
+
+   Close_Size   : constant Gdouble := 16.0;   --  close-button glyph size
+   Close_Margin : constant Gdouble := 13.0;   --  gap from the right edge
 
    --  Border colours cycled through as bubbles are created.
    Border_Palette : constant array (0 .. 4) of Colour :=
@@ -111,6 +117,14 @@ package body Aquarius.UI.Gtk_View is
    Dragging_Bubble : Natural := 0;
    Bubble_Grab_X   : Gdouble := 0.0;
    Bubble_Grab_Y   : Gdouble := 0.0;
+
+   --  Cursors and hover state for the title-bar affordances.
+   Move_Cursor    : Gdk.Gdk_Cursor;
+   Close_Cursor   : Gdk.Gdk_Cursor;
+   Default_Cursor : Gdk.Gdk_Cursor;
+
+   type Hover_Zone is (Zone_None, Zone_Title, Zone_Close);
+   Current_Zone : Hover_Zone := Zone_None;
 
    Main_Window   : Gtk_Window;
    Overview      : Gtk_Drawing_Area;
@@ -156,21 +170,52 @@ package body Aquarius.UI.Gtk_View is
    -- Draw_Bubble --
    -----------------
 
-   procedure Draw_Bubble (Cr : Cairo_Context; B : Bubble) is
+   procedure Close_Box (B : Bubble; Bx, By, Bs : out Gdouble);
+   --  Geometry of a bubble's close button (top-right of the title bar).
+
+   procedure Close_Box (B : Bubble; Bx, By, Bs : out Gdouble) is
    begin
+      Bs := Close_Size;
+      Bx := B.X + B.W - Close_Size - Close_Margin;
+      By := B.Y + (Title_Height - Close_Size) / 2.0;
+   end Close_Box;
+
+   procedure Draw_Bubble (Cr : Cairo_Context; B : Bubble) is
+      Bx, By, Bs : Gdouble;
+   begin
+      --  Body.
       Rectangle (Cr, B.X, B.Y, B.W, B.H);
       Set_Colour (Cr, Bubble_Fill);
-      Fill_Preserve (Cr);
+      Cairo.Fill (Cr);
+
+      --  Title bar in a slightly different colour.
+      Rectangle (Cr, B.X, B.Y, B.W, Title_Height);
+      Set_Colour (Cr, Title_Fill);
+      Cairo.Fill (Cr);
+
+      --  Coloured border around the whole bubble.
+      Rectangle (Cr, B.X, B.Y, B.W, B.H);
       Set_Source_Rgba (Cr, B.Border.R, B.Border.G, B.Border.B, Border_Alpha);
       Set_Line_Width (Cr, Border_Width);
       Stroke (Cr);
 
+      --  Title text.
       Set_Colour (Cr, Text_Colour);
       Select_Font_Face
         (Cr, "sans-serif", Cairo_Font_Slant_Normal, Cairo_Font_Weight_Bold);
       Set_Font_Size (Cr, 20.0);
       Move_To (Cr, B.X + 20.0, B.Y + 30.0);
       Show_Text (Cr, To_String (B.Title));
+
+      --  Close button (an X).
+      Close_Box (B, Bx, By, Bs);
+      Set_Source_Rgba (Cr, 0.35, 0.35, 0.40, 0.9);
+      Set_Line_Width (Cr, 2.0);
+      Move_To (Cr, Bx + 3.0, By + 3.0);
+      Line_To (Cr, Bx + Bs - 3.0, By + Bs - 3.0);
+      Move_To (Cr, Bx + Bs - 3.0, By + 3.0);
+      Line_To (Cr, Bx + 3.0, By + Bs - 3.0);
+      Stroke (Cr);
    end Draw_Bubble;
 
    -----------------
@@ -568,6 +613,25 @@ package body Aquarius.UI.Gtk_View is
       end if;
    end Move_Bubble_View;
 
+   ------------------
+   -- Close_Bubble --
+   ------------------
+
+   procedure Close_Bubble (Index : Positive);
+
+   procedure Close_Bubble (Index : Positive) is
+      use type Views.View_Reference;
+      V : constant Views.View_Reference := Bubbles (Index).View;
+   begin
+      if V /= null and then V.all in Gtk_View_Interface'Class then
+         --  Destroying the content widget removes it from the layout.
+         Gtk_View_Interface'Class (V.all).Widget.Destroy;
+      end if;
+      Bubbles.Delete (Index);
+      Bubble_Area.Queue_Draw;
+      Overview.Queue_Draw;
+   end Close_Bubble;
+
    -----------------------
    -- On_Canvas_Press --
    -----------------------
@@ -584,12 +648,20 @@ package body Aquarius.UI.Gtk_View is
       Cx, Cy : Gdouble;
    begin
       To_Canvas (Event.X_Root, Event.Y_Root, Cx, Cy);
-      --  Topmost bubble whose title bar contains the point starts a drag.
+      --  Topmost bubble first: its close button closes it, else its title
+      --  bar starts a drag.
       for I in reverse Bubbles.First_Index .. Bubbles.Last_Index loop
          declare
-            B : Bubble renames Bubbles (I);
+            B          : constant Bubble := Bubbles (I);
+            Bx, By, Bs : Gdouble;
          begin
-            if Cx >= B.X and then Cx <= B.X + B.W
+            Close_Box (B, Bx, By, Bs);
+            if Cx >= Bx and then Cx <= Bx + Bs
+              and then Cy >= By and then Cy <= By + Bs
+            then
+               Close_Bubble (I);
+               return True;
+            elsif Cx >= B.X and then Cx <= B.X + B.W
               and then Cy >= B.Y and then Cy <= B.Y + Title_Height
             then
                Dragging_Bubble := I;
@@ -618,16 +690,52 @@ package body Aquarius.UI.Gtk_View is
       pragma Unreferenced (Self);
       Cx, Cy : Gdouble;
    begin
-      if Dragging_Bubble = 0 then
-         return False;
-      end if;
       To_Canvas (Event.X_Root, Event.Y_Root, Cx, Cy);
-      Bubbles (Dragging_Bubble).X := Gdouble'Max (0.0, Cx - Bubble_Grab_X);
-      Bubbles (Dragging_Bubble).Y := Gdouble'Max (0.0, Cy - Bubble_Grab_Y);
-      Move_Bubble_View (Dragging_Bubble);
-      Bubble_Area.Queue_Draw;
-      Overview.Queue_Draw;
-      return True;
+
+      if Dragging_Bubble /= 0 then
+         Bubbles (Dragging_Bubble).X := Gdouble'Max (0.0, Cx - Bubble_Grab_X);
+         Bubbles (Dragging_Bubble).Y := Gdouble'Max (0.0, Cy - Bubble_Grab_Y);
+         Move_Bubble_View (Dragging_Bubble);
+         Bubble_Area.Queue_Draw;
+         Overview.Queue_Draw;
+         return True;
+      end if;
+
+      --  Not dragging: move cursor over a title bar, close cursor over its X.
+      declare
+         Zone : Hover_Zone := Zone_None;
+      begin
+         for I in reverse Bubbles.First_Index .. Bubbles.Last_Index loop
+            declare
+               B          : constant Bubble := Bubbles (I);
+               Bx, By, Bs : Gdouble;
+            begin
+               Close_Box (B, Bx, By, Bs);
+               if Cx >= Bx and then Cx <= Bx + Bs
+                 and then Cy >= By and then Cy <= By + Bs
+               then
+                  Zone := Zone_Close;
+                  exit;
+               elsif Cx >= B.X and then Cx <= B.X + B.W
+                 and then Cy >= B.Y and then Cy <= B.Y + Title_Height
+               then
+                  Zone := Zone_Title;
+                  exit;
+               end if;
+            end;
+         end loop;
+
+         if Zone /= Current_Zone then
+            Current_Zone := Zone;
+            Set_Cursor
+              (Bubble_Area.Get_Window,
+               (case Zone is
+                   when Zone_Close => Close_Cursor,
+                   when Zone_Title => Move_Cursor,
+                   when Zone_None  => Default_Cursor));
+         end if;
+      end;
+      return False;
    end On_Canvas_Motion;
 
    -------------------------
@@ -758,6 +866,10 @@ package body Aquarius.UI.Gtk_View is
       Gtk.Main.Init;
       Aquarius.UI.Gtk_Views.Register.Register_All;
 
+      Gdk_New (Move_Cursor, Fleur);
+      Gdk_New (Close_Cursor, Hand2);
+      Gdk_New (Default_Cursor, Left_Ptr);
+
       Gtk_New (Main_Window);
       Main_Window.Set_Title ("Aquarius");
       Main_Window.Set_Default_Size (1200, 800);
@@ -789,7 +901,8 @@ package body Aquarius.UI.Gtk_View is
       Bubble_Area.Set_Size (Guint (Canvas_W), Guint (Canvas_H));
       Bubble_Area.On_Draw (Draw_Canvas'Access);
       Bubble_Area.Add_Events
-        (Button_Press_Mask + Button_Release_Mask + Button1_Motion_Mask);
+        (Button_Press_Mask + Button_Release_Mask
+         + Button1_Motion_Mask + Pointer_Motion_Mask);
       Bubble_Area.On_Button_Press_Event (On_Canvas_Press'Access);
       Bubble_Area.On_Button_Release_Event (On_Canvas_Release'Access);
       Bubble_Area.On_Motion_Notify_Event (On_Canvas_Motion'Access);
