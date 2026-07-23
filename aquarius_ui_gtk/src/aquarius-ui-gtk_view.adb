@@ -1,19 +1,28 @@
+with Ada.Containers.Vectors;
+with Ada.Directories;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Text_IO;
 
 with Glib;                      use Glib;
 with Glib.Error;                use Glib.Error;
 with Glib.Object;               use Glib.Object;
 
+with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 
 with Cairo;                     use Cairo;
 with Cairo.Pattern;             use Cairo.Pattern;
 
 with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Drawing_Area;          use Gtk.Drawing_Area;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.File_Chooser;          use Gtk.File_Chooser;
+with Gtk.File_Chooser_Dialog;   use Gtk.File_Chooser_Dialog;
 with Gtk.Layout;                use Gtk.Layout;
 with Gtk.Main;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
@@ -24,10 +33,14 @@ with Aquarius.Models;
 with Aquarius.Models.Text;
 with Aquarius.UI.Views;
 with Aquarius.UI.Views.Registry;
-with Aquarius.UI.Gtk_Views;
+with Aquarius.UI.Gtk_Views;      use Aquarius.UI.Gtk_Views;
 with Aquarius.UI.Gtk_Views.Register;
 
 package body Aquarius.UI.Gtk_View is
+
+   package Models renames Aquarius.Models;
+   package Views renames Aquarius.UI.Views;
+   package Text_Models renames Aquarius.Models.Text;
 
    --  Size of the (fixed) bubble canvas in pixels.
    Canvas_W : constant Gint := 2000;
@@ -43,6 +56,9 @@ package body Aquarius.UI.Gtk_View is
    Title_Height  : constant Gdouble := 42.0;   --  chrome reserved for title
    Content_Inset : constant Gdouble := Border_Width + 6.0;
 
+   Default_Bubble_W : constant Gdouble := 340.0;
+   Default_Bubble_H : constant Gdouble := 190.0;
+
    type Colour is record
       R, G, B : Gdouble;
    end record;
@@ -55,55 +71,55 @@ package body Aquarius.UI.Gtk_View is
    Text_Colour   : constant Colour := (0.16, 0.16, 0.22);
    Black         : constant Colour := (0.0, 0.0, 0.0);
 
+   --  Border colours cycled through as bubbles are created.
+   Border_Palette : constant array (0 .. 4) of Colour :=
+     [(0.486, 0.227, 0.929),   --  purple
+      (0.10, 0.62, 0.60),      --  teal
+      (0.90, 0.49, 0.13),      --  orange
+      (0.30, 0.65, 0.30),      --  green
+      (0.85, 0.25, 0.45)];     --  pink
+
    type Bubble is record
       X, Y, W, H : Gdouble;
       Title      : Unbounded_String;
       Border     : Colour;
-      Model      : Aquarius.Models.Model_Reference := null;
-      View       : Aquarius.UI.Views.View_Reference := null;
+      Model      : Models.Model_Reference := null;
+      View       : Views.View_Reference := null;
    end record;
 
-   type Bubble_Array is array (Positive range <>) of Bubble;
+   package Bubble_Vectors is new Ada.Containers.Vectors (Positive, Bubble);
 
-   --  Placeholder bubbles. Real bubbles and their properties will be managed
-   --  from outside this crate; these exist so the canvas is not empty. Their
-   --  models and views are filled in by Launch.
-   Bubbles : Bubble_Array (1 .. 2) :=
-     [(X => 60.0, Y => 40.0, W => 340.0, H => 190.0,
-       Title  => To_Unbounded_String ("Welcome"),
-       Border => (0.486, 0.227, 0.929),   --  purple
-       others => <>),
-      (X => 470.0, Y => 300.0, W => 300.0, H => 170.0,
-       Title  => To_Unbounded_String ("Notes"),
-       Border => (0.10, 0.62, 0.60),       --  teal
-       others => <>)];
+   --  Runtime state, at package level so the request entry points and the
+   --  redraw/scroll callbacks can all reach it.
+   Bubbles          : Bubble_Vectors.Vector;
+   New_Bubble_Count : Natural := 0;
 
-   procedure Set_Colour (Cr : Cairo_Context; C : Colour);
-   --  Set Cr's source to the opaque colour C.
-
-   --  Widgets kept at package level so the overview can query the canvas
-   --  scroll position and both can be redrawn when the user scrolls.
+   Main_Window   : Gtk_Window;
    Overview      : Gtk_Drawing_Area;
    Bubble_Scroll : Gtk_Scrolled_Window;
    Bubble_Area   : Gtk_Layout;
 
+   procedure Set_Colour (Cr : Cairo_Context; C : Colour);
+   --  Set Cr's source to the opaque colour C.
+
    procedure Draw_Bubble (Cr : Cairo_Context; B : Bubble);
-   --  Draw one bubble's chrome (body fill, coloured border, title). The bubble
-   --  content is a real child widget placed on the canvas by Launch.
+   --  Draw one bubble's chrome (body fill, coloured border, title).
 
    procedure On_Destroy (Self : access Gtk_Widget_Record'Class);
-   --  Stop the Gtk main loop when the main window is destroyed.
 
    function Draw_Canvas
      (Self : access Gtk_Widget_Record'Class;
       Cr   : Cairo_Context) return Boolean;
-   --  Paint the bubble canvas: blue gradient background and bubble chrome.
 
    function Draw_Overview
      (Self : access Gtk_Widget_Record'Class;
       Cr   : Cairo_Context) return Boolean;
-   --  Paint the overview strip: grey background and a scaled-down,
-   --  black-bordered rectangle per bubble, filled with the bubble's colour.
+
+   --  Request entry points. Open_Model is the core "give me a bubble for this
+   --  model" operation; future producers (drag-and-drop, OS open) resolve to a
+   --  model and call it. Open_File is one such producer.
+   procedure Open_Model (Model : Models.Model_Reference; Title : String);
+   procedure Open_File (Path : String);
 
    ----------------
    -- Set_Colour --
@@ -150,7 +166,6 @@ package body Aquarius.UI.Gtk_View is
       Vval : constant Gdouble := Get_Value (Bubble_Scroll.Get_Vadjustment);
       Aw   : constant Gdouble := Gdouble (Self.Get_Allocated_Width);
       Ah   : constant Gdouble := Gdouble (Self.Get_Allocated_Height);
-      --  Cover the whole canvas, and any excess when the window is larger.
       W    : constant Gdouble := Gdouble'Max (Gdouble (Canvas_W), Hval + Aw);
       H    : constant Gdouble := Gdouble'Max (Gdouble (Canvas_H), Vval + Ah);
       Grad : constant Cairo_Pattern := Create_Linear (0.0, 0.0, 0.0, H);
@@ -229,6 +244,82 @@ package body Aquarius.UI.Gtk_View is
       return True;
    end Draw_Overview;
 
+   ----------------
+   -- Open_Model --
+   ----------------
+
+   procedure Open_Model (Model : Models.Model_Reference; Title : String) is
+      use type Views.View_Reference;
+      B    : Bubble;
+      Off  : constant Gdouble :=
+        Gdouble (New_Bubble_Count mod 6) * 30.0;
+      Hval : constant Gdouble := Get_Value (Bubble_Scroll.Get_Hadjustment);
+      Vval : constant Gdouble := Get_Value (Bubble_Scroll.Get_Vadjustment);
+   begin
+      B.W := Default_Bubble_W;
+      B.H := Default_Bubble_H;
+      B.X := Hval + 40.0 + Off;
+      B.Y := Vval + 40.0 + Off;
+      B.Title := To_Unbounded_String (Title);
+      B.Border := Border_Palette (New_Bubble_Count mod Border_Palette'Length);
+      B.Model := Model;
+      B.View := Views.Registry.Resolve (Model);
+      New_Bubble_Count := New_Bubble_Count + 1;
+
+      if B.View /= null
+        and then B.View.all in Gtk_View_Interface'Class
+      then
+         declare
+            Content_Widget : constant Gtk_Widget :=
+              Gtk_View_Interface'Class (B.View.all).Widget;
+            Cx : constant Gdouble := B.X + Content_Inset;
+            Cy : constant Gdouble := B.Y + Title_Height;
+            Cw : constant Gdouble := B.W - 2.0 * Content_Inset;
+            Ch : constant Gdouble := B.H - Title_Height - Content_Inset;
+         begin
+            Content_Widget.Set_Size_Request (Gint (Cw), Gint (Ch));
+            Bubble_Area.Put (Content_Widget, Gint (Cx), Gint (Cy));
+            --  The window is already shown for runtime requests, so show the
+            --  freshly-added widget explicitly.
+            Content_Widget.Show_All;
+         end;
+      end if;
+
+      Bubbles.Append (B);
+      Bubble_Area.Queue_Draw;
+      Overview.Queue_Draw;
+   end Open_Model;
+
+   ---------------
+   -- Open_File --
+   ---------------
+
+   procedure Open_File (Path : String) is
+      Content : Unbounded_String := Null_Unbounded_String;
+      File    : Ada.Text_IO.File_Type;
+   begin
+      begin
+         Ada.Text_IO.Open (File, Ada.Text_IO.In_File, Path);
+         while not Ada.Text_IO.End_Of_File (File) loop
+            Append (Content, Ada.Text_IO.Get_Line (File));
+            if not Ada.Text_IO.End_Of_File (File) then
+               Append (Content, ASCII.LF);
+            end if;
+         end loop;
+         Ada.Text_IO.Close (File);
+      exception
+         when others =>
+            if Ada.Text_IO.Is_Open (File) then
+               Ada.Text_IO.Close (File);
+            end if;
+      end;
+
+      Open_Model
+        (Models.Model_Reference
+           (Text_Models.Create (To_String (Content))),
+         Ada.Directories.Simple_Name (Path));
+   end Open_File;
+
    ---------------
    -- On_Scroll --
    ---------------
@@ -246,6 +337,55 @@ package body Aquarius.UI.Gtk_View is
       end if;
    end On_Scroll;
 
+   ------------------------
+   -- Choose_And_Open_File --
+   ------------------------
+
+   procedure Choose_And_Open_File;
+
+   procedure Choose_And_Open_File is
+      Dialog : Gtk_File_Chooser_Dialog;
+      Dummy  : Gtk_Widget;
+      pragma Unreferenced (Dummy);
+   begin
+      Gtk_New (Dialog, "Open File", Main_Window, Action_Open);
+      Dummy := Dialog.Add_Button ("Cancel", Gtk_Response_Cancel);
+      Dummy := Dialog.Add_Button ("Open", Gtk_Response_Accept);
+      if Dialog.Run = Gtk_Response_Accept then
+         Open_File (Dialog.Get_Filename);
+      end if;
+      Dialog.Destroy;
+   end Choose_And_Open_File;
+
+   ------------------
+   -- On_Key_Press --
+   ------------------
+
+   function On_Key_Press
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Key) return Boolean;
+
+   function On_Key_Press
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Key) return Boolean
+   is
+      pragma Unreferenced (Self);
+   begin
+      if (Event.State and Control_Mask) /= 0 then
+         if Event.Keyval = GDK_LC_n then
+            --  Ctrl+N: new empty text note.
+            Open_Model
+              (Models.Model_Reference (Text_Models.Create ("")), "Note");
+            return True;
+         elsif Event.Keyval = GDK_LC_o then
+            --  Ctrl+O: open a file as a plain-text bubble.
+            Choose_And_Open_File;
+            return True;
+         end if;
+      end if;
+      return False;
+   end On_Key_Press;
+
    ----------------
    -- On_Destroy --
    ----------------
@@ -261,15 +401,9 @@ package body Aquarius.UI.Gtk_View is
    ------------
 
    procedure Launch (Icon_Dir : String := "") is
-      Window      : Gtk_Window;
-      Box         : Gtk_Box;
+      Box : Gtk_Box;
 
       procedure Set_Window_Icons (Dir : String);
-      --  Load the "aquarius-<size>.png" icons from Dir into an icon list.
-
-      procedure Populate_Bubbles;
-      --  Give each bubble a model, resolve a view for it and place the view's
-      --  widget on the canvas.
 
       ----------------------
       -- Set_Window_Icons --
@@ -298,68 +432,26 @@ package body Aquarius.UI.Gtk_View is
          end loop;
 
          if Icons /= Object_Simple_List.Null_List then
-            Window.Set_Icon_List (Icons);
+            Main_Window.Set_Icon_List (Icons);
          end if;
       end Set_Window_Icons;
-
-      ----------------------
-      -- Populate_Bubbles --
-      ----------------------
-
-      procedure Populate_Bubbles is
-         use type Aquarius.UI.Views.View_Reference;
-
-         Contents : constant array (1 .. 2) of Unbounded_String :=
-           [To_Unbounded_String ("Aquarius" & ASCII.LF
-              & "Code-bubbles UI."),
-            To_Unbounded_String ("Plain-text bubble." & ASCII.LF
-              & "Backed by a text model." & ASCII.LF
-              & "Displayed by a text view.")];
-      begin
-         for I in Bubbles'Range loop
-            Bubbles (I).Model :=
-              Aquarius.Models.Model_Reference
-                (Aquarius.Models.Text.Create (To_String (Contents (I))));
-            Bubbles (I).View :=
-              Aquarius.UI.Views.Registry.Resolve (Bubbles (I).Model);
-
-            if Bubbles (I).View /= null
-              and then Bubbles (I).View.all
-                         in Aquarius.UI.Gtk_Views.Gtk_View_Interface'Class
-            then
-               declare
-                  Content_Widget : constant Gtk_Widget :=
-                    Aquarius.UI.Gtk_Views.Gtk_View_Interface'Class
-                      (Bubbles (I).View.all).Widget;
-                  Cx : constant Gdouble := Bubbles (I).X + Content_Inset;
-                  Cy : constant Gdouble := Bubbles (I).Y + Title_Height;
-                  Cw : constant Gdouble :=
-                    Bubbles (I).W - 2.0 * Content_Inset;
-                  Ch : constant Gdouble :=
-                    Bubbles (I).H - Title_Height - Content_Inset;
-               begin
-                  Content_Widget.Set_Size_Request (Gint (Cw), Gint (Ch));
-                  Bubble_Area.Put (Content_Widget, Gint (Cx), Gint (Cy));
-               end;
-            end if;
-         end loop;
-      end Populate_Bubbles;
 
    begin
       Gtk.Main.Init;
       Aquarius.UI.Gtk_Views.Register.Register_All;
 
-      Gtk_New (Window);
-      Window.Set_Title ("Aquarius");
-      Window.Set_Default_Size (1200, 800);
-      Window.On_Destroy (On_Destroy'Access);
+      Gtk_New (Main_Window);
+      Main_Window.Set_Title ("Aquarius");
+      Main_Window.Set_Default_Size (1200, 800);
+      Main_Window.On_Destroy (On_Destroy'Access);
+      Main_Window.On_Key_Press_Event (On_Key_Press'Access);
 
       if Icon_Dir /= "" then
          Set_Window_Icons (Icon_Dir);
       end if;
 
       Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 0);
-      Window.Add (Box);
+      Main_Window.Add (Box);
 
       --  Overview strip along the top.
       Gtk_New (Overview);
@@ -367,8 +459,7 @@ package body Aquarius.UI.Gtk_View is
       Overview.On_Draw (Draw_Overview'Access);
       Box.Pack_Start (Overview, Expand => False, Fill => True, Padding => 0);
 
-      --  Bubble canvas: a large scrollable layout filling the remaining space,
-      --  on which bubble chrome is drawn and content widgets are placed.
+      --  Bubble canvas: a large scrollable layout filling the remaining space.
       Gtk_New (Bubble_Scroll);
       Bubble_Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
       Gtk_New (Bubble_Area);
@@ -378,13 +469,20 @@ package body Aquarius.UI.Gtk_View is
       Box.Pack_Start
         (Bubble_Scroll, Expand => True, Fill => True, Padding => 0);
 
-      Populate_Bubbles;
-
-      --  Redraw the overview's viewport indicator when the canvas scrolls.
+      --  Redraw overview + chrome when the canvas scrolls.
       Bubble_Scroll.Get_Hadjustment.On_Value_Changed (On_Scroll'Access);
       Bubble_Scroll.Get_Vadjustment.On_Value_Changed (On_Scroll'Access);
 
-      Window.Show_All;
+      --  Seed one welcome bubble. Ctrl+N adds a note, Ctrl+O opens a file.
+      Open_Model
+        (Models.Model_Reference
+           (Text_Models.Create
+              ("Welcome to Aquarius." & ASCII.LF & ASCII.LF
+               & "Ctrl+N: new note" & ASCII.LF
+               & "Ctrl+O: open a file")),
+         "Welcome");
+
+      Main_Window.Show_All;
       Gtk.Main.Main;
    end Launch;
 
