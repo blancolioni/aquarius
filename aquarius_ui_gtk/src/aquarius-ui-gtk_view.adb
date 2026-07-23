@@ -370,22 +370,73 @@ package body Aquarius.UI.Gtk_View is
    ----------------
 
    procedure Open_Model (Model : Models.Model_Reference; Title : String) is
+      package Layout renames Aquarius.UI.Layout;
       use type Views.View_Reference;
-      B    : Bubble;
-      Off  : constant Gdouble :=
-        Gdouble (New_Bubble_Count mod 6) * 30.0;
-      Hval : constant Gdouble := Get_Value (Bubble_Scroll.Get_Hadjustment);
-      Vval : constant Gdouble := Get_Value (Bubble_Scroll.Get_Vadjustment);
+
+      B      : Bubble;
+      Hval   : constant Gdouble := Get_Value (Bubble_Scroll.Get_Hadjustment);
+      Vval   : constant Gdouble := Get_Value (Bubble_Scroll.Get_Vadjustment);
+      Page_W : constant Gdouble :=
+        Get_Page_Size (Bubble_Scroll.Get_Hadjustment);
+      Page_H : constant Gdouble :=
+        Get_Page_Size (Bubble_Scroll.Get_Vadjustment);
+      Base_X : constant Gdouble := Hval + 40.0;
+      Base_Y : constant Gdouble := Vval + 40.0;
+      Step_X : constant Gdouble := Default_Bubble_W + Bubble_Gap;
+      Step_Y : constant Gdouble := Default_Bubble_H + Bubble_Gap;
+
+      function Free_At (X, Y : Gdouble) return Boolean is
+         R : constant Layout.Rectangle :=
+           (Long_Float (X), Long_Float (Y),
+            Long_Float (Default_Bubble_W), Long_Float (Default_Bubble_H));
+      begin
+         for Existing of Bubbles loop
+            if Layout.Overlaps
+                 (R,
+                  (Long_Float (Existing.X), Long_Float (Existing.Y),
+                   Long_Float (Existing.W), Long_Float (Existing.H)),
+                  Long_Float (Bubble_Gap))
+            then
+               return False;
+            end if;
+         end loop;
+         return True;
+      end Free_At;
+
    begin
       B.W := Default_Bubble_W;
       B.H := Default_Bubble_H;
-      B.X := Hval + 40.0 + Off;
-      B.Y := Vval + 40.0 + Off;
       B.Title := To_Unbounded_String (Title);
       B.Border := Border_Palette (New_Bubble_Count mod Border_Palette'Length);
       B.Model := Model;
       B.View := Views.Registry.Resolve (Model);
       New_Bubble_Count := New_Bubble_Count + 1;
+
+      --  Place in the first free grid slot that fits within the visible
+      --  viewport, preferring downward before moving right, so a new bubble
+      --  appears on-screen and does not overlap (and thus shove) existing
+      --  ones. Falls back to the base position (which then shoves) if the
+      --  visible area is full.
+      B.X := Base_X;
+      B.Y := Base_Y;
+      Search :
+      for Col in 0 .. 7 loop
+         for Row in 0 .. 7 loop
+            declare
+               X : constant Gdouble := Base_X + Gdouble (Col) * Step_X;
+               Y : constant Gdouble := Base_Y + Gdouble (Row) * Step_Y;
+            begin
+               if X + B.W <= Hval + Page_W
+                 and then Y + B.H <= Vval + Page_H
+                 and then Free_At (X, Y)
+               then
+                  B.X := X;
+                  B.Y := Y;
+                  exit Search;
+               end if;
+            end;
+         end loop;
+      end loop Search;
 
       if B.View /= null
         and then B.View.all in Gtk_View_Interface'Class

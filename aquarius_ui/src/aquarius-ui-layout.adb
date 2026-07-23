@@ -1,5 +1,21 @@
 package body Aquarius.UI.Layout is
 
+   --------------
+   -- Overlaps --
+   --------------
+
+   function Overlaps
+     (A, B : Rectangle; Gap : Long_Float := 12.0) return Boolean
+   is
+      Dx : constant Long_Float :=
+        abs ((A.X + A.W / 2.0) - (B.X + B.W / 2.0));
+      Dy : constant Long_Float :=
+        abs ((A.Y + A.H / 2.0) - (B.Y + B.H / 2.0));
+   begin
+      return (A.W + B.W) / 2.0 + Gap > Dx
+        and then (A.H + B.H) / 2.0 + Gap > Dy;
+   end Overlaps;
+
    ---------------------
    -- Remove_Overlaps --
    ---------------------
@@ -15,7 +31,6 @@ package body Aquarius.UI.Layout is
       Tail   : Natural := Rects'First - 1;
 
       procedure Enqueue (Index : Positive);
-      function Overlaps (A, B : Rectangle) return Boolean;
       procedure Push_Apart (Anchor : Rectangle; Movable : in out Rectangle);
 
       -------------
@@ -28,20 +43,6 @@ package body Aquarius.UI.Layout is
          Queue (Tail) := Index;
          Frozen (Index) := True;
       end Enqueue;
-
-      --------------
-      -- Overlaps --
-      --------------
-
-      function Overlaps (A, B : Rectangle) return Boolean is
-         Dx : constant Long_Float :=
-           abs ((A.X + A.W / 2.0) - (B.X + B.W / 2.0));
-         Dy : constant Long_Float :=
-           abs ((A.Y + A.H / 2.0) - (B.Y + B.H / 2.0));
-      begin
-         return (A.W + B.W) / 2.0 + Gap > Dx
-           and then (A.H + B.H) / 2.0 + Gap > Dy;
-      end Overlaps;
 
       --------------
       -- Push_Apart --
@@ -85,7 +86,7 @@ package body Aquarius.UI.Layout is
          Anchor := Queue (Head);
          for X in Rects'Range loop
             if not Frozen (X)
-              and then Overlaps (Rects (Anchor), Rects (X))
+              and then Overlaps (Rects (Anchor), Rects (X), Gap)
             then
                Push_Apart (Rects (Anchor), Rects (X));
                Enqueue (X);

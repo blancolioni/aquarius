@@ -9,6 +9,11 @@ package Aquarius.UI.Layout is
 
    type Rectangle_Array is array (Positive range <>) of Rectangle;
 
+   function Overlaps
+     (A, B : Rectangle; Gap : Long_Float := 12.0) return Boolean;
+   --  True if A and B are closer than Gap (i.e. would overlap once Gap is
+   --  reserved between them).
+
    procedure Remove_Overlaps
      (Rects : in out Rectangle_Array;
       Seed  : Positive;
