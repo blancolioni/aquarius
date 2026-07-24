@@ -172,6 +172,15 @@ package body Aquarius.Programs.Parser is
       Context.Errors.Append (Error);
    end Add_Error;
 
+   -----------------
+   -- Error_Count --
+   -----------------
+
+   function Error_Count (Context : Parse_Context) return Natural is
+   begin
+      return Natural (Context.Errors.Length);
+   end Error_Count;
+
    --------------------
    -- Clear_Comments --
    --------------------

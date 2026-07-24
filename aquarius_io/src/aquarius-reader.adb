@@ -1,6 +1,7 @@
 with Ada.Characters.Handling;
 with Ada.Characters.Latin_1;
 with Ada.Directories;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
@@ -396,6 +397,23 @@ package body Aquarius.Reader is
       Finish_Parse (Context);
 
       Stream.Close;
+
+      --  Record parse failures as a message on the tree root so that
+      --  callers inspecting the tree (e.g. via Get_Messages) can tell
+      --  the parse did not succeed. Individual errors were already
+      --  written to standard error above.
+
+      declare
+         Count : constant Natural :=
+                   Aquarius.Programs.Parser.Error_Count (Context);
+      begin
+         if Count > 0 then
+            Aquarius.Errors.Error
+              (Result,
+               Ada.Strings.Fixed.Trim (Count'Image, Ada.Strings.Left)
+               & (if Count = 1 then " syntax error" else " syntax errors"));
+         end if;
+      end;
 
       return Result;
 

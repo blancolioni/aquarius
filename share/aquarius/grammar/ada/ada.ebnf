@@ -6,7 +6,7 @@ identifier         ::= standard ada_identifier
 numeric_literal    ::= standard ada_numeric_literal
 character_literal  ::= standard ada_character_literal
 string_literal     ::= standard ada_string_literal
-delimiter          ::= delimiters "&()+,;|"
+delimiter          ::= delimiters "&()+,;|@[]"
 symbol             ::= standard ada_symbol
 
 line_comment       = "--"
@@ -41,6 +41,8 @@ format ';' no_space_before no_space_after new_line_after
 format '.' no_space_before no_space_after
 format '(' space_before no_space_after
 format ')' no_space_before space_after
+format '[' space_before no_space_after
+format ']' no_space_before space_after
 format ',' no_space_before space_after
 format ''' no_space_before no_space_after
 format '=>' soft_new_line_after
@@ -647,8 +649,8 @@ loop_name ::= identifier ':'
 while_statement_header ::= 'while' expression
 
 for_statement_header ::=
-   'for' identifier 'in' [ 'reverse' ] for_loop_discrete_range
- | 'for' identifier 'of' [ 'reverse' ] object_reference
+   'for' identifier 'in' [ 'reverse' ] for_loop_discrete_range [ 'when' condition ]
+ | 'for' identifier 'of' [ 'reverse' ] object_reference [ 'when' condition ]
 
 for_loop_discrete_range ::= object_reference [ for_loop_subrange ]
                           | bounded_range
@@ -676,9 +678,11 @@ factor ::= primary [ exponentation_operator primary ]
        | unary_primary_operator primary
 
 primary ::= numeric_literal | string_literal : string |
-            object_reference | 'null' |
+            object_reference | 'null' | target_name |
             parenthesised_expression | aggregate |
             character_literal | allocator
+
+target_name ::= '@'
 
 boolean_operator ::=
         'and' | 'and' 'then' | 'or' | 'or' 'else' | 'xor'
@@ -788,10 +792,23 @@ loop_expression ::= 'for' 'some' identifier 'of' primary '=>' expression
                   
 aggregate ::=
     '(' object_reference 'with' 'null' 'record' ')'
+  | '(' object_reference 'with' 'delta' < selector_expression / ',' > ')'
   | '(' object_reference 'with' < selector_expression / ',' > ')'
   | '(' selector '=>' expression ')'
   | '(' selector '=>' '<>' ')'
   | '(' selector_expression ',' < selector_expression / ',' > ')'
+  | container_aggregate
+
+container_aggregate ::= '[' ']'
+                      | '[' object_reference 'with' 'delta' < selector_expression / ',' > ']'
+                      | '[' < container_element / ',' > ']'
+
+container_element ::= iterated_element_association
+                    | selector_expression
+
+iterated_element_association ::=
+      'for' identifier 'in' [ 'reverse' ] for_loop_discrete_range [ 'when' condition ] '=>' expression
+    | 'for' identifier 'of' [ 'reverse' ] object_reference [ 'when' condition ] '=>' expression
 
 selector_expression ::= selector '=>' expression
                       | selector '=>' '<>'

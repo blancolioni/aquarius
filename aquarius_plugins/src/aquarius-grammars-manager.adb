@@ -23,10 +23,6 @@ package body Aquarius.Grammars.Manager is
 
    function Load_Grammar (Name : String) return Aquarius_Grammar;
 
-   function Load_Grammar_From_File (Name   : String;
-                                    Path : String)
-                                   return Aquarius_Grammar;
-
    procedure Check_EBNF;
    --  Check_EBNF: load EBNF grammar if it's not already loaded.
 
@@ -175,6 +171,8 @@ package body Aquarius.Grammars.Manager is
       EBNF   : Aquarius.Programs.Program_Tree;
 
    begin
+
+      Check_EBNF;
 
       --  Turn off tracing while loading a grammar
 
