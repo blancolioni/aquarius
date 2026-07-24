@@ -12,10 +12,12 @@ tags = []
 [[depends-on]]
 aquarius_base = "*"
 aqua_vm = "*"
+tagatha = "*"
 
 [[pins]]
 aquarius_base = { path = "../aquarius_base" }
 aqua_vm = { path = "../aqua_vm" }
+tagatha = { path = "../tagatha" }
 
 [build-switches]
 "*".ada_version = "ada2022"

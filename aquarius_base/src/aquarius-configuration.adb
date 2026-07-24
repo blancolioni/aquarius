@@ -21,6 +21,19 @@ package body Aquarius.Configuration is
    end Aqua_Configuration_Path;
 
    ---------------------------------
+   -- Aqua_Extension_Library_Path --
+   ---------------------------------
+
+   function Aqua_Extension_Library_Path
+     (Name : String)
+      return String
+   is
+   begin
+      return Get_Path ("/install/paths/standard")
+        & "/" & Name;
+   end Aqua_Extension_Library_Path;
+
+   ---------------------------------
    -- Aqua_Standard_Assembly_Path --
    ---------------------------------
 

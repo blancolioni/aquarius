@@ -1,0 +1,13 @@
+deferred class
+   Ast.Expression
+
+inherit
+   Ast
+
+feature
+
+   Set_Value (Code : Tagatha.Code)
+      deferred
+      end
+
+end

@@ -6,6 +6,7 @@ with Ack.Loader;
 
 with Aquarius.Configuration;
 with Aquarius.Devices.Character_Handler;
+with Aquarius.Devices.Tagatha_Device;
 with Aquarius.Devices.Text_Writer;
 with Aquarius.Grammars.Manager;
 with Aquarius.Logging;
@@ -147,6 +148,8 @@ package body Aquarius.Library is
       Aquarius.Devices.Register
         ("aquarius-program-tree",
          Aquarius.Programs.Device.Aquarius_Tree_Driver);
+      Aquarius.Devices.Register
+        ("tagatha", Aquarius.Devices.Tagatha_Device.Create);
 
       if not Aquarius.Plugins.Manager.Load
         (Aquarius.Grammars.Manager.Get_Grammar ("ebnf"))

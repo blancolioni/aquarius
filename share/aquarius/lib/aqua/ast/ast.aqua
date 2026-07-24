@@ -1,0 +1,23 @@
+deferred class
+   Ast
+
+feature
+
+   Parent : detachable Ast
+   Source : Aquarius.Trees.Program_Tree
+
+   Error (Message : String)
+      do
+         Source.Error (Message)
+      end
+
+   Generate (Code : Tagatha.Code)
+      deferred
+      end
+
+   Find (Name : String) : detachable Ast
+      do
+         Result := Void
+      end
+
+end

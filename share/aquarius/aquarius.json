@@ -36,6 +36,10 @@
 		"ads": {
 			"name": "Ada specification",
 			"plugin": "ada"
+		},
+		"pas": {
+			"name": "Pascal programming language",
+			"plugin": "pascal"
 		}
     },
     "install": {

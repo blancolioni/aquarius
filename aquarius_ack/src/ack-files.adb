@@ -41,6 +41,12 @@ package body Ack.Files is
 
       Class_Path.Append (Ada.Directories.Current_Directory);
       Class_Path.Append (Aquarius.Configuration.Aqua_Standard_Library_Path);
+      Class_Path.Append
+        (Aquarius.Configuration.Aqua_Extension_Library_Path
+           ("tagatha"));
+      Class_Path.Append
+        (Aquarius.Configuration.Aqua_Extension_Library_Path
+           ("ast"));
       Class_Path.Append (Aquarius.Configuration.Generated_Path);
 
       for Path of Class_Path loop

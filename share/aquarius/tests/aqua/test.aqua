@@ -108,6 +108,8 @@ feature
          Test_List.Append (T)
          create { Test_Json_Array } T
          Test_List.Append (T)
+         create { Test_Tagatha_1} T
+         Test_List.Append (T)
       end
 
    Make
