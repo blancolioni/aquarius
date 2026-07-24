@@ -1,0 +1,22 @@
+class
+   Test_Bag_Linked_List
+
+inherit
+   Bag_Conformance_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-bag-linked-list"
+      end
+
+   New_Bag : Aqua.Containers.Bag [Integer]
+      local
+         L : Aqua.Containers.Linked_List [Integer]
+      do
+         create L
+         Result := L
+      end
+
+end

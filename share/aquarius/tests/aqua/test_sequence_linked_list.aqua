@@ -1,0 +1,22 @@
+class
+   Test_Sequence_Linked_List
+
+inherit
+   Sequence_Conformance_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-sequence-linked-list"
+      end
+
+   New_Sequence : Aqua.Containers.Sequence [Integer]
+      local
+         L : Aqua.Containers.Linked_List [Integer]
+      do
+         create L
+         Result := L
+      end
+
+end

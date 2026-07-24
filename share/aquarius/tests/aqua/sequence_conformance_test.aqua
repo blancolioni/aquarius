@@ -1,0 +1,77 @@
+--  Reusable conformance test for the deferred Aqua.Containers.Sequence contract.
+--  Bind it to an effective Sequence implementation by inheriting and supplying
+--  New_Sequence (a factory returning a fresh, empty sequence). See
+--  Test_Sequence_Linked_List. Add a Test_Sequence_Vector once Vector is fixed.
+
+deferred class
+   Sequence_Conformance_Test
+
+inherit
+   Unit_Test
+
+feature
+
+   New_Sequence : Aqua.Containers.Sequence [Integer]
+      deferred
+      end
+
+   Execute
+      local
+         S : Aqua.Containers.Sequence [Integer]
+      do
+         Success := True
+         S := New_Sequence
+
+         if not S.Is_Empty then
+            Success := False
+            Fail_Message := "a fresh sequence should be empty"
+         end
+
+         if Success then
+            S.Append (1)
+            if S.Is_Empty then
+               Success := False
+               Fail_Message := "sequence should not be empty after Append (1)"
+            end
+         end
+
+         if Success and then S.First_Element /= 1 then
+            Success := False
+            Fail_Message := "First_Element expected 1, found " & S.First_Element.To_String
+         end
+
+         if Success and then S.Last_Element /= 1 then
+            Success := False
+            Fail_Message := "Last_Element expected 1, found " & S.Last_Element.To_String
+         end
+
+         if Success then
+            S.Append (2)
+         end
+
+         if Success and then S.First_Element /= 1 then
+            Success := False
+            Fail_Message := "First_Element expected 1 after Append (2), found " & S.First_Element.To_String
+         end
+
+         if Success and then S.Last_Element /= 2 then
+            Success := False
+            Fail_Message := "Last_Element expected 2 after Append (2), found " & S.Last_Element.To_String
+         end
+
+         if Success then
+            S.Delete_First
+         end
+
+         if Success and then S.First_Element /= 2 then
+            Success := False
+            Fail_Message := "First_Element expected 2 after Delete_First, found " & S.First_Element.To_String
+         end
+
+         if Success and then S.Last_Element /= 2 then
+            Success := False
+            Fail_Message := "Last_Element expected 2 after Delete_First, found " & S.Last_Element.To_String
+         end
+      end
+
+end

@@ -1,0 +1,82 @@
+--  Reusable conformance test for the deferred Aqua.Containers.Map contract.
+--  Bind it to an effective Map implementation by inheriting and supplying
+--  New_Map (a factory returning a fresh, empty map). See Test_Map_List_Map.
+
+deferred class
+   Map_Conformance_Test
+
+inherit
+   Unit_Test
+
+feature
+
+   New_Map : Aqua.Containers.Map [Integer, Integer]
+      deferred
+      end
+
+   Execute
+      local
+         M : Aqua.Containers.Map [Integer, Integer]
+      do
+         Success := True
+         M := New_Map
+
+         if not M.Is_Empty then
+            Success := False
+            Fail_Message := "a fresh map should be empty"
+         end
+
+         if Success and then M.Contains_Key (1) then
+            Success := False
+            Fail_Message := "an empty map should not contain key 1"
+         end
+
+         if Success then
+            M.Insert (1, 100)
+            if not M.Contains_Key (1) then
+               Success := False
+               Fail_Message := "map should contain key 1 after Insert (1, 100)"
+            end
+         end
+
+         if Success and then M.Element (1) /= 100 then
+            Success := False
+            Fail_Message := "Element (1) expected 100, found " & M.Element (1).To_String
+         end
+
+         if Success then
+            M.Insert (2, 200)
+            if M.Element (2) /= 200 then
+               Success := False
+               Fail_Message := "Element (2) expected 200, found " & M.Element (2).To_String
+            end
+         end
+
+         if Success and then M.Element (1) /= 100 then
+            Success := False
+            Fail_Message := "Element (1) should still be 100 after Insert (2, 200)"
+         end
+
+         if Success then
+            M.Replace (1, 111)
+            if M.Element (1) /= 111 then
+               Success := False
+               Fail_Message := "Element (1) expected 111 after Replace, found " & M.Element (1).To_String
+            end
+         end
+
+         if Success then
+            M.Delete (1)
+            if M.Contains_Key (1) then
+               Success := False
+               Fail_Message := "map should not contain key 1 after Delete (1)"
+            end
+         end
+
+         if Success and then not M.Contains_Key (2) then
+            Success := False
+            Fail_Message := "map should still contain key 2 after deleting key 1"
+         end
+      end
+
+end

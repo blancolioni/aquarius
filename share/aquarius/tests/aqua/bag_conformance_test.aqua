@@ -1,0 +1,83 @@
+--  Reusable conformance test for the deferred Aqua.Containers.Bag contract.
+--  Bind it to an effective Bag implementation by inheriting and supplying
+--  New_Bag as a factory that returns a fresh, empty container. See
+--  Test_Bag_Linked_List. Add a Test_Bag_<impl> subclass per implementation.
+
+deferred class
+   Bag_Conformance_Test
+
+inherit
+   Unit_Test
+
+feature
+
+   New_Bag : Aqua.Containers.Bag [Integer]
+      deferred
+      end
+
+   Execute
+      local
+         B : Aqua.Containers.Bag [Integer]
+      do
+         Success := True
+         B := New_Bag
+
+         if not B.Is_Empty then
+            Success := False
+            Fail_Message := "a fresh bag should be empty"
+         end
+
+         if Success and then B.Contains (5) then
+            Success := False
+            Fail_Message := "an empty bag should not contain 5"
+         end
+
+         if Success then
+            B.Include (5)
+            if B.Is_Empty then
+               Success := False
+               Fail_Message := "bag should not be empty after Include"
+            end
+         end
+
+         if Success and then not B.Contains (5) then
+            Success := False
+            Fail_Message := "bag should contain 5 after Include (5)"
+         end
+
+         if Success then
+            B.Include (7)
+            if not B.Contains (7) then
+               Success := False
+               Fail_Message := "bag should contain 7 after Include (7)"
+            end
+         end
+
+         if Success and then not B.Contains (5) then
+            Success := False
+            Fail_Message := "bag should still contain 5 after Include (7)"
+         end
+
+         if Success then
+            B.Delete (5)
+            if B.Contains (5) then
+               Success := False
+               Fail_Message := "bag should not contain 5 after Delete (5)"
+            end
+         end
+
+         if Success and then not B.Contains (7) then
+            Success := False
+            Fail_Message := "bag should still contain 7 after deleting 5"
+         end
+
+         if Success then
+            B.Clear
+            if not B.Is_Empty then
+               Success := False
+               Fail_Message := "bag should be empty after Clear"
+            end
+         end
+      end
+
+end

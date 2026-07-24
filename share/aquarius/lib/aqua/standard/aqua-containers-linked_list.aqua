@@ -97,8 +97,8 @@ feature
       end
       
    Last_Element : G
---      require
---         Not_Empty: not Is_Empty
+      require
+         Not_Empty: not Is_Empty
       do
          Result := Last_Cell.Element
       end

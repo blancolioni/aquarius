@@ -1,0 +1,22 @@
+class
+   Test_Map_List_Map
+
+inherit
+   Map_Conformance_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-map-list-map"
+      end
+
+   New_Map : Aqua.Containers.Map [Integer, Integer]
+      local
+         L : Aqua.Containers.List_Map [Integer, Integer]
+      do
+         create L
+         Result := L
+      end
+
+end

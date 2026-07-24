@@ -82,6 +82,17 @@ feature
          Test_List.Append (T)
          create { Test_Integer_To_String } T
          Test_List.Append (T)
+         create { Test_Bag_Linked_List } T
+         Test_List.Append (T)
+         create { Test_Sequence_Linked_List } T
+         Test_List.Append (T)
+         --  Container conformance for other implementations — enable per impl when ready:
+         --  create { Test_Bag_Array } T          -- Array: Map/Bag impl incomplete (no Element/Insert bodies)
+         --  Test_List.Append (T)
+         --  create { Test_Sequence_Vector } T     -- Vector: broken (undeclared G / Aqua_Array / Indexable)
+         --  Test_List.Append (T)
+         create { Test_Map_List_Map } T
+         Test_List.Append (T)
          create { Test_Rescue } T
          Test_List.Append (T)
 --         create { Test_Explicit_Integer_Interval } T

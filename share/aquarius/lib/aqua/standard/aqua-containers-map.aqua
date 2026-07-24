@@ -50,7 +50,7 @@ feature
           Delete (K)
           Insert (K, E)
        ensure
-          Still_Contains_Key: Contains (K)
-          Correct_Mapping: Current.Element (K) = Element
-      
+          Still_Contains_Key: Contains_Key (K)
+          Correct_Mapping: Current.Element (K) = E
+       end
 end
