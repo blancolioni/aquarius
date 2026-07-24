@@ -14,6 +14,10 @@ package Ack.Compile is
      (Result : Compilation_Result'Class)
       return Natural;
 
+   function Has_Error
+     (Result : Compilation_Result'Class)
+      return Boolean;
+
    procedure Compile_Class
      (Source_Path : String;
       Result      : in out Compilation_Result'Class;
@@ -39,12 +43,18 @@ private
       record
          Compilation_Count   : Natural := 0;
          Newest_Class_Source : Ada.Calendar.Time;
+         Error               : Boolean := False;
       end record;
 
    function Compiled_Classes_Count
      (Result : Compilation_Result'Class)
       return Natural
    is (Result.Compilation_Count);
+
+   function Has_Error
+     (Result : Compilation_Result'Class)
+      return Boolean
+   is (Result.Error);
 
    function Newest_Class_Source
      (Result : Compilation_Result'Class)

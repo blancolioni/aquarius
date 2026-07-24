@@ -833,7 +833,7 @@ private
          Warning         : Boolean := False;
          Error_Entity    : Constant_Entity_Type := null;
          Error_Context   : Constant_Entity_Type := null;
-         Integer_Value   : Integer;
+         Integer_Value   : Integer := 0;
          Label           : Natural := 0;
       end record;
 

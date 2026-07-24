@@ -24,17 +24,10 @@ package body Ack.Compile is
       Result      : in out Compilation_Result'Class;
       Root        : Boolean := False);
 
-   procedure Assemble
-     (Assembly_Path : String;
-      Object_Path   : String);
-
    procedure Generate_Object_Code
      (Base_Name   : String;
-      Main        : Boolean);
-
-   procedure Load_Library_File
-     (Path  : String)
-     with Unreferenced;
+      Main        : Boolean;
+      Success     : out Boolean);
 
    procedure Compile_Class
      (Source_Path      : String;
@@ -45,19 +38,6 @@ package body Ack.Compile is
                      Ack.Classes.Class_Entity_Record'Class;
                    Feature      : not null access constant
                      Root_Entity_Type'Class));
-
-   --------------
-   -- Assemble --
-   --------------
-
-   procedure Assemble
-     (Assembly_Path : String;
-      Object_Path   : String)
-   is
-   begin
-      Ada.Text_IO.Put_Line
-        ("aqua_as " & Assembly_Path & " -o " & Object_Path);
-   end Assemble;
 
    ----------------------------
    -- Check_Assembly_Package --
@@ -79,6 +59,7 @@ package body Ack.Compile is
                                      (Source_Path);
       Object_Path              : constant String :=
                       Aquarius.Configuration.Object_File_Path (Package_Name);
+      Ignore_Success           : Boolean;
    begin
       if not Ada.Directories.Exists (Source_Path) then
          raise Constraint_Error
@@ -94,7 +75,7 @@ package body Ack.Compile is
          Ada.Directories.Copy_File
            (Source_Path,
             Aquarius.Configuration.Assembly_File_Path (Package_Name));
-         Generate_Object_Code (Package_Name, False);
+         Generate_Object_Code (Package_Name, False, Ignore_Success);
          Assembled := True;
       end if;
 
@@ -198,7 +179,8 @@ package body Ack.Compile is
 
    procedure Generate_Object_Code
      (Base_Name   : String;
-      Main        : Boolean)
+      Main        : Boolean;
+      Success     : out Boolean)
    is
       use type GNAT.OS_Lib.Argument_List;
       Object_Path : constant String :=
@@ -229,6 +211,8 @@ package body Ack.Compile is
       for Arg of Args loop
          GNAT.OS_Lib.Free (Arg);
       end loop;
+
+      Success := Exit_Code = 0;
 
       if Exit_Code /= 0 then
          Ada.Text_IO.Put_Line
@@ -301,12 +285,20 @@ package body Ack.Compile is
                  or else Modification_Time (Object_Path)
                  < Source_Modification_Time
                then
-                  Ada.Text_IO.Put_Line
-                    ("generating " & Base_Name);
-                  Ack.Generate.Generate_Class_Declaration
-                    (Loaded_Classes.Element (Base_Name), Root);
+                  declare
+                     Success : Boolean;
+                  begin
+                     Ada.Text_IO.Put_Line
+                       ("generating " & Base_Name);
+                     Ack.Generate.Generate_Class_Declaration
+                       (Loaded_Classes.Element (Base_Name), Root);
 
-                  Generate_Object_Code (Base_Name, Root);
+                     Generate_Object_Code (Base_Name, Root, Success);
+
+                     if not Success then
+                        Result.Error := True;
+                     end if;
+                  end;
                end if;
 
                Class_Object_Paths.Insert (Base_Name, Object_Path);
@@ -317,66 +309,6 @@ package body Ack.Compile is
       end if;
 
    end Compile_Class;
-
-   -----------------------
-   -- Load_Library_File --
-   -----------------------
-
-   procedure Load_Library_File
-     (Path  : String)
-   is
-      use Ada.Directories, Ada.Calendar;
-      Base_Name   : constant String := Ada.Directories.Base_Name (Path);
-      Object_Path : constant String :=
-                      Aquarius.Configuration.Object_File_Path (Base_Name);
-   begin
-      if not Exists (Object_Path)
-        or else Modification_Time (Object_Path)
-        < Modification_Time (Path)
-      then
-         Assemble
-           (Assembly_Path => Path,
-            Object_Path   => Object_Path);
-      end if;
-   end Load_Library_File;
-
-   ----------------------
-   -- Load_Link_Config --
-   ----------------------
-
-   --  procedure Load_Link_Config is
-   --     use Ada.Text_IO;
-   --     Link_Config : Ada.Text_IO.File_Type;
-   --  begin
-   --     Open (Link_Config, In_File,
-   --           Aquarius.Configuration.Aqua_Standard_Library_Path
-   --           & "/link.config");
-   --
-   --     while not End_Of_File (Link_Config) loop
-   --        declare
-   --           Line : constant String :=
-   --                    Ada.Strings.Fixed.Trim
-   --                      (Get_Line (Link_Config),
-   --                       Ada.Strings.Both);
-   --           Path : constant String :=
-   --                    Aquarius.Configuration.Aqua_Standard_Library_Path
-   --                    & "/libaqua/" & Line & ".s";
-   --        begin
-   --           if Line /= ""
-   --             and then Line (Line'First) /= '#'
-   --           then
-   --              if not Ada.Directories.Exists (Path) then
-   --                 Put_Line
-   --                   (Standard_Error,
-   --                    Line & ": cannot open");
-   --              else
-   --                 Load_Library_File (Path);
-   --              end if;
-   --           end if;
-   --        end;
-   --     end loop;
-   --     Close (Link_Config);
-   --  end Load_Link_Config;
 
    ---------------------
    -- Load_Root_Class --
@@ -395,7 +327,12 @@ package body Ack.Compile is
         ("loaded"
          & Natural'Image (Result.Compiled_Classes_Count)
          & " classes");
-      --  Load_Link_Config;
+
+      if Result.Has_Error then
+         Ada.Text_IO.Put_Line
+           (Ada.Text_IO.Standard_Error,
+            "assembly failed");
+      end if;
    end Load_Root_Class;
 
 end Ack.Compile;
