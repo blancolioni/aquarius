@@ -1,11 +1,15 @@
 with Ada.Containers.Vectors;
 with Ada.Exceptions;
 with Ada.Text_IO;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Tagatha.Arch;
 with Tagatha.Code;
 
 package body Aquarius.Devices.Tagatha_Device is
+
+   function To_Int_32 is
+     new Ada.Unchecked_Conversion (Aqua.Word_32, Tagatha.Int_32);
 
    No_Command          : constant := 0;
    New_Code            : constant := 1;
@@ -41,17 +45,24 @@ package body Aquarius.Devices.Tagatha_Device is
    Remove_Local        : constant := 31;
    Begin_Block         : constant := 32;
    End_Block           : constant := 33;
+   Dereference         : constant := 34;
+   Pop_Indirect        : constant := 35;
+   Push_Name           : constant := 36;
+   Pop_Name            : constant := 37;
 
    Register_Count : constant := 1024;
    type Register_Index is range 0 .. Register_Count - 1;
 
+   --  Transfer window (see tagatha-driver.aqua). Word args ride R_Transfer /
+   --  R_Transfer_2; string args ride R_String_Len + R_String. By convention
+   --  R_Transfer_2 low bit carries operand content (0 = general,
+   --  1 = floating point) on push/pop ops.
    R_Current      : constant Register_Index := 0;
    R_Command      : constant Register_Index := 1;
    R_Transfer     : constant Register_Index := 2;
    R_Transfer_2   : constant Register_Index := 3;
-   R_Content      : constant Register_Index := 4;
-   R_String_Len   : constant Register_Index := 5;
-   R_String       : constant Register_Index := 6;
+   R_String_Len   : constant Register_Index := 4;
+   R_String       : constant Register_Index := 5;
 
    type Register_Array is array (Register_Index) of Aqua.Word_32;
 
@@ -121,16 +132,15 @@ package body Aquarius.Devices.Tagatha_Device is
       function Current return Code_Reference
       is (This.Code (Positive (This.Rs (R_Current))));
 
-      function Get_Content return Tagatha.Operand_Content is
+      function Content_Of (W : Aqua.Word_32) return Tagatha.Operand_Content is
          use type Aqua.Word_32;
-         Result : constant Tagatha.Operand_Content :=
-                    (if This.Rs (R_Content) = 1
-                     then Tagatha.Floating_Point_Content
-                     else Tagatha.General_Content);
       begin
-         This.Rs (R_Content) := 0;
-         return Result;
-      end Get_Content;
+         if (W and 1) = 1 then
+            return Tagatha.Floating_Point_Content;
+         else
+            return Tagatha.General_Content;
+         end if;
+      end Content_Of;
 
    begin
       This.Rs (R_Command) := 0;
@@ -224,29 +234,28 @@ package body Aquarius.Devices.Tagatha_Device is
          when Push_Argument =>
             Current.Push_Argument
               (Index   => Tagatha.Argument_Index (This.Rs (R_Transfer)),
-               Content => Get_Content);
+               Content => Content_Of (This.Rs (R_Transfer_2)));
 
          when Push_Local =>
             declare
                use type Aqua.Word_32;
-               Reference : constant Boolean :=
-                             (This.Rs (R_Transfer_2) and 1) = 1;
+               Flags : constant Aqua.Word_32 := This.Rs (R_Transfer_2);
             begin
                Current.Push_Local
                  (Index     => Tagatha.Local_Index (This.Rs (R_Transfer)),
-                  Content   => Get_Content,
-                  Reference => Reference);
+                  Content   => Content_Of (Flags),
+                  Reference => (Flags and 2) = 2);
             end;
 
          when Pop_Argument =>
             Current.Pop_Argument
               (Index   => Tagatha.Argument_Index (This.Rs (R_Transfer)),
-               Content => Get_Content);
+               Content => Content_Of (This.Rs (R_Transfer_2)));
 
          when Pop_Local =>
             Current.Pop_Local
               (Index   => Tagatha.Local_Index (This.Rs (R_Transfer)),
-               Content => Get_Content);
+               Content => Content_Of (This.Rs (R_Transfer_2)));
 
          when Begin_Routine =>
             declare
@@ -314,12 +323,12 @@ package body Aquarius.Devices.Tagatha_Device is
          when Pop_Result =>
             Current.Pop_Result
               (Index   => Tagatha.Result_Index (This.Rs (R_Transfer)),
-               Content => Get_Content);
+               Content => Content_Of (This.Rs (R_Transfer_2)));
 
          when Push_Return =>
             Current.Push_Return
               (Index   => Tagatha.Return_Index (This.Rs (R_Transfer)),
-               Content => Get_Content);
+               Content => Content_Of (This.Rs (R_Transfer_2)));
 
          when Exit_Routine =>
             Current.Exit_Routine;
@@ -345,6 +354,39 @@ package body Aquarius.Devices.Tagatha_Device is
 
          when End_Block =>
             Current.End_Block;
+
+         when Dereference =>
+            Current.Dereference
+              (Content => Content_Of (This.Rs (R_Transfer_2)),
+               Offset  => To_Int_32 (This.Rs (R_Transfer)));
+
+         when Pop_Indirect =>
+            Current.Pop_Indirect
+              (Content => Content_Of (This.Rs (R_Transfer_2)),
+               Offset  => To_Int_32 (This.Rs (R_Transfer)));
+
+         when Push_Name =>
+            declare
+               use type Aqua.Word_32;
+               Flags : constant Aqua.Word_32 := This.Rs (R_Transfer);
+            begin
+               Current.Push_Name
+                 (Name    => This.Read_String,
+                  Extern  => (Flags and 1) = 1,
+                  Content => Content_Of (This.Rs (R_Transfer_2)),
+                  Address => (Flags and 2) = 2);
+            end;
+
+         when Pop_Name =>
+            declare
+               use type Aqua.Word_32;
+               Flags : constant Aqua.Word_32 := This.Rs (R_Transfer);
+            begin
+               Current.Pop_Name
+                 (Name    => This.Read_String,
+                  Extern  => (Flags and 1) = 1,
+                  Content => Content_Of (This.Rs (R_Transfer_2)));
+            end;
 
          when others =>
             This.Rs (R_Command) := Command;

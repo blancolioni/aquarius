@@ -88,15 +88,6 @@ feature { None }
          Set_Command (Command)
       end
 
-   Set_Content (Value : Integer)
-      local
-         Mem : System.Memory.Mem
-         W : System.Word_32
-      do
-         W.Convert_From (Value)
-         Mem.Put_Word_32 (Content_Address, W)
-      end
-
    Set_Integer (Value   : Integer)
       local
          Mem : System.Memory.Mem
@@ -181,14 +172,9 @@ feature { None }
          Result := Base.Offset_Words (3)
       end
 
-   Content_Address : System.Address
-      once
-         Result := Base.Offset_Words (4)
-      end
-
    Text_Address : System.Address
       once
-         Result := Base.Offset_Words (5)
+         Result := Base.Offset_Words (4)
       end
 
    External_Code_Index : System.Word_32

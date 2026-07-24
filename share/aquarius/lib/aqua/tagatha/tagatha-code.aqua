@@ -22,9 +22,10 @@ feature
          Driver.Send_Integer (7, Value)
       end
 
-   Pop_Local (Index : Integer)
+   Pop_Local (Index   : Integer
+              Content : Integer)
       do
-         Driver.Send_Integer (11, Index)
+         Driver.Send_Integer_2 (11, Index, Content)
       end
 
    Begin_Routine (Name      : String
@@ -67,19 +68,29 @@ feature
          Driver.Source_Location (Line, Column)
       end
 
-   Push_Argument (Index : Integer)
+   Push_Argument (Index   : Integer
+                  Content : Integer)
       do
-         Driver.Send_Integer (8, Index)
+         Driver.Send_Integer_2 (8, Index, Content)
       end
 
-   Pop_Argument (Index : Integer)
+   Pop_Argument (Index   : Integer
+                 Content : Integer)
       do
-         Driver.Send_Integer (10, Index)
+         Driver.Send_Integer_2 (10, Index, Content)
       end
 
-   Push_Local (Index : Integer)
+   Push_Local (Index     : Integer
+               Content   : Integer
+               Reference : Boolean)
+      local
+         Flags : Integer
       do
-         Driver.Send_Integer_2 (9, Index, 0)
+         Flags := Content
+         if Reference then
+            Flags := Flags + 2
+         end
+         Driver.Send_Integer_2 (9, Index, Flags)
       end
 
    Drop
@@ -136,14 +147,58 @@ feature
          Driver.Send_String (23, Name)
       end
 
-   Pop_Result (Index : Integer)
+   Pop_Result (Index   : Integer
+               Content : Integer)
       do
-         Driver.Send_Integer (24, Index)
+         Driver.Send_Integer_2 (24, Index, Content)
       end
 
-   Push_Return (Index : Integer)
+   Push_Return (Index   : Integer
+                Content : Integer)
       do
-         Driver.Send_Integer (25, Index)
+         Driver.Send_Integer_2 (25, Index, Content)
+      end
+
+   Dereference (Content : Integer
+                Offset  : Integer)
+      do
+         Driver.Send_Integer_2 (34, Offset, Content)
+      end
+
+   Pop_Indirect (Content : Integer
+                 Offset  : Integer)
+      do
+         Driver.Send_Integer_2 (35, Offset, Content)
+      end
+
+   Push_Name (Name    : String
+              Extern  : Boolean
+              Address : Boolean
+              Content : Integer)
+      local
+         Flags : Integer
+      do
+         Flags := 0
+         if Extern then
+            Flags := Flags + 1
+         end
+         if Address then
+            Flags := Flags + 2
+         end
+         Driver.Send_String_2 (36, Flags, Content, Name)
+      end
+
+   Pop_Name (Name    : String
+             Extern  : Boolean
+             Content : Integer)
+      local
+         Flags : Integer
+      do
+         Flags := 0
+         if Extern then
+            Flags := Flags + 1
+         end
+         Driver.Send_String_2 (37, Flags, Content, Name)
       end
 
    Exit_Routine
