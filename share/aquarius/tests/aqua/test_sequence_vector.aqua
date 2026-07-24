@@ -1,0 +1,22 @@
+class
+   Test_Sequence_Vector
+
+inherit
+   Sequence_Conformance_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-sequence-vector"
+      end
+
+   New_Sequence : Aqua.Containers.Sequence [Integer]
+      local
+         V : Aqua.Containers.Vector [Integer]
+      do
+         create V
+         Result := V
+      end
+
+end

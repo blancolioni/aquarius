@@ -1,0 +1,85 @@
+class
+   Test_Vector_Index
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-vector-index"
+      end
+
+   Execute
+      local
+         V : Aqua.Containers.Vector [Integer]
+         Index : Integer
+         Sq : Integer
+      do
+         Success := True
+         create V
+
+         --  append past the initial capacity to exercise Grow
+         from
+            Index := 1
+         until
+            Index > 10
+         loop
+            V.Append (Index * Index)
+            Index := Index + 1
+         end
+
+         if V.Length /= 10 then
+            Success := False
+            Fail_Message := "Length expected 10, found " & V.Length.To_String
+         end
+
+         if Success and then V.Low_Bound /= 1 then
+            Success := False
+            Fail_Message := "Low_Bound expected 1, found " & V.Low_Bound.To_String
+         end
+
+         if Success and then V.High_Bound /= 10 then
+            Success := False
+            Fail_Message := "High_Bound expected 10, found " & V.High_Bound.To_String
+         end
+
+         --  Get returns what was appended (i^2)
+         if Success then
+            from
+               Index := 1
+            until
+               not Success or else Index > 10
+            loop
+               Sq := Index * Index
+               if V.Get (Index) /= Sq then
+                  Success := False
+                  Fail_Message := "Get (" & Index.To_String & ") expected "
+                     & Sq.To_String & ", found " & V.Get (Index).To_String
+               end
+               Index := Index + 1
+            end
+         end
+
+         --  Put overwrites in place
+         if Success then
+            V.Put (3, 999)
+            if V.Get (3) /= 999 then
+               Success := False
+               Fail_Message := "Get (3) after Put expected 999, found " & V.Get (3).To_String
+            end
+         end
+
+         if Success and then V.First_Element /= 1 then
+            Success := False
+            Fail_Message := "First_Element expected 1, found " & V.First_Element.To_String
+         end
+
+         if Success and then V.Last_Element /= 100 then
+            Success := False
+            Fail_Message := "Last_Element expected 100, found " & V.Last_Element.To_String
+         end
+      end
+
+end

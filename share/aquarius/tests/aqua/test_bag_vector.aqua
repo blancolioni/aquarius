@@ -1,0 +1,22 @@
+class
+   Test_Bag_Vector
+
+inherit
+   Bag_Conformance_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-bag-vector"
+      end
+
+   New_Bag : Aqua.Containers.Bag [Integer]
+      local
+         V : Aqua.Containers.Vector [Integer]
+      do
+         create V
+         Result := V
+      end
+
+end
