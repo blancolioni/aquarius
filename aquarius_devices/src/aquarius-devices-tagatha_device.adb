@@ -21,6 +21,26 @@ package body Aquarius.Devices.Tagatha_Device is
    Pop_Local           : constant := 11;
    Begin_Routine       : constant := 12;
    End_Routine         : constant := 13;
+   Drop                : constant := 14;
+   Pop                 : constant := 15;
+   Duplicate           : constant := 16;
+   Swap                : constant := 17;
+   Operate             : constant := 18;
+   Branch_Cond         : constant := 19;
+   Branch_Always       : constant := 20;
+   Call                : constant := 21;
+   Indirect_Call       : constant := 22;
+   Jump                : constant := 23;
+   Pop_Result          : constant := 24;
+   Push_Return         : constant := 25;
+   Exit_Routine        : constant := 26;
+   Fail_Routine        : constant := 27;
+   Retry_Routine       : constant := 28;
+   Raise_Exception     : constant := 29;
+   Add_Local           : constant := 30;
+   Remove_Local        : constant := 31;
+   Begin_Block         : constant := 32;
+   End_Block           : constant := 33;
 
    Register_Count : constant := 1024;
    type Register_Index is range 0 .. Register_Count - 1;
@@ -29,8 +49,9 @@ package body Aquarius.Devices.Tagatha_Device is
    R_Command      : constant Register_Index := 1;
    R_Transfer     : constant Register_Index := 2;
    R_Transfer_2   : constant Register_Index := 3;
-   R_String_Len   : constant Register_Index := 4;
-   R_String       : constant Register_Index := 5;
+   R_Content      : constant Register_Index := 4;
+   R_String_Len   : constant Register_Index := 5;
+   R_String       : constant Register_Index := 6;
 
    type Register_Array is array (Register_Index) of Aqua.Word_32;
 
@@ -99,6 +120,17 @@ package body Aquarius.Devices.Tagatha_Device is
    is
       function Current return Code_Reference
       is (This.Code (Positive (This.Rs (R_Current))));
+
+      function Get_Content return Tagatha.Operand_Content is
+         use type Aqua.Word_32;
+         Result : constant Tagatha.Operand_Content :=
+                    (if This.Rs (R_Content) = 1
+                     then Tagatha.Floating_Point_Content
+                     else Tagatha.General_Content);
+      begin
+         This.Rs (R_Content) := 0;
+         return Result;
+      end Get_Content;
 
    begin
       This.Rs (R_Command) := 0;
@@ -191,19 +223,30 @@ package body Aquarius.Devices.Tagatha_Device is
 
          when Push_Argument =>
             Current.Push_Argument
-              (Tagatha.Argument_Index (This.Rs (R_Transfer)));
+              (Index   => Tagatha.Argument_Index (This.Rs (R_Transfer)),
+               Content => Get_Content);
 
          when Push_Local =>
-            Current.Push_Local
-              (Tagatha.Local_Index (This.Rs (R_Transfer)));
+            declare
+               use type Aqua.Word_32;
+               Reference : constant Boolean :=
+                             (This.Rs (R_Transfer_2) and 1) = 1;
+            begin
+               Current.Push_Local
+                 (Index     => Tagatha.Local_Index (This.Rs (R_Transfer)),
+                  Content   => Get_Content,
+                  Reference => Reference);
+            end;
 
          when Pop_Argument =>
             Current.Pop_Argument
-              (Tagatha.Argument_Index (This.Rs (R_Transfer)));
+              (Index   => Tagatha.Argument_Index (This.Rs (R_Transfer)),
+               Content => Get_Content);
 
          when Pop_Local =>
             Current.Pop_Local
-              (Tagatha.Local_Index (This.Rs (R_Transfer)));
+              (Index   => Tagatha.Local_Index (This.Rs (R_Transfer)),
+               Content => Get_Content);
 
          when Begin_Routine =>
             declare
@@ -223,6 +266,85 @@ package body Aquarius.Devices.Tagatha_Device is
 
          when End_Routine =>
             Current.End_Routine;
+
+         when Drop =>
+            Current.Drop;
+
+         when Pop =>
+            Current.Pop;
+
+         when Duplicate =>
+            Current.Duplicate;
+
+         when Swap =>
+            Current.Swap;
+
+         when Operate =>
+            Current.Operate
+              (Tagatha.Operator'Val (This.Rs (R_Transfer)));
+
+         when Branch_Cond =>
+            Current.Branch
+              (Condition   =>
+                 Tagatha.Branch_Condition'Val (This.Rs (R_Transfer)),
+               Destination =>
+                 Tagatha.Code.From_Label_Index
+                   (Natural (This.Rs (R_Transfer_2))));
+
+         when Branch_Always =>
+            Current.Branch
+              (Destination =>
+                 Tagatha.Code.From_Label_Index
+                   (Natural (This.Rs (R_Transfer))));
+
+         when Call =>
+            Current.Call
+              (Name           => This.Read_String,
+               Argument_Count => Natural (This.Rs (R_Transfer)),
+               Result_Count   => Natural (This.Rs (R_Transfer_2)));
+
+         when Indirect_Call =>
+            Current.Indirect_Call
+              (Argument_Count => Natural (This.Rs (R_Transfer)),
+               Result_Count   => Natural (This.Rs (R_Transfer_2)));
+
+         when Jump =>
+            Current.Jump (This.Read_String);
+
+         when Pop_Result =>
+            Current.Pop_Result
+              (Index   => Tagatha.Result_Index (This.Rs (R_Transfer)),
+               Content => Get_Content);
+
+         when Push_Return =>
+            Current.Push_Return
+              (Index   => Tagatha.Return_Index (This.Rs (R_Transfer)),
+               Content => Get_Content);
+
+         when Exit_Routine =>
+            Current.Exit_Routine;
+
+         when Fail_Routine =>
+            Current.Fail_Routine;
+
+         when Retry_Routine =>
+            Current.Retry_Routine;
+
+         when Raise_Exception =>
+            Current.Raise_Exception;
+
+         when Add_Local =>
+            This.Rs (R_Transfer) :=
+              Aqua.Word_32 (Current.Add_Local);
+
+         when Remove_Local =>
+            Current.Remove_Local;
+
+         when Begin_Block =>
+            Current.Begin_Block;
+
+         when End_Block =>
+            Current.End_Block;
 
          when others =>
             This.Rs (R_Command) := Command;

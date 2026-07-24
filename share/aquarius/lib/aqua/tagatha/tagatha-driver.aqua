@@ -24,13 +24,13 @@ feature
    Next_Label : Label
       do
          Set_Command (3)
-         Result.Make (Get_Integer)
+         create Result.Make (Get_Integer)
       end
 
    Named_Label (Name : String) : Label
       do
          Send_String (4, Name)
-         Result.Make (Get_Integer)
+         create Result.Make (Get_Integer)
       end
 
    Set_Label (L : Label)
@@ -56,11 +56,45 @@ feature { None }
          External_Code_Index := Index
       end
 
+   Send_Command (Command : System.Word_32)
+      do
+         Set_Command (Command)
+      end
+
    Send_Integer (Command : System.Word_32
                  Value   : Integer)
       do
          Set_Integer (Value)
          Set_Command (Command)
+      end
+
+   Send_Integer_2 (Command : System.Word_32
+                   Value_1 : Integer
+                   Value_2 : Integer)
+      do
+         Set_Integer (Value_1)
+         Set_Integer_2 (Value_2)
+         Set_Command (Command)
+      end
+
+   Send_String_2 (Command : System.Word_32
+                  Value_1 : Integer
+                  Value_2 : Integer
+                  Text    : String)
+      do
+         Set_Integer (Value_1)
+         Set_Integer_2 (Value_2)
+         Text.Write_To_Memory (Text_Address)
+         Set_Command (Command)
+      end
+
+   Set_Content (Value : Integer)
+      local
+         Mem : System.Memory.Mem
+         W : System.Word_32
+      do
+         W.Convert_From (Value)
+         Mem.Put_Word_32 (Content_Address, W)
       end
 
    Set_Integer (Value   : Integer)
@@ -147,9 +181,14 @@ feature { None }
          Result := Base.Offset_Words (3)
       end
 
-   Text_Address : System.Address
+   Content_Address : System.Address
       once
          Result := Base.Offset_Words (4)
+      end
+
+   Text_Address : System.Address
+      once
+         Result := Base.Offset_Words (5)
       end
 
    External_Code_Index : System.Word_32

@@ -4,13 +4,13 @@ class
 create
     Make
 
-feature { Tagatha.Driver }
+feature { Tagatha.Driver, Tagatha.Code }
     Make (Index : Integer)
       do
          Label_Index := Index
       end
 
-feature { Tagatha.Driver }
+feature { Tagatha.Driver, Tagatha.Code }
 
     Label_Index : Integer
 end

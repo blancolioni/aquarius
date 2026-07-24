@@ -46,6 +46,147 @@ feature
          Driver.Set_Command (13)
       end
 
+   Next_Label : Label
+      do
+         Result := Driver.Next_Label
+      end
+
+   Named_Label (Name : String) : Label
+      do
+         Result := Driver.Named_Label (Name)
+      end
+
+   Set_Label (L : Label)
+      do
+         Driver.Set_Label (L)
+      end
+
+   Source_Location (Line   : Integer
+                    Column : Integer)
+      do
+         Driver.Source_Location (Line, Column)
+      end
+
+   Push_Argument (Index : Integer)
+      do
+         Driver.Send_Integer (8, Index)
+      end
+
+   Pop_Argument (Index : Integer)
+      do
+         Driver.Send_Integer (10, Index)
+      end
+
+   Push_Local (Index : Integer)
+      do
+         Driver.Send_Integer_2 (9, Index, 0)
+      end
+
+   Drop
+      do
+         Driver.Send_Command (14)
+      end
+
+   Pop
+      do
+         Driver.Send_Command (15)
+      end
+
+   Duplicate
+      do
+         Driver.Send_Command (16)
+      end
+
+   Swap
+      do
+         Driver.Send_Command (17)
+      end
+
+   Operate (Op : Integer)
+      do
+         Driver.Send_Integer (18, Op)
+      end
+
+   Branch (Condition : Integer
+           L         : Label)
+      do
+         Driver.Send_Integer_2 (19, Condition, L.Label_Index)
+      end
+
+   Branch_Always (L : Label)
+      do
+         Driver.Send_Integer (20, L.Label_Index)
+      end
+
+   Call (Name         : String
+         Arg_Count    : Integer
+         Result_Count : Integer)
+      do
+         Driver.Send_String_2 (21, Arg_Count, Result_Count, Name)
+      end
+
+   Indirect_Call (Arg_Count    : Integer
+                  Result_Count : Integer)
+      do
+         Driver.Send_Integer_2 (22, Arg_Count, Result_Count)
+      end
+
+   Jump (Name : String)
+      do
+         Driver.Send_String (23, Name)
+      end
+
+   Pop_Result (Index : Integer)
+      do
+         Driver.Send_Integer (24, Index)
+      end
+
+   Push_Return (Index : Integer)
+      do
+         Driver.Send_Integer (25, Index)
+      end
+
+   Exit_Routine
+      do
+         Driver.Send_Command (26)
+      end
+
+   Fail_Routine
+      do
+         Driver.Send_Command (27)
+      end
+
+   Retry_Routine
+      do
+         Driver.Send_Command (28)
+      end
+
+   Raise_Exception
+      do
+         Driver.Send_Command (29)
+      end
+
+   Add_Local : Integer
+      do
+         Driver.Send_Command (30)
+         Result := Driver.Get_Integer
+      end
+
+   Remove_Local
+      do
+         Driver.Send_Command (31)
+      end
+
+   Begin_Block
+      do
+         Driver.Send_Command (32)
+      end
+
+   End_Block
+      do
+         Driver.Send_Command (33)
+      end
+
 feature { None }
 
    Driver : Tagatha.Driver
