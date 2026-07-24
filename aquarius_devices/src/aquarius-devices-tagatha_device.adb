@@ -49,6 +49,12 @@ package body Aquarius.Devices.Tagatha_Device is
    Pop_Indirect        : constant := 35;
    Push_Name           : constant := 36;
    Pop_Name            : constant := 37;
+   Data_Label          : constant := 38;
+   Data_Label_RW       : constant := 39;
+   Data_Int            : constant := 40;
+   Data_RW             : constant := 41;
+   Data_Ref            : constant := 42;
+   String_Constant     : constant := 43;
 
    Register_Count : constant := 1024;
    type Register_Index is range 0 .. Register_Count - 1;
@@ -387,6 +393,24 @@ package body Aquarius.Devices.Tagatha_Device is
                   Extern  => (Flags and 1) = 1,
                   Content => Content_Of (This.Rs (R_Transfer_2)));
             end;
+
+         when Data_Label =>
+            Current.Data_Label (This.Read_String);
+
+         when Data_Label_RW =>
+            Current.Data_Label_RW (This.Read_String);
+
+         when Data_Int =>
+            Current.Data (Value => To_Int_32 (This.Rs (R_Transfer)));
+
+         when Data_RW =>
+            Current.Data_RW (Value => To_Int_32 (This.Rs (R_Transfer)));
+
+         when Data_Ref =>
+            Current.Data (Label => This.Read_String);
+
+         when String_Constant =>
+            Current.String_Constant (This.Read_String);
 
          when others =>
             This.Rs (R_Command) := Command;

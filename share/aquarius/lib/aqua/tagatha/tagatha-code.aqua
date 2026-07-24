@@ -242,6 +242,36 @@ feature
          Driver.Send_Command (33)
       end
 
+   Data_Label (Name : String)
+      do
+         Driver.Send_String (38, Name)
+      end
+
+   Data_Label_RW (Name : String)
+      do
+         Driver.Send_String (39, Name)
+      end
+
+   Data_Int (Value : Integer)
+      do
+         Driver.Send_Integer (40, Value)
+      end
+
+   Data_RW (Value : Integer)
+      do
+         Driver.Send_Integer (41, Value)
+      end
+
+   Data_Ref (Name : String)
+      do
+         Driver.Send_String (42, Name)
+      end
+
+   String_Constant (Value : String)
+      do
+         Driver.Send_String (43, Value)
+      end
+
 feature { None }
 
    Driver : Tagatha.Driver
