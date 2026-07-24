@@ -1,0 +1,52 @@
+class Ada.Declaration
+   inherit Aqua.Text_IO
+           
+feature
+
+   Spec_Tree : Aquarius.Trees.Program_Tree
+   Body_Tree : Aquarius.Trees.Program_Tree
+
+feature
+
+   Local_Name     : String
+   Qualified_Name : String
+   Class_Name     : String
+   
+feature
+   Entity : Komnenos.Entity
+   
+feature
+   
+   Create_Library_Declaration (Unit_Specification : detachable Ada.Checks.Declared
+                               Unit_Body          : detachable Ada.Checks.Declared
+                               Unit_Class_Name    : String)
+      do
+         if attached Unit_Specification then
+            Spec_Tree := Unit_Specification
+         end
+        
+         if attached Unit_Body then 
+            Body_Tree := Unit_Body
+         end
+         
+         Class_Name := Unit_Class_Name
+         
+         if attached Unit_Body then 
+            Local_Name := Unit_Body.Name
+            Qualified_Name := Unit_Body.Full_Name
+            Entity := 
+              Unit_Body.Create_Entity (Unit_Body.Name_Node, Local_Name, Qualified_Name, Class_Name, True)
+         elsif attached Unit_Specification then
+            Local_Name := Unit_Specification.Name
+            Qualified_Name := Unit_Specification.Full_Name
+            Entity := 
+              Unit_Specification.Create_Entity 
+                (Unit_Specification.Name_Node, Local_Name, Qualified_Name, Class_Name, True)
+         else
+            Put_Line ("no spec nor body in Create_Library_Declaration")
+         end
+         Put_Line ("New library unit: " & Qualified_Name)
+         
+      end
+   
+end

@@ -16,6 +16,7 @@ package body Aquarius.Options is
    Aqua_Trace_Option   : constant String := "aqua trace";
    Code_Trigger_Option : constant String := "code trigger";
    Start_Class_Option  : constant String := "start class";
+   Check_File_Option   : constant String := "check file";
    Self_Test_Option    : constant String := "self test";
    Help_Option         : constant String := "help";
 
@@ -35,6 +36,15 @@ package body Aquarius.Options is
    begin
       return AP.Boolean_Value (Aqua_Trace_Option);
    end Aqua_Trace;
+
+   ----------------
+   -- Check_File --
+   ----------------
+
+   function Check_File return String is
+   begin
+      return AP.String_Value (Check_File_Option);
+   end Check_File;
 
    ------------------
    -- Code_Trigger --
@@ -69,6 +79,12 @@ package body Aquarius.Options is
          Name          => Start_Class_Option,
          Long_Option   => "start-class",
          Usage         => "Create and run the Aqua class found in this path");
+
+      AP.Add_Option
+        (O             => Make_String_Option (""),
+         Name          => Check_File_Option,
+         Long_Option   => "check",
+         Usage         => "Load a file, report any errors, and exit");
 
       AP.Add_Option
         (O             => Make_Boolean_Option (False),

@@ -1,0 +1,19 @@
+class Ada.Entity_Reference
+
+create
+   Make
+   
+feature
+   Name      : String
+   Tree      : Aquarius.Trees.Program_Tree
+   Entity    : Komnenos.Entity
+   
+   Make (Ref_Name   : String
+         Ref_Entity : Komnenos.Entity
+         Ref_Tree   : Aquarius.Trees.Program_Tree)
+      do
+         Name := Ref_Name
+         Tree := Ref_Tree
+         Entity := Ref_Entity
+      end
+end

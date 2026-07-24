@@ -11,6 +11,7 @@ with Aquarius.Devices.Meta;
 with Aquarius.Grammars.Manager;
 with Aquarius.Library;
 with Aquarius.Reader;
+with Aquarius.Messages.Console;
 with Aquarius.Messages.Files;
 with Aquarius.Options;
 with Aquarius.Plugins.Manager;
@@ -72,6 +73,87 @@ begin
                Ada.Command_Line.Set_Exit_Status
                  (Ada.Command_Line.Exit_Status (Exit_Status));
             end;
+         end;
+         Aquarius.Library.Shut_Down;
+         return;
+      end if;
+   end;
+
+   declare
+      Check_Path : constant String := Aquarius.Options.Check_File;
+   begin
+      if Check_Path /= "" then
+         declare
+            use type Aquarius.Grammars.Aquarius_Grammar;
+            use Aquarius.Messages;
+         begin
+            if Ada.Directories.Extension (Check_Path) = "ebnf" then
+
+               --  Load the file as a grammar: this compiles it, runs the
+               --  analyse actions and Check_Grammar, reporting any errors
+               --  to the console. A null result means errors were found.
+
+               declare
+                  Grammar : constant Aquarius.Grammars.Aquarius_Grammar :=
+                    Aquarius.Grammars.Manager.Load_Grammar_From_File
+                      (Name => Ada.Directories.Base_Name (Check_Path),
+                       Path => Check_Path);
+               begin
+                  if Grammar = null then
+                     Ada.Command_Line.Set_Exit_Status (1);
+                  else
+                     Ada.Text_IO.Put_Line (Check_Path & ": no errors");
+                  end if;
+               end;
+
+            else
+
+               --  Parse the file under its grammar and report any messages
+               --  attached to the resulting tree, without rendering it.
+
+               declare
+                  Grammar : constant Aquarius.Grammars.Aquarius_Grammar :=
+                    Aquarius.Grammars.Manager.Get_Grammar_For_File
+                      (File_Name => Check_Path);
+               begin
+                  if Grammar = null then
+                     Ada.Text_IO.Put_Line
+                       (Ada.Text_IO.Standard_Error,
+                        Check_Path & ": no grammar found");
+                     Ada.Command_Line.Set_Exit_Status (1);
+                  elsif not Aquarius.Plugins.Manager.Load (Grammar) then
+                     Ada.Command_Line.Set_Exit_Status (1);
+                  else
+                     declare
+                        Source : constant Aquarius.Sources.Source_Reference :=
+                          Aquarius.Sources.Files.File_Source (Check_Path);
+                        Stream : constant Aquarius.Streams.Reader_Reference :=
+                          Aquarius.Streams.Files.File_Reader (Check_Path);
+                        Program : constant Aquarius.Programs.Program_Tree :=
+                          Aquarius.Reader.Read
+                            (Grammar => Grammar,
+                             Source  => Source,
+                             Stream  => Stream);
+                        List : Message_List;
+                     begin
+                        --  Run the semantic checks, then report messages
+                        --  attached to the tree. Syntax errors are recorded
+                        --  by the reader as an error message on the tree
+                        --  root (details printed to standard error).
+                        Grammar.Run_Action_Trigger
+                          (Program, Aquarius.Actions.Semantic_Trigger);
+                        Program.Get_Messages (List);
+                        Aquarius.Messages.Console.Show_Messages (List);
+                        if Highest_Level (List) > Warning then
+                           Ada.Command_Line.Set_Exit_Status (1);
+                        else
+                           Ada.Text_IO.Put_Line (Check_Path & ": no errors");
+                        end if;
+                     end;
+                  end if;
+               end;
+
+            end if;
          end;
          Aquarius.Library.Shut_Down;
          return;

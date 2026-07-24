@@ -37,6 +37,9 @@ package Aquarius.Programs.Parser is
    procedure Add_Error (Context : in out Parse_Context;
                         Error   : Program_Tree);
 
+   function Error_Count (Context : Parse_Context) return Natural;
+   --  Number of error nodes accumulated during the parse.
+
    procedure Finish_Parse (Context : in out Parse_Context);
 
    function Is_Ambiguous (Context : Parse_Context) return Boolean;

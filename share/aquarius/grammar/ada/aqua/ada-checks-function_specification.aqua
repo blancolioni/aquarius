@@ -1,0 +1,21 @@
+class Ada.Checks.Function_Specification inherit
+   Ada.Specification
+   Aquarius.Trees.Program_Tree
+   Aqua.Text_IO
+   
+feature
+
+   After_Defining_Designator (Child : Ada.Checks.Defining_Designator)
+      do
+         Full_Name := Child.Identifiers.Interpolate (".")
+         Local_Name := Child.Identifiers.Last_Element
+
+         if Part_Of_Body then
+            Put_Line ("function body: " & Full_Name)
+         else
+            Put_Line ("new function: " & Full_Name)
+            Entity := Create_Entity (Child, Local_Name, Full_Name, "function", Top_Level)
+         end
+      end
+
+end

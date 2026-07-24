@@ -1,0 +1,19 @@
+class Ada.Library.Function_Specification inherit
+   Ada.Specification
+   Aquarius.Trees.Program_Tree
+   Aqua.Text_IO
+   
+feature
+
+   After_Defining_Qualified_Reference (Child : Ada.Library.Defining_Qualified_Reference)
+      do
+         Set_Name (Child.Identifiers)
+         
+         if Part_Of_Body then
+            
+         else
+            Put_Line ("new function spec: " & Full_Name)
+            Entity := Create_Entity (Child, Local_Name, Full_Name, "function-spec", Top_Level)
+         end
+      end
+end

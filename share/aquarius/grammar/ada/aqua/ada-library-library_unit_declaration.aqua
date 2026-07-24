@@ -1,0 +1,14 @@
+class Ada.Library.Library_Unit_Declaration
+feature
+
+   Before_Subprogram_Declaration (Child : Ada.Library.Subprogram_Declaration)
+      do
+         Child.Set_Top_Level
+      end
+
+   Before_Package_Declaration (Child : Ada.Library.Package_Declaration)
+      do
+         Child.Set_Top_Level
+      end
+
+end

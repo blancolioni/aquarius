@@ -1,0 +1,4 @@
+class Ada.Checks.Package_Body inherit
+   Ada.Declared
+
+end

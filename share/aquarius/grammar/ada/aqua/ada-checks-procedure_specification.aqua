@@ -1,0 +1,18 @@
+class Ada.Checks.Procedure_Specification inherit
+   Ada.Specification
+   Aquarius.Trees.Program_Tree
+   Aqua.Text_IO
+   
+feature
+
+   After_Defining_Qualified_Reference (Child : Ada.Checks.Defining_Qualified_Reference)
+      do
+         Set_Name (Child.Identifiers)
+         
+         if Part_Of_Body then
+         else
+            Entity := Create_Entity (Child, Local_Name, Full_Name, "procedure-spec", Top_Level)
+         end
+      end
+
+end

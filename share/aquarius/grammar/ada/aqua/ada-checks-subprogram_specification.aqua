@@ -1,0 +1,18 @@
+class Ada.Checks.Subprogram_Specification inherit
+   Ada.Specification
+   
+feature
+
+   After_Procedure_Specification (Child : Ada.Checks.Procedure_Specification)
+      do
+         Full_Name := Child.Full_Name
+         Local_Name := Child.Local_Name
+      end
+
+   After_Function_Specification (Child : Ada.Checks.Function_Specification)
+      do
+         Full_Name := Child.Full_Name
+         Local_Name := Child.Local_Name
+      end
+
+end

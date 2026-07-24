@@ -1,0 +1,16 @@
+class Ada.Checks.Compilation_Unit
+inherit
+   Aqua.Text_IO
+   Aquarius.Trees.Program_Tree
+   
+feature
+
+   Before_Node
+      do
+      end
+
+   After_Node
+      do
+      end
+      
+end

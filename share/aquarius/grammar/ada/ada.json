@@ -1,0 +1,11 @@
+{
+    "name": "ada",
+    "description": "Ada programming language grammar",
+    "version": "0.1.0",
+    "groups": [
+        {
+            "name": "checks",
+            "stage": "semantic"
+        }
+    ]
+}

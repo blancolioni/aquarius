@@ -1,0 +1,25 @@
+class Ada.Checks.Subprogram_Body inherit
+   Ada.Declared
+   Aquarius.Trees.Program_Tree
+   Aqua.Text_IO
+   
+feature
+
+   Before_Subprogram_Specification (Child : Ada.Checks.Subprogram_Specification)
+      do
+         Copy_Top_Level (Child)
+         Child.Set_Part_Of_Body
+      end
+
+   After_Subprogram_Specification (Child : Ada.Checks.Subprogram_Specification)
+      do
+         Local_Name := Child.Local_Name
+         Full_Name := Child.Full_Name
+         Entity := Create_Entity (Current, Local_Name, Full_Name, "procedure-body", Top_Level)
+      end
+
+   Before_Matching_Name (Child : Ada.Checks.Matching_Name)
+      do
+         Child.Set_Original_Name (Full_Name)
+      end
+end

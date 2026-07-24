@@ -24,6 +24,18 @@
 		"ob": {
 			"name": "Oberon programming language",
 			"plugin": "oberon"
+		},
+		"ada": {
+			"name": "Ada programming language",
+			"plugin": "ada"
+		},
+		"adb": {
+			"name": "Ada body",
+			"plugin": "ada"
+		},
+		"ads": {
+			"name": "Ada specification",
+			"plugin": "ada"
 		}
     },
     "install": {

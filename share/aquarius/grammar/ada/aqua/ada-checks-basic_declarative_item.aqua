@@ -1,0 +1,3 @@
+class Ada.Checks.Basic_Declarative_Item inherit
+   Ada.Declared
+end

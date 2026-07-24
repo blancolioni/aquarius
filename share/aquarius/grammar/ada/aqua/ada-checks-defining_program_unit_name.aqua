@@ -1,0 +1,18 @@
+class
+   Ada.Checks.Defining_Program_Unit_Name 
+   
+inherit
+   Aquarius.Trees.Program_Tree
+
+feature
+
+   Reference   : Aqua.Containers.Linked_List[Ada.Entity_Reference]
+   Identifiers : String_List
+
+   After_Defining_Qualified_Reference (Child : Defining_Qualified_Reference)
+      do
+         Identifiers := Child.Identifiers
+         Reference   := Child.Reference
+      end
+
+end

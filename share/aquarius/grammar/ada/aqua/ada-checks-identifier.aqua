@@ -1,0 +1,5 @@
+class Ada.Checks.Identifier
+inherit
+   Aquarius.Trees.Program_Tree
+         
+end

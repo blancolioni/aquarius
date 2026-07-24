@@ -1,0 +1,11 @@
+class Ada.Library.Subprogram_Declaration inherit
+   Ada.Declared
+   
+feature
+
+   Before_Subprogram_Specification (Child : Ada.Library.Subprogram_Specification)
+      do
+         Copy_Top_Level (Child)
+      end
+
+end

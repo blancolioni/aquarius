@@ -1,0 +1,33 @@
+class Ada.Checks.Matching_Name
+   inherit Aqua.Text_IO
+           Aquarius.Trees.Program_Tree   
+feature
+
+   Original_Name : String
+   
+   Identifiers   : String_List
+
+   Set_Original_Name (Original : String)
+      do
+         Original_Name := Original
+      end
+      
+   After_Identifier (Name : String)
+      do
+         Identifiers.Append (Name)
+      end
+      
+   After_Node
+      local
+         Match : String
+      do
+         Match := Identifiers.Interpolate (".")
+         if Match /= Original_Name then
+            if Match.To_Lower = Original_Name.To_Lower then
+               Error ("Case of " & Match & " does not match " & Original_Name)
+            else
+               Error (Match & " does not match " & Original_Name)
+            end
+         end
+      end
+end
