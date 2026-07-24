@@ -1,5 +1,6 @@
 with Ada.Containers.Vectors;
 with Ada.Exceptions;
+with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -55,6 +56,9 @@ package body Aquarius.Devices.Tagatha_Device is
    Data_RW             : constant := 41;
    Data_Ref            : constant := 42;
    String_Constant     : constant := 43;
+   Set_Exc_Start       : constant := 44;
+   Set_Exc_End         : constant := 45;
+   Exception_Handler   : constant := 46;
 
    Register_Count : constant := 1024;
    type Register_Index is range 0 .. Register_Count - 1;
@@ -81,8 +85,10 @@ package body Aquarius.Devices.Tagatha_Device is
 
    type Instance is new Parent with
       record
-         Rs     : Register_Array := [others => 0];
-         Code   : Code_Vectors.Vector;
+         Rs        : Register_Array := [others => 0];
+         Code      : Code_Vectors.Vector;
+         Exc_Start : Ada.Strings.Unbounded.Unbounded_String;
+         Exc_End   : Ada.Strings.Unbounded.Unbounded_String;
       end record;
 
    type Instance_Reference is access all Instance'Class;
@@ -411,6 +417,22 @@ package body Aquarius.Devices.Tagatha_Device is
 
          when String_Constant =>
             Current.String_Constant (This.Read_String);
+
+         when Set_Exc_Start =>
+            This.Exc_Start :=
+              Ada.Strings.Unbounded.To_Unbounded_String (This.Read_String);
+
+         when Set_Exc_End =>
+            This.Exc_End :=
+              Ada.Strings.Unbounded.To_Unbounded_String (This.Read_String);
+
+         when Exception_Handler =>
+            Current.Exception_Handler
+              (Start_Label   =>
+                 Ada.Strings.Unbounded.To_String (This.Exc_Start),
+               End_Label     =>
+                 Ada.Strings.Unbounded.To_String (This.Exc_End),
+               Handler_Label => This.Read_String);
 
          when others =>
             This.Rs (R_Command) := Command;

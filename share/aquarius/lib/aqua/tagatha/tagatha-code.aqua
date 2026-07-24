@@ -272,6 +272,15 @@ feature
          Driver.Send_String (43, Value)
       end
 
+   Exception_Handler (Start_Label   : String
+                      End_Label     : String
+                      Handler_Label : String)
+      do
+         Driver.Send_String (44, Start_Label)
+         Driver.Send_String (45, End_Label)
+         Driver.Send_String (46, Handler_Label)
+      end
+
 feature { None }
 
    Driver : Tagatha.Driver
