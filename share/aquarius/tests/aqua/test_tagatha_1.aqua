@@ -18,7 +18,7 @@ feature
          create This.Make
          This.Begin_Routine ("test_tagatha_1", 1, True)
          This.Push_Constant (42)
-         This.Pop_Local (1)
+         This.Pop_Local (1, 0)
          This.End_Routine
          This.Dispose
          Success := True
