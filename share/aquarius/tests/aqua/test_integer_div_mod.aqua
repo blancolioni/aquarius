@@ -1,0 +1,43 @@
+class
+   Test_Integer_Div_Mod
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-integer-div-mod"
+      end
+
+   Execute
+      local
+         A, B, Q, M, R : Integer
+      do
+         Success := True
+         A := 47
+         B := 5
+
+         Q := A / B
+         if Q /= 9 then
+            Success := False
+            Fail_Message := "47 / 5 expected 9, found " & Q.To_String
+         end
+
+         M := A mod B
+         if Success and then M /= 2 then
+            Success := False
+            Fail_Message := "47 mod 5 expected 2, found " & M.To_String
+         end
+
+         --  division/remainder identity: (A / B) * B + (A mod B) = A
+         R := Q * B + M
+         if Success and then R /= A then
+            Success := False
+            Fail_Message := "(A / B) * B + (A mod B) expected " & A.To_String
+               & ", found " & R.To_String
+         end
+      end
+
+end

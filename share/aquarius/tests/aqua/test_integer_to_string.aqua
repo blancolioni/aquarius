@@ -1,0 +1,45 @@
+class
+   Test_Integer_To_String
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-integer-to-string"
+      end
+
+   Execute
+      local
+         A, Zero, Neg : Integer
+      do
+         Success := True
+         Zero := 0
+         A := 12345
+
+         if A.To_String /= "12345" then
+            Success := False
+            Fail_Message := "12345.To_String expected ""12345"", found " & A.To_String
+         end
+
+         if Success and then Zero.To_String /= "0" then
+            Success := False
+            Fail_Message := "0.To_String expected ""0"", found " & Zero.To_String
+         end
+
+         Neg := Zero - 7
+         if Success and then Neg.To_String /= "-7" then
+            Success := False
+            Fail_Message := "(-7).To_String expected ""-7"", found " & Neg.To_String
+         end
+
+         --  round trip through To_Integer (non-negative)
+         if Success and then A.To_String.To_Integer /= A then
+            Success := False
+            Fail_Message := "To_String/To_Integer round trip failed for " & A.To_String
+         end
+      end
+
+end

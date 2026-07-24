@@ -4,7 +4,6 @@ expanded class
 inherit
    Aqua.Algebra.Additive redefine Subtract, Negate, Equal end
    Aqua.Algebra.Multiplicative redefine Equal end
-   Aqua.Algebra.Eq redefine Equal end
    Aqua.Integral redefine Equal end
    Aqua.Comparable redefine Equal end
    Aqua.Bounded redefine Equal end
@@ -70,8 +69,10 @@ feature
    LT (Right : Integer) : Boolean external "intrinsic"
 
    Minimum : Integer
+      local
+         Zero : Integer
       do
-         Result := 0
+         Result := Zero - Maximum - 1
       end
 
    Maximum : Integer

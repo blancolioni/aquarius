@@ -1,9 +1,6 @@
 deferred class
    Aqua.Comparable
 
-inherit
-   Aqua.Algebra.Eq
-   
 feature
 
    GE alias ">=" (Right : like Current) : Boolean

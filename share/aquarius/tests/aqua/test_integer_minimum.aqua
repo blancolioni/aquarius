@@ -1,0 +1,53 @@
+class
+   Test_Integer_Minimum
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-integer-minimum"
+      end
+
+   Execute
+      local
+         Zero, One, Max, Min, R : Integer
+      do
+         Success := True
+         Zero := 0
+         One := 1
+         Max := Zero.Maximum
+         Min := Zero.Minimum
+
+         --  regression: Minimum used to return 0
+         if Min = 0 then
+            Success := False
+            Fail_Message := "Minimum must not be 0"
+         end
+
+         if Success and then not (Min < 0) then
+            Success := False
+            Fail_Message := "expected Minimum < 0, found " & Min.To_String
+         end
+
+         --  Minimum = -(Maximum) - 1 for two's-complement 32-bit
+         if Success and then Min /= Zero - Max - One then
+            Success := False
+            Fail_Message := "Minimum expected -(Maximum)-1"
+         end
+
+         --  Minimum + Maximum + 1 = 0
+         R := Min + Max + One
+         if Success and then R /= Zero then
+            Success := False
+            Fail_Message := "Minimum + Maximum + 1 expected 0, found " & R.To_String
+         end
+
+         --  NOTE: `Min < Max` omitted: the VM's comparison is subtraction-sign
+         --  based, so Min - Max overflows 32 bits and returns the wrong sign at
+         --  the extreme of the range. That is a separate VM bug, not a Minimum bug.
+      end
+
+end

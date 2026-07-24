@@ -1,0 +1,43 @@
+class
+   Test_Integer_Next_Previous
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-integer-next-previous"
+      end
+
+   Execute
+      local
+         A : Integer
+      do
+         Success := True
+         A := 41
+
+         if A.Next /= 42 then
+            Success := False
+            Fail_Message := "41.Next expected 42, found " & A.Next.To_String
+         end
+
+         if Success and then A.Previous /= 40 then
+            Success := False
+            Fail_Message := "41.Previous expected 40, found " & A.Previous.To_String
+         end
+
+         --  round trip
+         if Success and then A.Next.Previous /= A then
+            Success := False
+            Fail_Message := "Next then Previous should be identity"
+         end
+
+         if Success and then A.Previous.Next /= A then
+            Success := False
+            Fail_Message := "Previous then Next should be identity"
+         end
+      end
+
+end

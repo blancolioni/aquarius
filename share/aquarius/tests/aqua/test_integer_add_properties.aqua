@@ -1,0 +1,59 @@
+class
+   Test_Integer_Add_Properties
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-integer-add-properties"
+      end
+
+   Execute
+      local
+         A, B, C, Zero, R, S : Integer
+      do
+         Success := True
+         Zero := 0
+         A := 12
+         B := 34
+         C := 56
+
+         --  additive identity
+         R := A + Zero
+         if R /= A then
+            Success := False
+            Fail_Message := "A + 0 expected A, found " & R.To_String
+         end
+
+         --  commutativity
+         if Success and then A + B /= B + A then
+            Success := False
+            Fail_Message := "A + B /= B + A"
+         end
+
+         --  associativity
+         if Success and then (A + B) + C /= A + (B + C) then
+            Success := False
+            Fail_Message := "(A + B) + C /= A + (B + C)"
+         end
+
+         --  additive inverse: A + (0 - A) = 0
+         S := Zero - A
+         R := A + S
+         if Success and then R /= Zero then
+            Success := False
+            Fail_Message := "A + (0 - A) expected 0, found " & R.To_String
+         end
+
+         --  subtraction as addition of the negation: A - B = A + (0 - B)
+         S := Zero - B
+         if Success and then A - B /= A + S then
+            Success := False
+            Fail_Message := "A - B /= A + (0 - B)"
+         end
+      end
+
+end

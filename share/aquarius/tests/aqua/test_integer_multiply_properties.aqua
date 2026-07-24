@@ -1,0 +1,50 @@
+class
+   Test_Integer_Multiply_Properties
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-integer-multiply-properties"
+      end
+
+   Execute
+      local
+         A, B, C, One, R : Integer
+      do
+         Success := True
+         One := 1
+         A := 5
+         B := 9
+         C := 13
+
+         --  multiplicative identity
+         R := A * One
+         if R /= A then
+            Success := False
+            Fail_Message := "A * 1 expected A, found " & R.To_String
+         end
+
+         --  commutativity
+         if Success and then A * B /= B * A then
+            Success := False
+            Fail_Message := "A * B /= B * A"
+         end
+
+         --  associativity
+         if Success and then (A * B) * C /= A * (B * C) then
+            Success := False
+            Fail_Message := "(A * B) * C /= A * (B * C)"
+         end
+
+         --  distributivity over addition
+         if Success and then A * (B + C) /= A * B + A * C then
+            Success := False
+            Fail_Message := "A * (B + C) /= A * B + A * C"
+         end
+      end
+
+end

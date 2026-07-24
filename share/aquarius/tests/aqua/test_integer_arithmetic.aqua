@@ -1,0 +1,61 @@
+class
+   Test_Integer_Arithmetic
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-integer-arithmetic"
+      end
+
+   Execute
+      local
+         A, B, R : Integer
+      do
+         Success := True
+
+         A := 2
+         B := 3
+         R := A + B
+         if R /= 5 then
+            Success := False
+            Fail_Message := "2 + 3 expected 5, found " & R.To_String
+         end
+
+         A := 7
+         B := 4
+         R := A - B
+         if Success and then R /= 3 then
+            Success := False
+            Fail_Message := "7 - 4 expected 3, found " & R.To_String
+         end
+
+         A := 6
+         B := 7
+         R := A * B
+         if Success and then R /= 42 then
+            Success := False
+            Fail_Message := "6 * 7 expected 42, found " & R.To_String
+         end
+
+         A := 20
+         B := 4
+         R := A / B
+         if Success and then R /= 5 then
+            Success := False
+            Fail_Message := "20 / 4 expected 5, found " & R.To_String
+         end
+
+         A := 17
+         B := 5
+         R := A mod B
+         if Success and then R /= 2 then
+            Success := False
+            Fail_Message := "17 mod 5 expected 2, found " & R.To_String
+         end
+      end
+
+end

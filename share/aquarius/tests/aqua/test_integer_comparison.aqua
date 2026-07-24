@@ -1,0 +1,75 @@
+class
+   Test_Integer_Comparison
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-integer-comparison"
+      end
+
+   Execute
+      local
+         A, B : Integer
+      do
+         Success := True
+         A := 3
+         B := 7
+
+         if not (A < B) then
+            Success := False
+            Fail_Message := "expected 3 < 7"
+         end
+
+         if Success and then not (B > A) then
+            Success := False
+            Fail_Message := "expected 7 > 3"
+         end
+
+         if Success and then not (A <= B) then
+            Success := False
+            Fail_Message := "expected 3 <= 7"
+         end
+
+         if Success and then not (A <= A) then
+            Success := False
+            Fail_Message := "expected 3 <= 3"
+         end
+
+         if Success and then not (A >= A) then
+            Success := False
+            Fail_Message := "expected 3 >= 3"
+         end
+
+         if Success and then A > B then
+            Success := False
+            Fail_Message := "expected not (3 > 7)"
+         end
+
+         if Success and then A = B then
+            Success := False
+            Fail_Message := "expected 3 /= 7"
+         end
+
+         if Success and then not (A = A) then
+            Success := False
+            Fail_Message := "expected 3 = 3"
+         end
+
+         --  order consistency: (A < B) iff (B > A)
+         if Success and then (A < B) /= (B > A) then
+            Success := False
+            Fail_Message := "(A < B) inconsistent with (B > A)"
+         end
+
+         --  (A <= B) iff (A < B) or (A = B)
+         if Success and then (A <= B) /= ((A < B) or (A = B)) then
+            Success := False
+            Fail_Message := "(A <= B) inconsistent with (A < B or A = B)"
+         end
+      end
+
+end
