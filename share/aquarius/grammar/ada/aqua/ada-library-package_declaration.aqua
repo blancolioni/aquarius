@@ -1,0 +1,11 @@
+class Ada.Library.Package_Declaration inherit
+   Ada.Declared
+   
+feature
+
+   Before_Package_Specification (Child : Ada.Library.Package_Specification)
+      do
+         Copy_Top_Level (Child)
+      end
+
+end

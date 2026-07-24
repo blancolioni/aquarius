@@ -1,0 +1,4 @@
+class Ada.Checks.Basic_Declaration inherit
+   Ada.Declared
+
+end

@@ -1,0 +1,15 @@
+class Ada.Library.Package_Specification inherit
+   Aqua.Text_IO
+   Aquarius.Trees.Program_Tree
+   Ada.Specification
+   
+feature
+
+   After_Defining_Program_Unit_Name (Child : Ada.Library.Defining_Program_Unit_Name)
+      do
+         Set_Name (Child.Identifiers)
+         Entity := Create_Entity (Child, Local_Name, Full_Name, "package", Top_Level)
+         Put_Line ("Ada.Library: new package: " & Full_Name)
+      end
+      
+end

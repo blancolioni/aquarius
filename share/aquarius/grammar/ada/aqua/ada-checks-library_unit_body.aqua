@@ -1,0 +1,15 @@
+class Ada.Checks.Library_Unit_Body inherit
+   Aqua.Text_IO
+feature
+
+   Before_Subprogram_Body (Child : Ada.Checks.Subprogram_Body)
+      do
+         Child.Set_Top_Level
+      end
+
+   Before_Package_Body (Child : Ada.Checks.Package_Body)
+      do
+         Child.Set_Top_Level
+      end
+
+end

@@ -1,0 +1,31 @@
+note
+   Conforming_Child_Node: Copy_Part_Of_Body
+   
+class Ada.Specification inherit
+   Ada.Declared
+
+feature
+
+   Part_Of_Body : Boolean
+   
+   Set_Part_Of_Body
+      do
+         Part_Of_Body := True
+      end
+      
+   Copy_To (To : Ada.Specification)
+      do
+         Copy_Top_Level (To)
+         if Part_Of_Body then
+            To.Set_Part_Of_Body
+         end
+      end
+
+   Copy_Part_Of_Body (To : Ada.Specification)
+      do
+         if Part_Of_Body then
+            To.Set_Part_Of_Body
+end
+      end
+
+end

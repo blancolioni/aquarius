@@ -1,0 +1,12 @@
+class Ada.Library.Defining_Qualified_Reference
+inherit
+   Aquarius.Trees.Program_Tree
+feature
+
+   Identifiers : String_List
+   
+   After_Identifier (Id : String)
+      do
+         Identifiers.Append (Id)
+      end
+end

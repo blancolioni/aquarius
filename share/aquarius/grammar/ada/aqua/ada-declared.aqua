@@ -1,0 +1,39 @@
+note
+   Conforming_Child_Node: Copy_Top_Level
+   
+class Ada.Declared
+   
+feature
+
+   Top_Level  : Boolean
+   Full_Name  : String
+   Local_Name : String
+   Entity     : Komnenos.Entity
+
+   Set_Name (Ids : String_List)
+      do
+         Full_Name := Ids.Interpolate (".")
+         Local_Name := Ids.Last_Element
+      end
+      
+   Copy (D : Ada.Declared)
+      do
+         Full_Name  := D.Full_Name
+         Local_Name := D.Local_Name
+         Entity     := D.Entity
+         Top_Level  := D.Top_Level
+      end
+      
+   Set_Top_Level
+      do
+         Top_Level := True
+      end
+      
+   Copy_Top_Level (To : Ada.Declared)
+      do
+         if Top_Level then
+            To.Set_Top_Level
+         end
+      end
+      
+end
