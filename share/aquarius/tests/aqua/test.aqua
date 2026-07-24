@@ -90,6 +90,8 @@ feature
          Test_List.Append (T)
          create { Test_Diamond_Inheritance } T
          Test_List.Append (T)
+         create { Test_Deep_Inheritance } T
+         Test_List.Append (T)
          create { Test_Descendent_Create } T
          Test_List.Append (T)
          create { Test_Inherited_Attached } T

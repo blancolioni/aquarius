@@ -1,0 +1,27 @@
+class
+   Si_Leaf
+
+inherit
+   Si_Mid
+      redefine describe end
+
+feature
+
+   leaf_val : Integer
+
+   Set_Leaf_Val (V : Integer)
+      do
+         leaf_val := V
+      end
+
+   describe : String
+      do
+         Result := "leaf"
+      end
+
+   Total : Integer
+      do
+         Result := base_val + mid_val + leaf_val
+      end
+
+end

@@ -1,0 +1,22 @@
+class
+   Si_Mid
+
+inherit
+   Si_Base
+      redefine describe end
+
+feature
+
+   mid_val : Integer
+
+   Set_Mid_Val (V : Integer)
+      do
+         mid_val := V
+      end
+
+   describe : String
+      do
+         Result := "mid"
+      end
+
+end

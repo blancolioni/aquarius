@@ -1,0 +1,23 @@
+class
+   Si_Base
+
+feature
+
+   base_val : Integer
+
+   Set_Base_Val (V : Integer)
+      do
+         base_val := V
+      end
+
+   describe : String
+      do
+         Result := "base"
+      end
+
+   base_only : Integer
+      do
+         Result := base_val
+      end
+
+end

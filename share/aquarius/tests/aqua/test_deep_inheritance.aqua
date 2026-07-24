@@ -1,0 +1,48 @@
+class
+   Test_Deep_Inheritance
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-deep-inheritance"
+      end
+
+   Execute
+      local
+         L : Si_Leaf
+         B : Si_Base
+      do
+         create L
+         L.Set_Base_Val (100)
+         L.Set_Mid_Val (20)
+         L.Set_Leaf_Val (3)
+
+         --  B is the same object viewed as its spine root
+         B := L
+
+         Success :=
+            L.base_val = 100            --  distinct inherited-property offset
+            and then L.mid_val = 20      --  no aliasing across the spine
+            and then L.leaf_val = 3
+            and then L.Total = 123       --  leaf reads all inherited fields
+            and then L.base_only = 100   --  inherited (non-redefined) dispatch
+            and then L.describe = "leaf" --  redefinition along the spine
+            and then B.describe = "leaf" --  polymorphic dispatch through spine
+
+         if not Success then
+            Fail_Message :=
+              "b=" & L.base_val.To_String
+              & " m=" & L.mid_val.To_String
+              & " l=" & L.leaf_val.To_String
+              & " total=" & L.Total.To_String
+              & " base_only=" & L.base_only.To_String
+              & " describe=" & L.describe
+              & " dyn=" & B.describe
+         end
+      end
+
+end
