@@ -218,6 +218,11 @@ package body Aquarius.UI.Gtk_View is
    --  Re-sync every docked bubble's geometry and content widget to the current
    --  viewport (call on scroll and on viewport resize).
 
+   procedure Raise_Docked;
+   --  Raise docked bubbles' content widgets above the floating ones, so a
+   --  floating bubble never covers a docked one (Gtk_Layout stacks children in
+   --  add order, so a later floating bubble would otherwise sit on top).
+
    procedure Size_Bubble_View (Index : Positive);
    --  Resize AND reposition bubble Index's content widget to match its
    --  geometry.
@@ -576,6 +581,8 @@ package body Aquarius.UI.Gtk_View is
       else
          Bubble_Area.Queue_Draw;
       end if;
+      --  Keep docked bubbles above the (possibly newly added) floating ones.
+      Raise_Docked;
    end Open_Model;
 
    ---------------
@@ -897,7 +904,34 @@ package body Aquarius.UI.Gtk_View is
             Size_Bubble_View (I);
          end if;
       end loop;
+      Raise_Docked;
    end Layout_Docked;
+
+   ------------------
+   -- Raise_Docked --
+   ------------------
+
+   procedure Raise_Docked is
+      use type Views.View_Reference;
+      use type Gdk.Gdk_Window;
+   begin
+      for I in Bubbles.First_Index .. Bubbles.Last_Index loop
+         if Bubbles (I).Dock /= Undocked
+           and then Bubbles (I).View /= null
+           and then Bubbles (I).View.all in Gtk_View_Interface'Class
+         then
+            declare
+               Win : constant Gdk.Gdk_Window :=
+                       Gtk_View_Interface'Class
+                         (Bubbles (I).View.all).Widget.Get_Window;
+            begin
+               if Win /= null then
+                  Gdk_Raise (Win);
+               end if;
+            end;
+         end if;
+      end loop;
+   end Raise_Docked;
 
    ---------------
    -- Edge_Hits --
