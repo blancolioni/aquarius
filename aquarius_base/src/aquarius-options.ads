@@ -15,6 +15,9 @@ package Aquarius.Options is
 
    function Self_Test return Boolean;
 
+   function Clear_Cache return Boolean;
+   --  when set, empty the temporary (cache) folder before continuing
+
    function Show_Full_Path return Boolean;
    --  when reporting file names, use the full path
 

@@ -18,6 +18,7 @@ package body Aquarius.Options is
    Start_Class_Option  : constant String := "start class";
    Check_File_Option   : constant String := "check file";
    Self_Test_Option    : constant String := "self test";
+   Clear_Cache_Option  : constant String := "clear cache";
    Help_Option         : constant String := "help";
 
    Show_Full_Path_Option : constant String := "show full path";
@@ -45,6 +46,15 @@ package body Aquarius.Options is
    begin
       return AP.String_Value (Check_File_Option);
    end Check_File;
+
+   -----------------
+   -- Clear_Cache --
+   -----------------
+
+   function Clear_Cache return Boolean is
+   begin
+      return AP.Boolean_Value (Clear_Cache_Option);
+   end Clear_Cache;
 
    ------------------
    -- Code_Trigger --
@@ -91,6 +101,12 @@ package body Aquarius.Options is
          Name          => Self_Test_Option,
          Long_Option   => "self-test",
          Usage         => "Run unit tests");
+
+      AP.Add_Option
+        (O             => Make_Boolean_Option (False),
+         Name          => Clear_Cache_Option,
+         Long_Option   => "clear-cache",
+         Usage         => "Empty the temporary folder before continuing");
 
       AP.Add_Option
         (O             => Make_Boolean_Option (False),

@@ -130,6 +130,20 @@ package body Aquarius.Library is
 
       Ack.Loader.Set_Loader (Load_Aqua_Class'Access);
 
+      --  --clear-cache: empty the temporary folder before it is repopulated.
+      --  Must run after the config is loaded (paths come from Kosei) but
+      --  before the assembly packages below are rebuilt into it.
+      if Aquarius.Options.Clear_Cache then
+         declare
+            Temp : constant String := Aquarius.Configuration.Temporary_Path;
+         begin
+            if Ada.Directories.Exists (Temp) then
+               Ada.Text_IO.Put_Line ("clearing cache: " & Temp);
+               Ada.Directories.Delete_Tree (Temp);
+            end if;
+         end;
+      end if;
+
       Check_Directory (Aquarius.Configuration.Temporary_Path);
       Check_Directory (Aquarius.Configuration.Generated_Path);
       Check_Directory (Aquarius.Configuration.Assembly_Path);
