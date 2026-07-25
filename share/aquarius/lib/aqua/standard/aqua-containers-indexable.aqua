@@ -1,0 +1,49 @@
+note
+   description:
+      "Random-access protocol: elements addressed by a contiguous integer",
+      "index range Lower .. Upper. A rootless mixin -- concrete indexables",
+      "also inherit a Container-rooted class (e.g. Array, Vector), which",
+      "avoids a repeated-Container diamond."
+
+deferred class
+   Aqua.Containers.Indexable [Element_Type]
+
+feature  --  Bounds
+
+   Lower : Integer
+      deferred
+      end
+
+   Upper : Integer
+      deferred
+      end
+
+   Count : Integer
+      do
+         Result := Upper - Lower + 1
+      ensure
+         Consistent_With_Bounds: Result = Upper - Lower + 1
+      end
+
+   Valid_Index (Index : Integer) : Boolean
+      do
+         Result := Index >= Lower and then Index <= Upper
+      end
+
+feature  --  Access
+
+   Item alias "[]" (Index : Integer) : Element_Type
+      require
+         Valid_Index: Valid_Index (Index)
+      deferred
+      end
+
+   Put (Index : Integer; Value : Element_Type)
+      require
+         Valid_Index: Valid_Index (Index)
+      deferred
+      ensure
+         Item_Set: Item (Index) = Value
+      end
+
+end

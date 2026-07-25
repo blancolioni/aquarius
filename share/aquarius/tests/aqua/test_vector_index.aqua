@@ -30,22 +30,22 @@ feature
             Index := Index + 1
          end
 
-         if V.Length /= 10 then
+         if V.Count /= 10 then
             Success := False
-            Fail_Message := "Length expected 10, found " & V.Length.To_String
+            Fail_Message := "Count expected 10, found " & V.Count.To_String
          end
 
-         if Success and then V.Low_Bound /= 1 then
+         if Success and then V.Lower /= 1 then
             Success := False
-            Fail_Message := "Low_Bound expected 1, found " & V.Low_Bound.To_String
+            Fail_Message := "Lower expected 1, found " & V.Lower.To_String
          end
 
-         if Success and then V.High_Bound /= 10 then
+         if Success and then V.Upper /= 10 then
             Success := False
-            Fail_Message := "High_Bound expected 10, found " & V.High_Bound.To_String
+            Fail_Message := "Upper expected 10, found " & V.Upper.To_String
          end
 
-         --  Get returns what was appended (i^2)
+         --  Item returns what was appended (i^2)
          if Success then
             from
                Index := 1
@@ -53,10 +53,10 @@ feature
                not Success or else Index > 10
             loop
                Sq := Index * Index
-               if V.Get (Index) /= Sq then
+               if V.Item (Index) /= Sq then
                   Success := False
-                  Fail_Message := "Get (" & Index.To_String & ") expected "
-                     & Sq.To_String & ", found " & V.Get (Index).To_String
+                  Fail_Message := "Item (" & Index.To_String & ") expected "
+                     & Sq.To_String & ", found " & V.Item (Index).To_String
                end
                Index := Index + 1
             end
@@ -65,9 +65,9 @@ feature
          --  Put overwrites in place
          if Success then
             V.Put (3, 999)
-            if V.Get (3) /= 999 then
+            if V.Item (3) /= 999 then
                Success := False
-               Fail_Message := "Get (3) after Put expected 999, found " & V.Get (3).To_String
+               Fail_Message := "Item (3) after Put expected 999, found " & V.Item (3).To_String
             end
          end
 

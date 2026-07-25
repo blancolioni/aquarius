@@ -8,6 +8,8 @@ class
 inherit
    Aqua.Containers.Sequence [Element]
       redefine default_create end
+   Aqua.Containers.Indexable [Element]
+      redefine default_create end
 
 create
    default_create
@@ -39,7 +41,7 @@ feature  --  Container
          until
             Result or else Index > Item_Count
          loop
-            if Get (Index) = Value then
+            if Item (Index) = Value then
                Result := True
             end
             Index := Index + 1
@@ -60,17 +62,12 @@ feature  --  Collection status
 
 feature  --  Measurement
 
-   Length : Integer
-      do
-         Result := Item_Count
-      end
-
-   Low_Bound : Integer
+   Lower : Integer
       do
          Result := 1
       end
 
-   High_Bound : Integer
+   Upper : Integer
       do
          Result := Item_Count
       end
@@ -84,7 +81,7 @@ feature  --  Measurement
          until
             Index > Item_Count
          loop
-            if Get (Index) = Value then
+            if Item (Index) = Value then
                Result := Result + 1
             end
             Index := Index + 1
@@ -93,7 +90,7 @@ feature  --  Measurement
 
 feature  --  Indexed access
 
-   Get (Index : Integer) : Element
+   Item (Index : Integer) : Element
       require
          In_Range: Index >= 1 and then Index <= Item_Count
       local
@@ -119,14 +116,14 @@ feature  --  Sequence query
       require
          Not_Empty: not Is_Empty
       do
-         Result := Get (1)
+         Result := Item (1)
       end
 
    Last_Element : Element
       require
          Not_Empty: not Is_Empty
       do
-         Result := Get (Item_Count)
+         Result := Item (Item_Count)
       end
 
 feature  --  Element change
@@ -172,7 +169,7 @@ feature  --  Deletion
          until
             Found or else Index > Item_Count
          loop
-            if Get (Index) = Value then
+            if Item (Index) = Value then
                Delete_At (Index)
                Found := True
             else
@@ -190,7 +187,7 @@ feature  --  Deletion
          until
             Index > Item_Count
          loop
-            if Get (Index) = Value then
+            if Item (Index) = Value then
                Delete_At (Index)
             else
                Index := Index + 1
@@ -243,7 +240,7 @@ feature { None }  --  implementation
          until
             I >= Item_Count
          loop
-            Store_At (I, Get (I + 1))
+            Store_At (I, Item (I + 1))
             I := I + 1
          end
          Item_Count := Item_Count - 1

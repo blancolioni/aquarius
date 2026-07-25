@@ -6,8 +6,8 @@ deferred class
    Aqua.Containers.Sequence [G]
    
 inherit
-   Aqua.Containers.Bag
-   
+   Aqua.Containers.Bag [G]
+
 feature  --  Query
 
    First_Element : G
