@@ -21,7 +21,6 @@ with Aquarius.Rendering.Text;
 with Aquarius.Sources.Files;
 with Aquarius.Streams.Files;
 with Aquarius.Tests;
-with Aquarius.UI.Gtk_View;
 
 procedure Aquarius.Driver is
 begin
@@ -217,8 +216,11 @@ begin
       return;
    end if;
 
-   Aquarius.UI.Gtk_View.Launch
-     (Icon_Dir => Aquarius.Library.Configuration_Path & "/icons");
+   --  The GtkAda UI (aquarius_ui_gtk) is temporarily disabled; a bare
+   --  launch with no file/command is a no-op for now.
+   Ada.Text_IO.Put_Line
+     (Ada.Text_IO.Standard_Error,
+      "aquarius: GUI disabled in this build; nothing to do.");
    Aquarius.Library.Shut_Down;
 
 exception
