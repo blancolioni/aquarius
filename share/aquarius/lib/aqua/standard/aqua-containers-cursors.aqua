@@ -1,7 +1,0 @@
-deferred class Aqua.Containers.Cursors [Element]
-   inherit Cell [Element]
-   
-   Next : Cursors [Element]
-      deferred
-      
-end

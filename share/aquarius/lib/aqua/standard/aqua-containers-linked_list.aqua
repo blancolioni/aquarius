@@ -1,5 +1,5 @@
 class Aqua.Containers.Linked_List[G]
-   inherit Aqua.Containers.Forward_Iterable[G]
+   inherit Aqua.Iterable [G]
            Aqua.Containers.Sequence [G]
               
 feature{Aqua.Containers.Linked_List_Iterator}
