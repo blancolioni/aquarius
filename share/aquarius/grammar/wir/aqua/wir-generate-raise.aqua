@@ -1,0 +1,31 @@
+class
+   Wir.Generate.Raise
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  'raise' expression. Evaluate the exception value, then raise it
+--  (Ast.Statement.Raise).
+
+feature
+
+   After_Expression (Child : Wir.Generate.Expression)
+      do
+         Value := Child.Expr
+      end
+
+   After_Node
+      local
+         R : Ast.Statement.Raise
+      do
+         if attached Value as V then
+            create R.Make (Void, Current, V)
+            Set_Stmt (R)
+         end
+      end
+
+feature { None }
+
+   Value : detachable Ast.Expression
+
+end

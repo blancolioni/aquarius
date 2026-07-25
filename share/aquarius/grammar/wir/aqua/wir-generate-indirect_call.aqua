@@ -1,0 +1,49 @@
+class
+   Wir.Generate.Indirect_Call
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  '*' expression '(' args ')'. Call through a computed address, result
+--  count 1. The first (direct) expression child is the callee; the arguments
+--  live under the argument_list child (Ast.Expression.Indirect_Call).
+
+feature
+
+   After_Expression (Child : Wir.Generate.Expression)
+      do
+         Callee := Child.Expr
+      end
+
+   After_Argument_List (Child : Wir.Generate.Argument_List)
+      do
+         Arg_List := Child
+      end
+
+   After_Node
+      local
+         C  : Ast.Expression.Indirect_Call
+         It : Aqua.Containers.Linked_List_Iterator [Ast.Expression]
+      do
+         if attached Callee as The_Callee then
+            create C.Make (Void, Current, The_Callee)
+            if attached Arg_List as AL then
+               from
+                  It := AL.Args.New_Cursor
+               until
+                  It.After
+               loop
+                  C.Add_Argument (It.Element)
+                  It.Next
+               end
+            end
+            Set_Expr (C)
+         end
+      end
+
+feature { None }
+
+   Callee   : detachable Ast.Expression
+   Arg_List : detachable Wir.Generate.Argument_List
+
+end

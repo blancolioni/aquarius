@@ -1,0 +1,32 @@
+class
+   Wir.Generate.Unary_Operator
+
+inherit
+   Wir.Generate.Node
+
+--  A unary operator token, mapped to its Ast.Operator ordinal.
+
+feature
+
+   Op : Integer
+
+   After_Node
+      local
+         O : Ast.Operator
+         S : String
+      do
+         S := Concatenated_Image
+         if S = "+" then
+            Op := O.Identity
+         elsif S = "neg" then
+            Op := O.Negate
+         elsif S = "not" then
+            Op := O.Logical_Not
+         elsif S = "test" then
+            Op := O.Test
+         else
+            Error ("unknown unary operator: " & S)
+         end
+      end
+
+end

@@ -1,0 +1,60 @@
+class
+   Wir.Generate.Routine
+
+inherit
+   Wir.Generate.Node
+
+--  routine [public] name args N locals N is <body> end
+--  The two integer children are the argument count then the local count,
+--  in source order. Builds an Ast.Routine (exposed as Rtn for the unit).
+
+feature
+
+   Rtn : detachable Ast.Routine
+
+   After_Routine_Scope (Child : Wir.Generate.Routine_Scope)
+      do
+         if Child.Concatenated_Image = "public" then
+            Is_Public := True
+         end
+      end
+
+   After_Name (Child : Wir.Generate.Name)
+      do
+         Nm := Child.Concatenated_Image
+      end
+
+   After_Integer (Value : String)
+      do
+         if Got_Args then
+            Local_Count := Value.To_Integer
+         else
+            Arg_Count := Value.To_Integer
+            Got_Args := True
+         end
+      end
+
+   After_Statement_List (Child : Wir.Generate.Statement_List)
+      do
+         Body := Child.Stmt
+      end
+
+   After_Node
+      do
+         if attached Nm as N then
+            if attached Body as B then
+               create Rtn.Make (Current, N, Arg_Count, Local_Count, Is_Public, B)
+            end
+         end
+      end
+
+feature { None }
+
+   Nm          : detachable String
+   Body        : detachable Ast.Statement
+   Is_Public   : Boolean
+   Arg_Count   : Integer
+   Local_Count : Integer
+   Got_Args    : Boolean
+
+end

@@ -1,0 +1,30 @@
+class
+   Wir.Generate.Data_Reference
+
+inherit
+   Wir.Generate.Data_Node
+
+--  'ref' name. A word holding a named label's address (Ast.Data.Reference).
+
+feature
+
+   After_Name (Child : Wir.Generate.Name)
+      do
+         Nm := Child.Concatenated_Image
+      end
+
+   After_Node
+      local
+         D : Ast.Data.Reference
+      do
+         if attached Nm as N then
+            create D.Make (Void, Current, N)
+            Set_Datum (D)
+         end
+      end
+
+feature { None }
+
+   Nm : detachable String
+
+end

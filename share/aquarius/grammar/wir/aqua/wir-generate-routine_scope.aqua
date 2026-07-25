@@ -1,0 +1,10 @@
+class
+   Wir.Generate.Routine_Scope
+
+inherit
+   Wir.Generate.Node
+
+--  [ 'public' ]. Read by Routine via Concatenated_Image ("public" or the
+--  rule name when empty).
+
+end

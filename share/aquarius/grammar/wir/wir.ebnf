@@ -28,18 +28,20 @@ format statement_list indented_child
 unit ::= { routine } { data_item }
 
 routine ::=
-   'routine' [ 'public' ] name
+   'routine' routine_scope name
       'args' integer
       'locals' integer
    'is'
       statement_list
    'end'
 
+routine_scope ::= [ 'public' ]
+
 statement_list ::= { statement }
 
 statement ::= sequence | assign | return_statement | call_statement
             | conditional | iteration | label | goto | jump | fail
-            | raise | evaluate | block | retry
+            | raise | evaluate | block | retry_statement
 
 sequence ::= 'begin' statement_list 'end' ';'
 
@@ -65,17 +67,19 @@ label ::= 'label' name ';'
 goto  ::= 'goto' name ';'
 jump  ::= 'jump' name ';'
 
-fail     ::= 'fail' ';'
-raise    ::= 'raise' expression ';'
-evaluate ::= 'eval' expression ';'
-retry    ::= 'retry' ';'
+fail            ::= 'fail' ';'
+raise           ::= 'raise' expression ';'
+evaluate        ::= 'eval' expression ';'
+retry_statement ::= 'retry' ';'
 
 block ::=
    'block' 'locals' integer
       statement_list
    'end' 'block' ';'
 
-expression ::= primary [ ':' 'float' ]
+expression ::= primary [ content ]
+
+content ::= ':' 'float'
 
 primary ::= literal
           | argument
@@ -88,7 +92,7 @@ primary ::= literal
           | indirect_call
           | dereference
 
-literal ::= [ '-' ] integer
+literal ::= signed_integer
 
 argument       ::= 'arg' integer
 local_variable ::= 'local' integer
@@ -98,7 +102,9 @@ binary ::= '(' expression binary_operator expression ')'
 
 unary ::= unary_operator expression
 
-name_value ::= [ 'addr' ] [ 'extern' ] name
+name_value ::= addr_opt extern_opt name
+addr_opt   ::= [ 'addr' ]
+extern_opt ::= [ 'extern' ]
 
 call_expression ::= name '(' [ argument_list ] ')'
 
@@ -114,7 +120,9 @@ lvalue ::= argument
          | store_name
          | dereference
 
-store_name ::= [ 'extern' ] name
+store_name ::= extern_opt name
+
+signed_integer ::= [ '-' ] integer
 
 binary_operator ::= '+' | '-'  | '*'   | '/'  | 'mod'
                   | '&' | '|'  | 'xor'
@@ -124,12 +132,14 @@ unary_operator ::= '+' | 'neg' | 'not' | 'test'
 
 data_item ::= data_label | data_word | data_reference | data_text
 
-data_label ::= [ 'rw' ] 'data' name ':'
+data_label ::= data_scope 'data' name ':'
 
-data_word ::= [ 'rw' ] 'word' [ '-' ] integer ';'
+data_word ::= data_scope 'word' signed_integer ';'
 
 data_reference ::= 'ref' name ';'
 
 data_text ::= 'text' string_constant ';'
+
+data_scope ::= [ 'rw' ]
 
 name ::= identifier

@@ -1,0 +1,31 @@
+class
+   Wir.Generate.Jump
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  'jump' name. Non-local transfer to a routine, no return
+--  (Ast.Statement.Jump).
+
+feature
+
+   After_Name (Child : Wir.Generate.Name)
+      do
+         Nm := Child.Concatenated_Image
+      end
+
+   After_Node
+      local
+         J : Ast.Statement.Jump
+      do
+         if attached Nm as N then
+            create J.Make (Void, Current, N)
+            Set_Stmt (J)
+         end
+      end
+
+feature { None }
+
+   Nm : detachable String
+
+end

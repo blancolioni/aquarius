@@ -1,0 +1,35 @@
+class
+   Wir.Generate.Data_Text
+
+inherit
+   Wir.Generate.Data_Node
+
+--  'text' "...". A string constant in the data section. The token image
+--  keeps its surrounding quotes, which are stripped here (Ast.Data.Text).
+
+feature
+
+   After_String_Constant (Text : String)
+      do
+         if Text.Length >= 2 then
+            Value := Text.Slice (2, Text.Length - 1)
+         else
+            Value := Text
+         end
+      end
+
+   After_Node
+      local
+         D : Ast.Data.Text
+      do
+         if attached Value as V then
+            create D.Make (Void, Current, V)
+            Set_Datum (D)
+         end
+      end
+
+feature { None }
+
+   Value : detachable String
+
+end

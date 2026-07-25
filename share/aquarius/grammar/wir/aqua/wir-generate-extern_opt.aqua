@@ -1,0 +1,9 @@
+class
+   Wir.Generate.Extern_Opt
+
+inherit
+   Wir.Generate.Node
+
+--  [ 'extern' ]. Read via Concatenated_Image ("extern" when present).
+
+end

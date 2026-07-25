@@ -1,0 +1,19 @@
+class
+   Wir.Generate.Fail
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  'fail'. Exit the current routine reporting failure (Ast.Statement.Fail).
+
+feature
+
+   After_Node
+      local
+         F : Ast.Statement.Fail
+      do
+         create F.Make (Void, Current)
+         Set_Stmt (F)
+      end
+
+end

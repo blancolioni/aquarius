@@ -1,0 +1,18 @@
+class
+   Wir.Generate.Stmt_Node
+
+inherit
+   Wir.Generate.Node
+
+--  A node whose synthesized value is an Ast.Statement (net zero).
+
+feature
+
+   Stmt : detachable Ast.Statement
+
+   Set_Stmt (S : Ast.Statement)
+      do
+         Stmt := S
+      end
+
+end

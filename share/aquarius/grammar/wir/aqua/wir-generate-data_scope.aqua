@@ -1,0 +1,9 @@
+class
+   Wir.Generate.Data_Scope
+
+inherit
+   Wir.Generate.Node
+
+--  [ 'rw' ]. Read via Concatenated_Image ("rw" when present).
+
+end

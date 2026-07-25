@@ -1,0 +1,44 @@
+class
+   Wir.Generate.Binary
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  '(' expression binary_operator expression ')'. The two expression
+--  children arrive in source order: left, then right (Ast.Expression.Binary).
+
+feature
+
+   After_Expression (Child : Wir.Generate.Expression)
+      do
+         if attached Left then
+            Right := Child.Expr
+         else
+            Left := Child.Expr
+         end
+      end
+
+   After_Binary_Operator (Child : Wir.Generate.Binary_Operator)
+      do
+         Op := Child.Op
+      end
+
+   After_Node
+      local
+         B : Ast.Expression.Binary
+      do
+         if attached Left as L then
+            if attached Right as R then
+               create B.Make (Void, Current, Op, L, R)
+               Set_Expr (B)
+            end
+         end
+      end
+
+feature { None }
+
+   Left  : detachable Ast.Expression
+   Right : detachable Ast.Expression
+   Op    : Integer
+
+end

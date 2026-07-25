@@ -1,0 +1,31 @@
+class
+   Wir.Generate.Evaluate
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  'eval' expression. Evaluate for effect and discard the value
+--  (Ast.Statement.Evaluate).
+
+feature
+
+   After_Expression (Child : Wir.Generate.Expression)
+      do
+         Value := Child.Expr
+      end
+
+   After_Node
+      local
+         E : Ast.Statement.Evaluate
+      do
+         if attached Value as V then
+            create E.Make (Void, Current, V)
+            Set_Stmt (E)
+         end
+      end
+
+feature { None }
+
+   Value : detachable Ast.Expression
+
+end

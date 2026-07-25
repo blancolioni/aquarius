@@ -1,0 +1,48 @@
+class
+   Wir.Generate.Call_Expression
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  name '(' args ')' used as a value: a direct call, result count 1
+--  (Ast.Expression.Call).
+
+feature
+
+   After_Name (Child : Wir.Generate.Name)
+      do
+         Nm := Child.Concatenated_Image
+      end
+
+   After_Argument_List (Child : Wir.Generate.Argument_List)
+      do
+         Arg_List := Child
+      end
+
+   After_Node
+      local
+         C  : Ast.Expression.Call
+         It : Aqua.Containers.Linked_List_Iterator [Ast.Expression]
+      do
+         if attached Nm as N then
+            create C.Make (Void, Current, N)
+            if attached Arg_List as AL then
+               from
+                  It := AL.Args.New_Cursor
+               until
+                  It.After
+               loop
+                  C.Add_Argument (It.Element)
+                  It.Next
+               end
+            end
+            Set_Expr (C)
+         end
+      end
+
+feature { None }
+
+   Nm       : detachable String
+   Arg_List : detachable Wir.Generate.Argument_List
+
+end

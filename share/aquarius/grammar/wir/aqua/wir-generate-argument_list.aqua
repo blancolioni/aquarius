@@ -1,0 +1,21 @@
+class
+   Wir.Generate.Argument_List
+
+inherit
+   Wir.Generate.Node
+
+--  A comma-separated list of expressions. Collects the built expressions in
+--  source order; the enclosing call reads them via Args.
+
+feature
+
+   Args : Aqua.Containers.Linked_List [Ast.Expression]
+
+   After_Expression (Child : Wir.Generate.Expression)
+      do
+         if attached Child.Expr as E then
+            Args.Append (E)
+         end
+      end
+
+end

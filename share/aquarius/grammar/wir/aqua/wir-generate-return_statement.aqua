@@ -1,0 +1,33 @@
+class
+   Wir.Generate.Return_Statement
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  'return' [ expression ]. With a value, Ast.Statement.Return.Make_Value
+--  stores it into result slot 1 before exiting; without, a bare exit.
+
+feature
+
+   After_Expression (Child : Wir.Generate.Expression)
+      do
+         Value := Child.Expr
+      end
+
+   After_Node
+      local
+         R : Ast.Statement.Return
+      do
+         if attached Value as V then
+            create R.Make_Value (Void, Current, V)
+         else
+            create R.Make (Void, Current)
+         end
+         Set_Stmt (R)
+      end
+
+feature { None }
+
+   Value : detachable Ast.Expression
+
+end

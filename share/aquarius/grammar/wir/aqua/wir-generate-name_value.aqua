@@ -1,0 +1,51 @@
+class
+   Wir.Generate.Name_Value
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  [ 'addr' ] [ 'extern' ] name. A global name: its value, or its address
+--  when 'addr' is present (Ast.Expression.Name / Make_Address).
+
+feature
+
+   After_Addr_Opt (Child : Wir.Generate.Addr_Opt)
+      do
+         if Child.Concatenated_Image = "addr" then
+            Is_Address := True
+         end
+      end
+
+   After_Extern_Opt (Child : Wir.Generate.Extern_Opt)
+      do
+         if Child.Concatenated_Image = "extern" then
+            Is_Extern := True
+         end
+      end
+
+   After_Name (Child : Wir.Generate.Name)
+      do
+         Nm := Child.Concatenated_Image
+      end
+
+   After_Node
+      local
+         N : Ast.Expression.Name
+      do
+         if attached Nm as The_Name then
+            if Is_Address then
+               create N.Make_Address (Void, Current, The_Name, Is_Extern)
+            else
+               create N.Make (Void, Current, The_Name, Is_Extern)
+            end
+            Set_Expr (N)
+         end
+      end
+
+feature { None }
+
+   Nm         : detachable String
+   Is_Address : Boolean
+   Is_Extern  : Boolean
+
+end

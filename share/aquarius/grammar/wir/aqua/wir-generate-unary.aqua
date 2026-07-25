@@ -1,0 +1,36 @@
+class
+   Wir.Generate.Unary
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  unary_operator expression (Ast.Expression.Unary).
+
+feature
+
+   After_Unary_Operator (Child : Wir.Generate.Unary_Operator)
+      do
+         Op := Child.Op
+      end
+
+   After_Expression (Child : Wir.Generate.Expression)
+      do
+         Operand := Child.Expr
+      end
+
+   After_Node
+      local
+         U : Ast.Expression.Unary
+      do
+         if attached Operand as E then
+            create U.Make (Void, Current, Op, E)
+            Set_Expr (U)
+         end
+      end
+
+feature { None }
+
+   Op      : Integer
+   Operand : detachable Ast.Expression
+
+end

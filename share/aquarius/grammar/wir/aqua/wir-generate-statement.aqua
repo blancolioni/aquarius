@@ -1,0 +1,62 @@
+class
+   Wir.Generate.Statement
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  Dispatch node: copies the chosen alternative's synthesized statement up.
+
+feature
+
+   After_Sequence (Child : Wir.Generate.Sequence)
+      do Copy (Child.Stmt) end
+
+   After_Assign (Child : Wir.Generate.Assign)
+      do Copy (Child.Stmt) end
+
+   After_Return_Statement (Child : Wir.Generate.Return_Statement)
+      do Copy (Child.Stmt) end
+
+   After_Call_Statement (Child : Wir.Generate.Call_Statement)
+      do Copy (Child.Stmt) end
+
+   After_Conditional (Child : Wir.Generate.Conditional)
+      do Copy (Child.Stmt) end
+
+   After_Iteration (Child : Wir.Generate.Iteration)
+      do Copy (Child.Stmt) end
+
+   After_Label (Child : Wir.Generate.Label)
+      do Copy (Child.Stmt) end
+
+   After_Goto (Child : Wir.Generate.Goto)
+      do Copy (Child.Stmt) end
+
+   After_Jump (Child : Wir.Generate.Jump)
+      do Copy (Child.Stmt) end
+
+   After_Fail (Child : Wir.Generate.Fail)
+      do Copy (Child.Stmt) end
+
+   After_Raise (Child : Wir.Generate.Raise)
+      do Copy (Child.Stmt) end
+
+   After_Evaluate (Child : Wir.Generate.Evaluate)
+      do Copy (Child.Stmt) end
+
+   After_Block (Child : Wir.Generate.Block)
+      do Copy (Child.Stmt) end
+
+   After_Retry_Statement (Child : Wir.Generate.Retry_Statement)
+      do Copy (Child.Stmt) end
+
+feature { None }
+
+   Copy (S : detachable Ast.Statement)
+      do
+         if attached S as The_Statement then
+            Set_Stmt (The_Statement)
+         end
+      end
+
+end

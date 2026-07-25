@@ -1,0 +1,28 @@
+class
+   Wir.Generate.Literal
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  A signed integer literal (Ast.Expression.Literal).
+
+feature
+
+   After_Signed_Integer (Child : Wir.Generate.Signed_Integer)
+      do
+         Value := Child.Value
+      end
+
+   After_Node
+      local
+         L : Ast.Expression.Literal
+      do
+         create L.Make_Integer (Void, Current, Value)
+         Set_Expr (L)
+      end
+
+feature { None }
+
+   Value : Integer
+
+end

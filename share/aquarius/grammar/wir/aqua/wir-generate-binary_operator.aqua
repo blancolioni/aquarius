@@ -1,0 +1,52 @@
+class
+   Wir.Generate.Binary_Operator
+
+inherit
+   Wir.Generate.Node
+
+--  A binary operator token, mapped to its Ast.Operator ordinal.
+
+feature
+
+   Op : Integer
+
+   After_Node
+      local
+         O : Ast.Operator
+         S : String
+      do
+         S := Concatenated_Image
+         if S = "+" then
+            Op := O.Add
+         elsif S = "-" then
+            Op := O.Subtract
+         elsif S = "*" then
+            Op := O.Multiply
+         elsif S = "/" then
+            Op := O.Divide
+         elsif S = "mod" then
+            Op := O.Modulo
+         elsif S = "&" then
+            Op := O.Bit_And
+         elsif S = "|" then
+            Op := O.Bit_Or
+         elsif S = "xor" then
+            Op := O.Bit_Xor
+         elsif S = "=" then
+            Op := O.Compare_Equal
+         elsif S = "/=" then
+            Op := O.Compare_Not_Equal
+         elsif S = "<" then
+            Op := O.Less
+         elsif S = "<=" then
+            Op := O.Less_Equal
+         elsif S = ">" then
+            Op := O.Greater
+         elsif S = ">=" then
+            Op := O.Greater_Equal
+         else
+            Error ("unknown binary operator: " & S)
+         end
+      end
+
+end

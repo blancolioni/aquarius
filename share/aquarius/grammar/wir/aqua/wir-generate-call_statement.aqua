@@ -1,0 +1,48 @@
+class
+   Wir.Generate.Call_Statement
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  'call' name '(' args ')'. Ast.Statement.Call: a direct call for effect,
+--  result count 0.
+
+feature
+
+   After_Name (Child : Wir.Generate.Name)
+      do
+         Nm := Child.Concatenated_Image
+      end
+
+   After_Argument_List (Child : Wir.Generate.Argument_List)
+      do
+         Arg_List := Child
+      end
+
+   After_Node
+      local
+         C  : Ast.Statement.Call
+         It : Aqua.Containers.Linked_List_Iterator [Ast.Expression]
+      do
+         if attached Nm as N then
+            create C.Make (Void, Current, N)
+            if attached Arg_List as AL then
+               from
+                  It := AL.Args.New_Cursor
+               until
+                  It.After
+               loop
+                  C.Add_Argument (It.Element)
+                  It.Next
+               end
+            end
+            Set_Stmt (C)
+         end
+      end
+
+feature { None }
+
+   Nm       : detachable String
+   Arg_List : detachable Wir.Generate.Argument_List
+
+end

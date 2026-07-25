@@ -1,0 +1,50 @@
+class
+   Wir.Generate.Primary
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  Dispatch node: copies the chosen alternative's synthesized expression up.
+
+feature
+
+   After_Literal (Child : Wir.Generate.Literal)
+      do Copy (Child.Expr) end
+
+   After_Argument (Child : Wir.Generate.Argument)
+      do Copy (Child.Expr) end
+
+   After_Local_Variable (Child : Wir.Generate.Local_Variable)
+      do Copy (Child.Expr) end
+
+   After_Result_Slot (Child : Wir.Generate.Result_Slot)
+      do Copy (Child.Expr) end
+
+   After_Binary (Child : Wir.Generate.Binary)
+      do Copy (Child.Expr) end
+
+   After_Unary (Child : Wir.Generate.Unary)
+      do Copy (Child.Expr) end
+
+   After_Name_Value (Child : Wir.Generate.Name_Value)
+      do Copy (Child.Expr) end
+
+   After_Call_Expression (Child : Wir.Generate.Call_Expression)
+      do Copy (Child.Expr) end
+
+   After_Indirect_Call (Child : Wir.Generate.Indirect_Call)
+      do Copy (Child.Expr) end
+
+   After_Dereference (Child : Wir.Generate.Dereference)
+      do Copy (Child.Expr) end
+
+feature { None }
+
+   Copy (E : detachable Ast.Expression)
+      do
+         if attached E as The_Expression then
+            Set_Expr (The_Expression)
+         end
+      end
+
+end

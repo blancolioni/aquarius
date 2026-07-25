@@ -1,0 +1,38 @@
+--  Wir demo: exercises every Ast node kind, lowered to PDP-11 via
+--     bin/aquarius --code-trigger demo.wir   (output: tagatha.pdp11)
+--  Indices are 1-based. See ../../grammar/wir/wir.md.
+
+routine public add
+   args 2
+   locals 1
+is
+   local 1 := (arg 1 + arg 2);
+   if (local 1 > 10) then
+      result 1 := (local 1 - 10);
+      return local 1;
+   else
+      return local 1;
+   end if;
+   loop (local 1 < 100) do
+      local 1 := (local 1 * 2);
+      call print (local 1);
+   end loop;
+   block locals 1
+      [ arg 1 + 4 ] := neg local 1;
+      eval helper (addr counter, extern other);
+      eval *[ arg 2 ] (arg 1);
+      label top;
+      goto top;
+   end block;
+   raise local 1;
+   jump handler;
+   fail;
+   retry;
+end
+
+data message:
+   text "hello";
+data table:
+   ref message;
+rw data counter:
+   rw word 0;

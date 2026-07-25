@@ -14,6 +14,10 @@ comments — is the annotated reference.
 
 - **Post-lowering.** Names are already resolved to integer offsets, so
   arguments, locals and result slots are integers, not identifiers.
+- **Indices are 1-based.** `arg`, `local`, and `result` indices map straight
+  through to Tagatha's `Argument_Index` / `Local_Index` / `Result_Index`,
+  which are `range 1 .. Last`. The first argument is `arg 1`, the first local
+  `local 1`; index `0` is out of range.
 - **Untyped words.** Every value is a word. The sole type hook is the
   `: float` content tag, which sets `Ast.Expression.Content := 1`
   (`Set_Content`); absent leaves the default word (`0`), threaded into each
@@ -53,9 +57,9 @@ unit ::= { routine } { data_item }
 | `Statement.Evaluate` | `eval e;` | evaluate for effect, `Drop` the value |
 | `Statement.Retry_Routine` | `retry;` | restart routine from the top |
 | `Expression.Literal` | `[-] int` | `Integer` value |
-| `Expression.Argument` | `arg I` | by integer offset |
-| `Expression.Local_Variable` | `local I` | by integer offset |
-| `Expression.Result_Value` | `result I` | **lvalue only** — write-only slot |
+| `Expression.Argument` | `arg I` | 1-based argument index |
+| `Expression.Local_Variable` | `local I` | 1-based local index |
+| `Expression.Result_Value` | `result I` | 1-based; **lvalue only** — write-only slot |
 | `Expression.Binary` | `( e op e )` | `op` → `Ast.Operator` ordinal |
 | `Expression.Unary` | `unop e` | `+` / `neg` / `not` / `test` |
 | `Expression.Name` | `[extern] N` | value at the name (`Push_Name`) |
@@ -65,6 +69,7 @@ unit ::= { routine } { data_item }
 | `Expression.Dereference` | `[ e [+ off] ]` | value at `Address + Offset` |
 | `Data.Label` | `[rw] data N:` | `rw` = writable (`Data_Label_RW`) |
 | `Data.Word` | `[rw] word [-] int;` | one word (`Data_Int` / `Data_RW`) |
+
 | `Data.Reference` | `ref N;` | word holding a named label's address |
 | `Data.Text` | `text "…";` | string constant |
 
@@ -120,6 +125,12 @@ slot is write-only").
 
 Case-insensitive.
 
+Case-insensitive.
+
+`rw` is **per item**: it flags the label (`rw data`) or the word (`rw word`)
+independently. A writable label and its writable contents both need `rw`;
+mixing a writable label with read-only words puts them in different sections.
+
 ## Example
 
 ```wir
@@ -127,11 +138,11 @@ routine public add
    args 2
    locals 1
 is
-   local 0 := (arg 0 + arg 1);
-   if (local 0 > 10) then
-      return (local 0 - 10);
+   local 1 := (arg 1 + arg 2);
+   if (local 1 > 10) then
+      return (local 1 - 10);
    else
-      result 1 := local 0;
+      result 1 := local 1;
       return;
    end if;
 end
@@ -139,9 +150,22 @@ end
 data message:
    text "hello";
 rw data counter:
-   word 0;
+   rw word 0;
    ref message;
 ```
 
-Validate any `.wir` file (or this grammar) with
-`bin/aquarius --check <path>`.
+## Code generation
+
+The `generate` action group (`stage: code`, one visitor class per
+non-terminal in [`aqua/`](aqua/)) walks the parse tree bottom-up, building the
+`Ast.*` nodes as synthesized attributes, and in the top `unit` node opens a
+`Tagatha.Code`, lowers the whole unit into it, and closes it. The visitor
+framework it uses is documented in
+[`docs/visitor-mechanism.md`](../../docs/visitor-mechanism.md). Run it with:
+
+```
+bin/aquarius --code-trigger <path>.wir
+```
+
+which emits PDP-11 assembly to `tagatha.pdp11`. (Plain `bin/aquarius --check
+<path>` parses and validates only, without generating code.)

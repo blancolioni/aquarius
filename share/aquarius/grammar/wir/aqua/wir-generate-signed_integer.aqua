@@ -1,0 +1,29 @@
+class
+   Wir.Generate.Signed_Integer
+
+inherit
+   Wir.Generate.Node
+
+--  [ '-' ] integer. Its Concatenated_Image glues the sign to the digits
+--  ("-5" / "5"); To_Integer does not accept a sign, so peel it off here.
+
+feature
+
+   Value : Integer
+
+   After_Node
+      local
+         Image     : String
+         Zero      : Integer
+         Magnitude : Integer
+      do
+         Image := Concatenated_Image
+         if Image.Length >= 1 and then Image.Element (1) = '-' then
+            Magnitude := Image.Slice (2, Image.Length).To_Integer
+            Value := Zero - Magnitude
+         else
+            Value := Image.To_Integer
+         end
+      end
+
+end

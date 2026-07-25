@@ -1,0 +1,38 @@
+class
+   Wir.Generate.Statement_List
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  A run of statements. Lowers to an Ast.Statement.Sequence (net zero,
+--  no local frame). Empty lists yield an empty sequence.
+
+feature
+
+   After_Statement (Child : Wir.Generate.Statement)
+      do
+         if attached Child.Stmt as S then
+            The_Sequence.Append (S)
+         end
+      end
+
+   After_Node
+      do
+         Set_Stmt (The_Sequence)
+      end
+
+feature { None }
+
+   Held_Sequence : detachable Ast.Statement.Sequence
+
+   The_Sequence : Ast.Statement.Sequence
+      do
+         if attached Held_Sequence as S then
+            Result := S
+         else
+            create Result.Make (Void, Current)
+            Held_Sequence := Result
+         end
+      end
+
+end

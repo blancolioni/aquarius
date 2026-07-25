@@ -1,0 +1,50 @@
+class
+   Wir.Generate.Unit
+
+inherit
+   Wir.Generate.Node
+
+--  Top level. Collects routines and data items into an Ast.Unit, then in
+--  After_Node opens a Tagatha.Code, lowers the whole unit into it, and
+--  closes it (routines are emitted first, data afterwards).
+
+feature
+
+   After_Routine (Child : Wir.Generate.Routine)
+      do
+         if attached Child.Rtn as R then
+            The_Unit.Add_Routine (R)
+         end
+      end
+
+   After_Data_Item (Child : Wir.Generate.Data_Item)
+      do
+         if attached Child.Datum as D then
+            The_Unit.Add_Data (D)
+         end
+      end
+
+   After_Node
+      local
+         Code : Tagatha.Code
+      do
+         create Code.Make
+         The_Unit.Generate (Code)
+         Code.Dispose
+      end
+
+feature { None }
+
+   Held_Unit : detachable Ast.Unit
+
+   The_Unit : Ast.Unit
+      do
+         if attached Held_Unit as U then
+            Result := U
+         else
+            create Result.Make (Current)
+            Held_Unit := Result
+         end
+      end
+
+end

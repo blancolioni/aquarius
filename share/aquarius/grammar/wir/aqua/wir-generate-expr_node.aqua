@@ -1,0 +1,18 @@
+class
+   Wir.Generate.Expr_Node
+
+inherit
+   Wir.Generate.Node
+
+--  A node whose synthesized value is an Ast.Expression (net +1 word).
+
+feature
+
+   Expr : detachable Ast.Expression
+
+   Set_Expr (E : Ast.Expression)
+      do
+         Expr := E
+      end
+
+end

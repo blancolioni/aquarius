@@ -1,0 +1,37 @@
+class
+   Wir.Generate.Block
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  'block' 'locals' N <body> 'end' 'block'. Nested scope with its own N
+--  locals (Ast.Statement.Block).
+
+feature
+
+   After_Integer (Value : String)
+      do
+         Local_Count := Value.To_Integer
+      end
+
+   After_Statement_List (Child : Wir.Generate.Statement_List)
+      do
+         Body := Child.Stmt
+      end
+
+   After_Node
+      local
+         B : Ast.Statement.Block
+      do
+         if attached Body as The_Body then
+            create B.Make (Void, Current, Local_Count, The_Body)
+            Set_Stmt (B)
+         end
+      end
+
+feature { None }
+
+   Local_Count : Integer
+   Body        : detachable Ast.Statement
+
+end

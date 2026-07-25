@@ -1,0 +1,19 @@
+class
+   Wir.Generate.Sequence
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  'begin' <statements> 'end'. Its value is the inner statement list's
+--  Ast.Statement.Sequence.
+
+feature
+
+   After_Statement_List (Child : Wir.Generate.Statement_List)
+      do
+         if attached Child.Stmt as S then
+            Set_Stmt (S)
+         end
+      end
+
+end

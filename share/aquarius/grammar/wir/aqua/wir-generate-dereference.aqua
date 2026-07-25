@@ -1,0 +1,37 @@
+class
+   Wir.Generate.Dereference
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  '[' expression [ '+' N ] ']'. The value at Address + Offset. The only
+--  direct integer child is the offset (Ast.Expression.Dereference).
+
+feature
+
+   After_Expression (Child : Wir.Generate.Expression)
+      do
+         Address := Child.Expr
+      end
+
+   After_Integer (Value : String)
+      do
+         Offset := Value.To_Integer
+      end
+
+   After_Node
+      local
+         D : Ast.Expression.Dereference
+      do
+         if attached Address as A then
+            create D.Make (Void, Current, A, Offset)
+            Set_Expr (D)
+         end
+      end
+
+feature { None }
+
+   Address : detachable Ast.Expression
+   Offset  : Integer
+
+end

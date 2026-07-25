@@ -1,0 +1,37 @@
+class
+   Wir.Generate.Expression
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  primary [ ': float' ]. The optional content tag marks the expression as
+--  floating point (Content := 1); absent leaves the default word.
+
+feature
+
+   After_Primary (Child : Wir.Generate.Primary)
+      do
+         Inner := Child.Expr
+      end
+
+   After_Content (Child : Wir.Generate.Content)
+      do
+         Is_Float := True
+      end
+
+   After_Node
+      do
+         if attached Inner as E then
+            if Is_Float then
+               E.Set_Content (1)
+            end
+            Set_Expr (E)
+         end
+      end
+
+feature { None }
+
+   Inner    : detachable Ast.Expression
+   Is_Float : Boolean
+
+end

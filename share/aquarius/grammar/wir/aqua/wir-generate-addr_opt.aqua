@@ -1,0 +1,9 @@
+class
+   Wir.Generate.Addr_Opt
+
+inherit
+   Wir.Generate.Node
+
+--  [ 'addr' ]. Read via Concatenated_Image ("addr" when present).
+
+end

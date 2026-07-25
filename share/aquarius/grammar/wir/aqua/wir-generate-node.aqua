@@ -1,0 +1,7 @@
+class
+   Wir.Generate.Node
+
+inherit
+   Aquarius.Trees.Program_Tree
+
+end

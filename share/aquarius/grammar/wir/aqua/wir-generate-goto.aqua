@@ -1,0 +1,30 @@
+class
+   Wir.Generate.Goto
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  'goto' name. Local unconditional branch to a Label (Ast.Statement.Goto).
+
+feature
+
+   After_Name (Child : Wir.Generate.Name)
+      do
+         Nm := Child.Concatenated_Image
+      end
+
+   After_Node
+      local
+         G : Ast.Statement.Goto
+      do
+         if attached Nm as N then
+            create G.Make (Void, Current, N)
+            Set_Stmt (G)
+         end
+      end
+
+feature { None }
+
+   Nm : detachable String
+
+end

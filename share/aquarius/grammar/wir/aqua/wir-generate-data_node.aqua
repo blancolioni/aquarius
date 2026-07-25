@@ -1,0 +1,18 @@
+class
+   Wir.Generate.Data_Node
+
+inherit
+   Wir.Generate.Node
+
+--  A node whose synthesized value is an Ast.Data item.
+
+feature
+
+   Datum : detachable Ast.Data
+
+   Set_Datum (D : Ast.Data)
+      do
+         Datum := D
+      end
+
+end

@@ -1,0 +1,10 @@
+class
+   Wir.Generate.Content
+
+inherit
+   Wir.Generate.Node
+
+--  ': float'. Presence alone flags floating-point content; Expression reads
+--  it via After_Content firing.
+
+end

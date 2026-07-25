@@ -1,0 +1,28 @@
+class
+   Wir.Generate.Argument
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  'arg' N. A routine argument by integer offset (Ast.Expression.Argument).
+
+feature
+
+   After_Integer (Value : String)
+      do
+         Offset := Value.To_Integer
+      end
+
+   After_Node
+      local
+         A : Ast.Expression.Argument
+      do
+         create A.Make (Void, Current, Offset)
+         Set_Expr (A)
+      end
+
+feature { None }
+
+   Offset : Integer
+
+end

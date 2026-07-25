@@ -1,0 +1,20 @@
+class
+   Wir.Generate.Retry_Statement
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  'retry'. Restart the current routine from the top
+--  (Ast.Statement.Retry_Routine).
+
+feature
+
+   After_Node
+      local
+         R : Ast.Statement.Retry_Routine
+      do
+         create R.Make (Void, Current)
+         Set_Stmt (R)
+      end
+
+end

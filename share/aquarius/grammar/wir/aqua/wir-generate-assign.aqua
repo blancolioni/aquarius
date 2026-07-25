@@ -1,0 +1,38 @@
+class
+   Wir.Generate.Assign
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  lvalue ':=' expression. Ast.Statement.Assign (Target, Value): the value
+--  is evaluated, then the target lvalue consumes it via Set_Value.
+
+feature
+
+   After_Lvalue (Child : Wir.Generate.Lvalue)
+      do
+         Target := Child.Expr
+      end
+
+   After_Expression (Child : Wir.Generate.Expression)
+      do
+         Value := Child.Expr
+      end
+
+   After_Node
+      do
+         if attached Target as T then
+            if attached Value as V then
+               create {Ast.Statement.Assign} The_Assign.Make (Void, Current, T, V)
+               Set_Stmt (The_Assign)
+            end
+         end
+      end
+
+feature { None }
+
+   Target     : detachable Ast.Expression
+   Value      : detachable Ast.Expression
+   The_Assign : detachable Ast.Statement.Assign
+
+end

@@ -1,0 +1,43 @@
+class
+   Wir.Generate.Data_Label
+
+inherit
+   Wir.Generate.Data_Node
+
+--  [ 'rw' ] 'data' name ':'. A data-section label; 'rw' makes it writable
+--  (Ast.Data.Label / Make_RW).
+
+feature
+
+   After_Data_Scope (Child : Wir.Generate.Data_Scope)
+      do
+         if Child.Concatenated_Image = "rw" then
+            Is_RW := True
+         end
+      end
+
+   After_Name (Child : Wir.Generate.Name)
+      do
+         Nm := Child.Concatenated_Image
+      end
+
+   After_Node
+      local
+         D : Ast.Data.Label
+      do
+         if attached Nm as N then
+            if Is_RW then
+               create D.Make_RW (Void, Current, N)
+            else
+               create D.Make (Void, Current, N)
+            end
+            Set_Datum (D)
+         end
+      end
+
+feature { None }
+
+   Nm    : detachable String
+   Is_RW : Boolean
+
+end

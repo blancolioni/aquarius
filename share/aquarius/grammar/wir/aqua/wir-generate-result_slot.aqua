@@ -1,0 +1,29 @@
+class
+   Wir.Generate.Result_Slot
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  'result' N. A routine result slot, write-only lvalue
+--  (Ast.Expression.Result_Value).
+
+feature
+
+   After_Integer (Value : String)
+      do
+         Index := Value.To_Integer
+      end
+
+   After_Node
+      local
+         R : Ast.Expression.Result_Value
+      do
+         create R.Make (Void, Current, Index)
+         Set_Expr (R)
+      end
+
+feature { None }
+
+   Index : Integer
+
+end

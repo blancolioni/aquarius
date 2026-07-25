@@ -1,0 +1,9 @@
+class
+   Wir.Generate.Name
+
+inherit
+   Wir.Generate.Node
+
+--  Leaf: an identifier. Read by parents via Concatenated_Image.
+
+end

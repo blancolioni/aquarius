@@ -1,0 +1,44 @@
+class
+   Wir.Generate.Conditional
+
+inherit
+   Wir.Generate.Stmt_Node
+
+--  'if' expression 'then' <then> [ 'else' <else> ] 'end' 'if'. The two
+--  statement-list children are the then-part then the else-part, in order.
+
+feature
+
+   After_Expression (Child : Wir.Generate.Expression)
+      do
+         Condition := Child.Expr
+      end
+
+   After_Statement_List (Child : Wir.Generate.Statement_List)
+      do
+         if attached Then_Part then
+            Else_Part := Child.Stmt
+         else
+            Then_Part := Child.Stmt
+         end
+      end
+
+   After_Node
+      local
+         C : Ast.Statement.Conditional
+      do
+         if attached Condition as Cond then
+            if attached Then_Part as T then
+               create C.Make (Void, Current, Cond, T, Else_Part)
+               Set_Stmt (C)
+            end
+         end
+      end
+
+feature { None }
+
+   Condition : detachable Ast.Expression
+   Then_Part : detachable Ast.Statement
+   Else_Part : detachable Ast.Statement
+
+end

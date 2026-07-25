@@ -1,0 +1,29 @@
+class
+   Wir.Generate.Local_Variable
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  'local' N. A frame local by integer offset
+--  (Ast.Expression.Local_Variable).
+
+feature
+
+   After_Integer (Value : String)
+      do
+         Offset := Value.To_Integer
+      end
+
+   After_Node
+      local
+         L : Ast.Expression.Local_Variable
+      do
+         create L.Make (Void, Current, Offset)
+         Set_Expr (L)
+      end
+
+feature { None }
+
+   Offset : Integer
+
+end

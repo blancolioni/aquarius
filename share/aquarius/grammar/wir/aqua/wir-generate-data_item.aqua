@@ -1,0 +1,32 @@
+class
+   Wir.Generate.Data_Item
+
+inherit
+   Wir.Generate.Data_Node
+
+--  Dispatch node: copies the chosen data alternative's item up.
+
+feature
+
+   After_Data_Label (Child : Wir.Generate.Data_Label)
+      do Copy (Child.Datum) end
+
+   After_Data_Word (Child : Wir.Generate.Data_Word)
+      do Copy (Child.Datum) end
+
+   After_Data_Reference (Child : Wir.Generate.Data_Reference)
+      do Copy (Child.Datum) end
+
+   After_Data_Text (Child : Wir.Generate.Data_Text)
+      do Copy (Child.Datum) end
+
+feature { None }
+
+   Copy (D : detachable Ast.Data)
+      do
+         if attached D as The_Datum then
+            Set_Datum (The_Datum)
+         end
+      end
+
+end
