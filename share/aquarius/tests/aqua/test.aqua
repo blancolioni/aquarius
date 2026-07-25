@@ -152,6 +152,7 @@ feature
          Pass_Ratio      : Integer
          Test_Value      : Unit_Test
          Test_Name       : String
+         Passed          : Boolean
          A : Ackermann
       do
          Put_Line ("Initialising ...")
@@ -161,15 +162,24 @@ feature
             Number_Of_Tests := Number_Of_Tests + 1
             Test_Value := T
             Test_Name := Test_Value.Name
-            Put (Test_Name)
-            Set_Col (30)
             Test_Value.Execute
-            if Test_Value.Success then
-               Put_Line ("PASS")
+            Passed := Test_Value.Success
+            if Passed then
+               Put ("PASS")
                Passed_Tests := Passed_Tests + 1
             else
-               Put_Line ("FAIL: " & Test_Value.Fail_Message)
+               Put ("FAIL: " & Test_Value.Fail_Message)
                Failed_Tests := Failed_Tests + 1
+            end
+
+            Set_Col (8)
+            Put (Test_Name)
+
+            if Passed then
+               New_Line
+            else
+               Set_Col (50)
+               Put_Line (Test_Value.Fail_Message)
             end
          end
 
