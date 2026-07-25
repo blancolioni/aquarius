@@ -1,0 +1,41 @@
+class
+   Ast.Expression.Unary
+
+inherit
+   Ast.Expression
+
+create
+   Make
+
+--  A unary operation: evaluate the operand, then apply a unary Operate op
+--  (Ast.Operator Identity/Negate/Logical_Not/Test).
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      O   : Integer
+      E   : Ast.Expression)
+      do
+         Parent := P
+         Source := Src
+         Op := O
+         Operand := E
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Operand.Generate (Code)
+         Code.Operate (Op)
+      end
+
+   Set_Value (Code : Tagatha.Code)
+      do
+         Error ("cannot assign to a unary expression")
+      end
+
+   Op      : Integer
+   Operand : Ast.Expression
+
+end

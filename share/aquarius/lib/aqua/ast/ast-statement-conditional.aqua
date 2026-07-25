@@ -1,0 +1,52 @@
+class
+   Ast.Statement.Conditional
+
+inherit
+   Ast.Statement
+
+create
+   Make
+
+--  if/then/else. ("If" is an Aqua keyword, hence Conditional.)
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      C   : Ast.Expression
+      T   : Ast.Statement
+      E   : detachable Ast.Statement)
+      do
+         Parent := P
+         Source := Src
+         Condition := C
+         Then_Part := T
+         Else_Part := E
+      end
+
+   Generate (Code : Tagatha.Code)
+      local
+         Cond       : Ast.Condition
+         Else_Label : Tagatha.Label
+         End_Label  : Tagatha.Label
+      do
+         Else_Label := Code.Next_Label
+         End_Label := Code.Next_Label
+         Condition.Generate (Code)
+         --  If_Zero (Z): skip THEN when condition is false
+         Code.Branch (Cond.If_Zero, Else_Label)
+         Then_Part.Generate (Code)
+         Code.Branch_Always (End_Label)
+         Code.Set_Label (Else_Label)
+         if attached Else_Part then
+            Else_Part.Generate (Code)
+         end
+         Code.Set_Label (End_Label)
+      end
+
+   Condition : Ast.Expression
+   Then_Part : Ast.Statement
+   Else_Part : detachable Ast.Statement
+
+end

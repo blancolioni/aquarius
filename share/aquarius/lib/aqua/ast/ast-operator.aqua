@@ -1,0 +1,36 @@
+expanded class
+   Ast.Operator
+
+--  Op codes for Tagatha.Code.Operate, mirroring the ordinals of
+--  Tagatha.Operator (tagatha/src/tagatha.ads). Single source of truth
+--  so IR nodes never carry magic integers. Floating ops (9..12) omitted
+--  from the minimal set; add when Aqua gains a float type.
+
+feature
+
+   Identity      : Integer do Result := 0  end
+   Negate        : Integer do Result := 1  end
+   Logical_Not   : Integer do Result := 2  end
+   Test          : Integer do Result := 3  end
+
+   Add           : Integer do Result := 4  end
+   Subtract      : Integer do Result := 5  end
+   Multiply      : Integer do Result := 6  end
+   Divide        : Integer do Result := 7  end
+   Modulo        : Integer do Result := 8  end
+
+   Bit_And       : Integer do Result := 13 end
+   Bit_Or        : Integer do Result := 14 end
+   Bit_Xor       : Integer do Result := 15 end
+
+   Dereference   : Integer do Result := 16 end
+   Store         : Integer do Result := 17 end
+
+   Compare_Equal     : Integer do Result := 18 end
+   Compare_Not_Equal : Integer do Result := 19 end
+   Less          : Integer do Result := 20 end
+   Less_Equal    : Integer do Result := 21 end
+   Greater       : Integer do Result := 22 end
+   Greater_Equal : Integer do Result := 23 end
+
+end

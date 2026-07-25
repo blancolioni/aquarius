@@ -1,0 +1,44 @@
+class
+   Ast.Expression.Dereference
+
+inherit
+   Ast.Expression
+
+create
+   Make
+
+--  Memory indirection: the value at Address + Offset. As an rvalue, push
+--  the address then Dereference. As an lvalue, the value to store is
+--  already on the stack (Assign pushed it); push the address on top and
+--  Pop_Indirect, which consumes [value, address].
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      A   : Ast.Expression
+      Off : Integer)
+      do
+         Parent := P
+         Source := Src
+         Address := A
+         Offset := Off
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Address.Generate (Code)
+         Code.Dereference (Content, Offset)
+      end
+
+   Set_Value (Code : Tagatha.Code)
+      do
+         Address.Generate (Code)
+         Code.Pop_Indirect (Content, Offset)
+      end
+
+   Address : Ast.Expression
+   Offset  : Integer
+
+end

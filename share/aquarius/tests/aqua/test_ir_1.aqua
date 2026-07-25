@@ -1,0 +1,113 @@
+class
+   Test_Ir_1
+
+--  End-to-end smoke test for the Ast.* imperative IR: hand-build a tree,
+--  Generate it against a real Tagatha.Code, emit to tagatha.pdp11.
+--  Run: bin/aquarius.exe --start-class test_ir_1.aqua
+--
+--  Routine demo (1 arg, 1 local):
+--     l1 := a1 + 3
+--     while l1 > 0 loop l1 := l1 - 1 end
+--     print (l1)
+--     if a1 > 10 then return 1 else return 0
+--
+--  Exercises: Literal, Argument, Local_Variable, Binary (Add/Subtract/
+--  Greater), Assign, Sequence, Iteration, Statement.Call, Conditional,
+--  Return, Routine. Expression.Call as a value is covered by test_ir_2.
+
+create
+   Make
+
+feature
+
+   Make
+      local
+         Code : Tagatha.Code
+         T    : Aquarius.Trees.Program_Tree
+         Op   : Ast.Operator
+         Body : Ast.Statement.Sequence
+
+         --  statement 1: l1 := a1 + 3
+         S1_A  : Ast.Expression.Argument
+         S1_3  : Ast.Expression.Literal
+         S1_Sum : Ast.Expression.Binary
+         S1_L  : Ast.Expression.Local_Variable
+         S1    : Ast.Statement.Assign
+
+         --  statement 2: while l1 > 0 loop l1 := l1 - 1 end
+         W_L   : Ast.Expression.Local_Variable
+         W_Z   : Ast.Expression.Literal
+         W_C   : Ast.Expression.Binary
+         D_L   : Ast.Expression.Local_Variable
+         D_1   : Ast.Expression.Literal
+         D_Sub : Ast.Expression.Binary
+         D_T   : Ast.Expression.Local_Variable
+         D_A   : Ast.Statement.Assign
+         W     : Ast.Statement.Iteration
+
+         --  statement 3: print (l1)
+         P_L   : Ast.Expression.Local_Variable
+         P     : Ast.Statement.Call
+
+         --  statement 4: if a1 > 10 then return 1 else return 0
+         I_A   : Ast.Expression.Argument
+         I_10  : Ast.Expression.Literal
+         I_C   : Ast.Expression.Binary
+         R1_V  : Ast.Expression.Literal
+         R0_V  : Ast.Expression.Literal
+         R1    : Ast.Statement.Return
+         R0    : Ast.Statement.Return
+         I     : Ast.Statement.Conditional
+
+         R     : Ast.Routine
+      do
+         create T
+         create Code.Make
+
+         create Body.Make (Void, T)
+
+         --  l1 := a1 + 3
+         create S1_A.Make (Void, T, 1)
+         create S1_3.Make_Integer (Void, T, 3)
+         create S1_Sum.Make (Void, T, Op.Add, S1_A, S1_3)
+         create S1_L.Make (Void, T, 1)
+         create S1.Make (Void, T, S1_L, S1_Sum)
+         Body.Append (S1)
+
+         --  while l1 > 0 loop l1 := l1 - 1 end
+         create D_T.Make (Void, T, 1)
+         create D_L.Make (Void, T, 1)
+         create D_1.Make_Integer (Void, T, 1)
+         create D_Sub.Make (Void, T, Op.Subtract, D_L, D_1)
+         create D_A.Make (Void, T, D_T, D_Sub)
+         create W_L.Make (Void, T, 1)
+         create W_Z.Make_Integer (Void, T, 0)
+         create W_C.Make (Void, T, Op.Greater, W_L, W_Z)
+         create W.Make (Void, T, W_C, D_A)
+         Body.Append (W)
+
+         --  print (l1)
+         create P.Make (Void, T, "print")
+         create P_L.Make (Void, T, 1)
+         P.Add_Argument (P_L)
+         Body.Append (P)
+
+         --  if a1 > 10 then return 1 else return 0
+         create I_A.Make (Void, T, 1)
+         create I_10.Make_Integer (Void, T, 10)
+         create I_C.Make (Void, T, Op.Greater, I_A, I_10)
+         create R1_V.Make_Integer (Void, T, 1)
+         create R1.Make_Value (Void, T, R1_V)
+         create R0_V.Make_Integer (Void, T, 0)
+         create R0.Make_Value (Void, T, R0_V)
+         create I.Make (Void, T, I_C, R1, R0)
+         Body.Append (I)
+
+         --  demo (a1) with 1 local, public
+         create R.Make (T, "demo", 1, 1, True, Body)
+         R.Generate (Code)
+
+         Code.Dispose
+      end
+
+end

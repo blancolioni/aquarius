@@ -1,0 +1,37 @@
+class
+   Ast.Statement.Assign
+
+inherit
+   Ast.Statement
+
+create
+   Make
+
+--  Evaluate Value (pushes one word), then let the Target lvalue consume
+--  it via Set_Value. Simple targets (Local, Argument) pop directly; an
+--  indirect target pushes its address on top before storing.
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      T   : Ast.Expression
+      V   : Ast.Expression)
+      do
+         Parent := P
+         Source := Src
+         Target := T
+         Value := V
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Value.Generate (Code)
+         Target.Set_Value (Code)
+      end
+
+   Target : Ast.Expression
+   Value  : Ast.Expression
+
+end

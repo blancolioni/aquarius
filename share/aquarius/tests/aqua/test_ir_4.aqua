@@ -1,0 +1,68 @@
+class
+   Test_Ir_4
+
+--  Global names. Routine demo (0 args, 1 local):
+--     counter := 5             (Pop_Name)
+--     l1 := counter + 1        (Push_Name, value)
+--     print (&msg)             (Push_Name, address-of)
+
+create
+   Make
+
+feature
+
+   Make
+      local
+         Code : Tagatha.Code
+         T    : Aquarius.Trees.Program_Tree
+         Op   : Ast.Operator
+         Body : Ast.Statement.Sequence
+
+         --  counter := 5
+         N_Set : Ast.Expression.Name
+         Five  : Ast.Expression.Literal
+         A1    : Ast.Statement.Assign
+
+         --  l1 := counter + 1
+         N_Get : Ast.Expression.Name
+         One   : Ast.Expression.Literal
+         Sum   : Ast.Expression.Binary
+         L_T   : Ast.Expression.Local_Variable
+         A2    : Ast.Statement.Assign
+
+         --  print (&msg)
+         Addr  : Ast.Expression.Name
+         P     : Ast.Statement.Call
+
+         R    : Ast.Routine
+      do
+         create T
+         create Code.Make
+         create Body.Make (Void, T)
+
+         --  counter := 5
+         create N_Set.Make (Void, T, "counter", False)
+         create Five.Make_Integer (Void, T, 5)
+         create A1.Make (Void, T, N_Set, Five)
+         Body.Append (A1)
+
+         --  l1 := counter + 1
+         create N_Get.Make (Void, T, "counter", False)
+         create One.Make_Integer (Void, T, 1)
+         create Sum.Make (Void, T, Op.Add, N_Get, One)
+         create L_T.Make (Void, T, 1)
+         create A2.Make (Void, T, L_T, Sum)
+         Body.Append (A2)
+
+         --  print (&msg)
+         create P.Make (Void, T, "print")
+         create Addr.Make_Address (Void, T, "msg", False)
+         P.Add_Argument (Addr)
+         Body.Append (P)
+
+         create R.Make (T, "demo", 0, 1, True, Body)
+         R.Generate (Code)
+         Code.Dispose
+      end
+
+end

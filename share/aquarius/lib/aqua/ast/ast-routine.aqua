@@ -1,0 +1,57 @@
+class
+   Ast.Routine
+
+inherit
+   Ast
+
+create
+   Make
+
+--  A routine: the unit of code Tagatha emits. Opens the routine, allocates
+--  Local_Count frame locals (offsets follow allocation order), generates the
+--  body, then closes. Arguments and locals are referenced elsewhere by the
+--  integer offsets carried in Ast.Expression.Argument / Ast.Expression.Local.
+
+feature
+
+   Make
+     (Src         : Aquarius.Trees.Program_Tree
+      N           : String
+      Arg_Count   : Integer
+      Local_Count : Integer
+      Public      : Boolean
+      B           : Ast.Statement)
+      do
+         Source := Src
+         Name := N
+         Argument_Count := Arg_Count
+         Local_Total := Local_Count
+         Is_Public := Public
+         Body := B
+      end
+
+   Generate (Code : Tagatha.Code)
+      local
+         I     : Integer
+         Dummy : Integer
+      do
+         Code.Begin_Routine (Name, Argument_Count, Is_Public)
+         from
+            I := 1
+         until
+            I > Local_Total
+         loop
+            Dummy := Code.Add_Local
+            I := I + 1
+         end
+         Body.Generate (Code)
+         Code.End_Routine
+      end
+
+   Name           : String
+   Argument_Count : Integer
+   Local_Total    : Integer
+   Is_Public      : Boolean
+   Body           : Ast.Statement
+
+end

@@ -1,0 +1,28 @@
+class
+   Ast.Statement.Retry_Routine
+
+inherit
+   Ast.Statement
+
+create
+   Make
+
+--  Restart the current routine from the top (Retry_Routine). ("Retry" is an
+--  Aqua keyword, hence Retry_Routine.)
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree)
+      do
+         Parent := P
+         Source := Src
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Code.Retry_Routine
+      end
+
+end

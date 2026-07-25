@@ -1,0 +1,48 @@
+class
+   Ast.Statement.Iteration
+
+inherit
+   Ast.Statement
+
+create
+   Make
+
+--  Pre-tested loop: test Condition at the top, exit when false, run Body,
+--  branch back. Local control only. ("Loop" is an Aqua keyword, hence
+--  Iteration.)
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      C   : Ast.Expression
+      B   : Ast.Statement)
+      do
+         Parent := P
+         Source := Src
+         Condition := C
+         Body := B
+      end
+
+   Generate (Code : Tagatha.Code)
+      local
+         Cond      : Ast.Condition
+         Top_Label : Tagatha.Label
+         End_Label : Tagatha.Label
+      do
+         Top_Label := Code.Next_Label
+         End_Label := Code.Next_Label
+         Code.Set_Label (Top_Label)
+         Condition.Generate (Code)
+         --  If_Zero (Z): exit loop when condition is false
+         Code.Branch (Cond.If_Zero, End_Label)
+         Body.Generate (Code)
+         Code.Branch_Always (Top_Label)
+         Code.Set_Label (End_Label)
+      end
+
+   Condition : Ast.Expression
+   Body      : Ast.Statement
+
+end

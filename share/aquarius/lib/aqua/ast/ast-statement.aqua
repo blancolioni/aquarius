@@ -1,0 +1,10 @@
+deferred class
+   Ast.Statement
+
+inherit
+   Ast
+
+--  A statement executes for effect and is net-zero on the Tagatha
+--  operand stack. Generate (inherited, deferred) emits the code.
+
+end

@@ -1,0 +1,79 @@
+class
+   Test_Ir_8
+
+--  Data section. Ast.Unit with one routine and every Ast.Data node type:
+--     answer:   .word 42                 (Label + Word)
+--     greeting: "hello"                  (Label + Text)
+--     table:    .word 1, 2, &answer      (Word x2 + Reference)
+--     counter:  .word 0   (writable)     (Label_RW + Word_RW)
+
+create
+   Make
+
+feature
+
+   Make
+      local
+         Code : Tagatha.Code
+         T    : Aquarius.Trees.Program_Tree
+         U    : Ast.Unit
+
+         --  routine get: return answer
+         G_N  : Ast.Expression.Name
+         G_R  : Ast.Statement.Return
+         G    : Ast.Routine
+
+         L_A  : Ast.Data.Label
+         W_A  : Ast.Data.Word
+         L_G  : Ast.Data.Label
+         Txt  : Ast.Data.Text
+         L_T  : Ast.Data.Label
+         W_1  : Ast.Data.Word
+         W_2  : Ast.Data.Word
+         Ref  : Ast.Data.Reference
+         L_C  : Ast.Data.Label
+         W_C  : Ast.Data.Word
+      do
+         create T
+         create Code.Make
+         create U.Make (T)
+
+         --  routine get: return answer
+         create G_N.Make (Void, T, "answer", False)
+         create G_R.Make_Value (Void, T, G_N)
+         create G.Make (T, "get", 0, 0, True, G_R)
+         U.Add_Routine (G)
+
+         --  answer: .word 42
+         create L_A.Make (Void, T, "answer")
+         create W_A.Make (Void, T, 42)
+         U.Add_Data (L_A)
+         U.Add_Data (W_A)
+
+         --  greeting: "hello"
+         create L_G.Make (Void, T, "greeting")
+         create Txt.Make (Void, T, "hello")
+         U.Add_Data (L_G)
+         U.Add_Data (Txt)
+
+         --  table: .word 1, 2, &answer
+         create L_T.Make (Void, T, "table")
+         create W_1.Make (Void, T, 1)
+         create W_2.Make (Void, T, 2)
+         create Ref.Make (Void, T, "answer")
+         U.Add_Data (L_T)
+         U.Add_Data (W_1)
+         U.Add_Data (W_2)
+         U.Add_Data (Ref)
+
+         --  counter: writable .word 0
+         create L_C.Make_RW (Void, T, "counter")
+         create W_C.Make_RW (Void, T, 0)
+         U.Add_Data (L_C)
+         U.Add_Data (W_C)
+
+         U.Generate (Code)
+         Code.Dispose
+      end
+
+end

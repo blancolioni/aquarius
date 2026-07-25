@@ -1,0 +1,32 @@
+class
+   Test_Ir_7
+
+--  Minimal deref-store isolation: ptr[4] := 99
+
+create
+   Make
+
+feature
+
+   Make
+      local
+         Code : Tagatha.Code
+         T    : Aquarius.Trees.Program_Tree
+         P    : Ast.Expression.Argument
+         D    : Ast.Expression.Dereference
+         V    : Ast.Expression.Literal
+         A    : Ast.Statement.Assign
+         R    : Ast.Routine
+      do
+         create T
+         create Code.Make
+         create P.Make (Void, T, 1)
+         create D.Make (Void, T, P, 4)
+         create V.Make_Integer (Void, T, 99)
+         create A.Make (Void, T, D, V)
+         create R.Make (T, "ptr_store", 1, 0, True, A)
+         R.Generate (Code)
+         Code.Dispose
+      end
+
+end

@@ -1,0 +1,46 @@
+class
+   Ast.Statement.Return
+
+inherit
+   Ast.Statement
+
+create
+   Make,
+   Make_Value
+
+--  Return from the current routine. With a value, evaluate it and store
+--  into result slot 1 (Tagatha Result_Index is 1-based) before exiting.
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree)
+      do
+         Parent := P
+         Source := Src
+         Value := Void
+      end
+
+   Make_Value
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      V   : Ast.Expression)
+      do
+         Parent := P
+         Source := Src
+         Value := V
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         if attached Value then
+            Value.Generate (Code)
+            Code.Pop_Result (1, Value.Content)
+         end
+         Code.Exit_Routine
+      end
+
+   Value : detachable Ast.Expression
+
+end

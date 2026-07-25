@@ -1,0 +1,34 @@
+class
+   Ast.Statement.Label
+
+inherit
+   Ast.Statement
+
+create
+   Make
+
+--  A local (routine-scoped) label definition. The name is interned by
+--  Tagatha via Named_Label, so a Goto to the same name resolves to the
+--  same label. Goto and Label are the local-control pair; non-local
+--  control is Statement.Jump (and Statement.Call).
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      N   : String)
+      do
+         Parent := P
+         Source := Src
+         Name := N
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Code.Set_Label (Code.Named_Label (Name))
+      end
+
+   Name : String
+
+end

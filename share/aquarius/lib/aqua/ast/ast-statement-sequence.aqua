@@ -1,0 +1,47 @@
+class
+   Ast.Statement.Sequence
+
+inherit
+   Ast.Statement
+
+create
+   Make
+
+--  Elements are held in a Linked_List, which keeps each in a typed Cell
+--  field. (Vector round-trips references through an address conversion,
+--  which loses the vptr and faults when a virtual feature is dispatched on
+--  a retrieved element.)
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree)
+      do
+         Parent := P
+         Source := Src
+         create Statements
+      end
+
+   Append (S : Ast.Statement)
+      do
+         Statements.Append (S)
+      end
+
+   Generate (Code : Tagatha.Code)
+      local
+         It : Aqua.Containers.Linked_List_Iterator [Ast.Statement]
+      do
+         from
+            It := Statements.New_Cursor
+         until
+            It.After
+         loop
+            It.Element.Generate (Code)
+            It.Next
+         end
+      end
+
+   Statements : Aqua.Containers.Linked_List [Ast.Statement]
+
+end

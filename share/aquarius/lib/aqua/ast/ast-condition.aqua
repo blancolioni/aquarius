@@ -1,0 +1,15 @@
+expanded class
+   Ast.Condition
+
+--  Branch conditions for Tagatha.Code.Branch, mirroring the ordinals of
+--  Tagatha.Branch_Condition (tagatha/src/tagatha.ads = Always, Z, NZ).
+--  Branch tests the top of stack: If_Zero branches when TOS = 0 (false),
+--  If_Non_Zero branches when TOS /= 0 (true).
+
+feature
+
+   Always      : Integer do Result := 0 end
+   If_Zero     : Integer do Result := 1 end
+   If_Non_Zero : Integer do Result := 2 end
+
+end

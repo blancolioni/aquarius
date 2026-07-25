@@ -1,0 +1,37 @@
+class
+   Ast.Expression.Local_Variable
+
+inherit
+   Ast.Expression
+
+create
+   Make
+
+--  A frame local, referenced by integer offset. ("Local" is an Aqua
+--  keyword, hence Local_Variable.)
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      Off : Integer)
+      do
+         Parent := P
+         Source := Src
+         Offset := Off
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Code.Push_Local (Offset, Content, False)
+      end
+
+   Set_Value (Code : Tagatha.Code)
+      do
+         Code.Pop_Local (Offset, Content)
+      end
+
+   Offset : Integer
+
+end

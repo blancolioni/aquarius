@@ -1,0 +1,27 @@
+class
+   Ast.Statement.Fail
+
+inherit
+   Ast.Statement
+
+create
+   Make
+
+--  Exit the current routine reporting failure (Fail_Routine).
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree)
+      do
+         Parent := P
+         Source := Src
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Code.Fail_Routine
+      end
+
+end

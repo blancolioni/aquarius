@@ -1,0 +1,59 @@
+class
+   Ast.Expression.Indirect_Call
+
+inherit
+   Ast.Expression
+
+create
+   Make
+
+--  Call through a computed address, used as a value. Push arguments
+--  left-to-right, then the callee address on top, then Indirect_Call with
+--  result count 1, then Push_Return (1) to fetch the result.
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      C   : Ast.Expression)
+      do
+         Parent := P
+         Source := Src
+         Callee := C
+         create Arguments
+      end
+
+   Add_Argument (Arg : Ast.Expression)
+      do
+         Arguments.Append (Arg)
+         Argument_Count := Argument_Count + 1
+      end
+
+   Generate (Code : Tagatha.Code)
+      local
+         It : Aqua.Containers.Linked_List_Iterator [Ast.Expression]
+      do
+         from
+            It := Arguments.New_Cursor
+         until
+            It.After
+         loop
+            It.Element.Generate (Code)
+            It.Next
+         end
+         Callee.Generate (Code)
+         Code.Indirect_Call (Argument_Count, 1)
+         Code.Push_Return (1, Content)
+      end
+
+   Set_Value (Code : Tagatha.Code)
+      do
+         Error ("cannot assign to a call")
+      end
+
+   Callee         : Ast.Expression
+   Argument_Count : Integer
+   Arguments      : Aqua.Containers.Linked_List [Ast.Expression]
+
+end

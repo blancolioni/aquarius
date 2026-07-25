@@ -1,0 +1,91 @@
+class
+   Test_Ir_3
+
+--  Exercises the new nodes: Unary (negate), Label + Goto (local control),
+--  Jump (non-local). Routine demo (1 arg, 1 local):
+--     l1 := -(a1)
+--     top: l1 := l1 + 1
+--     if l1 < 0 then goto top
+--     jump cleanup
+
+create
+   Make
+
+feature
+
+   Make
+      local
+         Code : Tagatha.Code
+         T    : Aquarius.Trees.Program_Tree
+         Op   : Ast.Operator
+         Body : Ast.Statement.Sequence
+
+         --  l1 := -(a1)
+         U_A  : Ast.Expression.Argument
+         U    : Ast.Expression.Unary
+         U_L  : Ast.Expression.Local_Variable
+         A1   : Ast.Statement.Assign
+
+         --  top:
+         Lbl  : Ast.Statement.Label
+
+         --  l1 := l1 + 1
+         I_L   : Ast.Expression.Local_Variable
+         I_1   : Ast.Expression.Literal
+         I_Sum : Ast.Expression.Binary
+         I_T   : Ast.Expression.Local_Variable
+         A2    : Ast.Statement.Assign
+
+         --  if l1 < 0 then goto top
+         C_L  : Ast.Expression.Local_Variable
+         C_0  : Ast.Expression.Literal
+         C_C  : Ast.Expression.Binary
+         G    : Ast.Statement.Goto
+         Cond : Ast.Statement.Conditional
+
+         --  jump cleanup
+         J    : Ast.Statement.Jump
+
+         R    : Ast.Routine
+      do
+         create T
+         create Code.Make
+         create Body.Make (Void, T)
+
+         --  l1 := -(a1)
+         create U_A.Make (Void, T, 1)
+         create U.Make (Void, T, Op.Negate, U_A)
+         create U_L.Make (Void, T, 1)
+         create A1.Make (Void, T, U_L, U)
+         Body.Append (A1)
+
+         --  top:
+         create Lbl.Make (Void, T, "top")
+         Body.Append (Lbl)
+
+         --  l1 := l1 + 1
+         create I_L.Make (Void, T, 1)
+         create I_1.Make_Integer (Void, T, 1)
+         create I_Sum.Make (Void, T, Op.Add, I_L, I_1)
+         create I_T.Make (Void, T, 1)
+         create A2.Make (Void, T, I_T, I_Sum)
+         Body.Append (A2)
+
+         --  if l1 < 0 then goto top
+         create C_L.Make (Void, T, 1)
+         create C_0.Make_Integer (Void, T, 0)
+         create C_C.Make (Void, T, Op.Less, C_L, C_0)
+         create G.Make (Void, T, "top")
+         create Cond.Make (Void, T, C_C, G, Void)
+         Body.Append (Cond)
+
+         --  jump cleanup
+         create J.Make (Void, T, "cleanup")
+         Body.Append (J)
+
+         create R.Make (T, "demo", 1, 1, True, Body)
+         R.Generate (Code)
+         Code.Dispose
+      end
+
+end

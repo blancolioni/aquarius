@@ -1,0 +1,35 @@
+class
+   Test_Ir_2
+
+--  Expression.Call as a value: l1 := double (5).
+--  Lowers to: push 5; Call double,1,1; Push_Return 1; Pop_Local 1.
+--  Emits MOV #5,-(SP) / JSR PC,double / ADD #2,SP / MOV R0,-2(R5).
+
+create
+   Make
+
+feature
+
+   Make
+      local
+         Code : Tagatha.Code
+         T    : Aquarius.Trees.Program_Tree
+         Dbl  : Ast.Expression.Call
+         A    : Ast.Expression.Literal
+         LT   : Ast.Expression.Local_Variable
+         Asg  : Ast.Statement.Assign
+         R    : Ast.Routine
+      do
+         create T
+         create Code.Make
+         create Dbl.Make (Void, T, "double")
+         create A.Make_Integer (Void, T, 5)
+         Dbl.Add_Argument (A)
+         create LT.Make (Void, T, 1)
+         create Asg.Make (Void, T, LT, Dbl)
+         create R.Make (T, "demo", 0, 1, True, Asg)
+         R.Generate (Code)
+         Code.Dispose
+      end
+
+end

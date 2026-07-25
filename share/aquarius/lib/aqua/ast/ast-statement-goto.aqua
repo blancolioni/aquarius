@@ -1,0 +1,32 @@
+class
+   Ast.Statement.Goto
+
+inherit
+   Ast.Statement
+
+create
+   Make
+
+--  Local goto: an unconditional branch to a routine-scoped label defined
+--  by Statement.Label with the same name.
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      N   : String)
+      do
+         Parent := P
+         Source := Src
+         Name := N
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Code.Branch_Always (Code.Named_Label (Name))
+      end
+
+   Name : String
+
+end

@@ -1,0 +1,58 @@
+class
+   Ast.Statement.Block
+
+inherit
+   Ast.Statement
+
+create
+   Make
+
+--  A nested scope with its own locals: open the block, allocate
+--  Local_Count locals, run the body, release the locals, close the block.
+--  Locals allocated here are addressed by the offsets the body's
+--  Local_Variable nodes carry.
+
+feature
+
+   Make
+     (P           : Ast
+      Src         : Aquarius.Trees.Program_Tree
+      Local_Count : Integer
+      B           : Ast.Statement)
+      do
+         Parent := P
+         Source := Src
+         Local_Total := Local_Count
+         Body := B
+      end
+
+   Generate (Code : Tagatha.Code)
+      local
+         I     : Integer
+         Dummy : Integer
+      do
+         Code.Begin_Block
+         from
+            I := 1
+         until
+            I > Local_Total
+         loop
+            Dummy := Code.Add_Local
+            I := I + 1
+         end
+         Body.Generate (Code)
+         from
+            I := 1
+         until
+            I > Local_Total
+         loop
+            Code.Remove_Local
+            I := I + 1
+         end
+         Code.End_Block
+      end
+
+   Local_Total : Integer
+   Body        : Ast.Statement
+
+end

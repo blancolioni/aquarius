@@ -1,0 +1,33 @@
+class
+   Ast.Statement.Raise
+
+inherit
+   Ast.Statement
+
+create
+   Make
+
+--  Raise an exception. The exception value is evaluated onto the stack,
+--  then Raise_Exception consumes it.
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      V   : Ast.Expression)
+      do
+         Parent := P
+         Source := Src
+         Value := V
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Value.Generate (Code)
+         Code.Raise_Exception
+      end
+
+   Value : Ast.Expression
+
+end

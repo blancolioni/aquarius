@@ -1,0 +1,81 @@
+class
+   Test_Ir_6
+
+--  Dereference (rvalue + lvalue), Indirect_Call, Evaluate.
+--  Routine mem (1 arg = pointer, 1 local):
+--     l1 := ptr[0]          (Dereference, rvalue)
+--     ptr[4] := l1          (Dereference, lvalue -> Pop_Indirect)
+--     f ()                  (Evaluate of a value call -> Drop)
+--     g := (*h) ()          (Indirect_Call through &h, store to global g)
+
+create
+   Make
+
+feature
+
+   Make
+      local
+         Code : Tagatha.Code
+         T    : Aquarius.Trees.Program_Tree
+         Body : Ast.Statement.Sequence
+
+         --  l1 := ptr[0]
+         D1_P : Ast.Expression.Argument
+         D1   : Ast.Expression.Dereference
+         D1_L : Ast.Expression.Local_Variable
+         A1   : Ast.Statement.Assign
+
+         --  ptr[4] := l1
+         D2_P : Ast.Expression.Argument
+         D2   : Ast.Expression.Dereference
+         D2_V : Ast.Expression.Local_Variable
+         A2   : Ast.Statement.Assign
+
+         --  f ()
+         F_Call : Ast.Expression.Call
+         Ev     : Ast.Statement.Evaluate
+
+         --  g := (*h) ()
+         H_Addr : Ast.Expression.Name
+         IC     : Ast.Expression.Indirect_Call
+         G_Name : Ast.Expression.Name
+         A3     : Ast.Statement.Assign
+
+         R    : Ast.Routine
+      do
+         create T
+         create Code.Make
+         create Body.Make (Void, T)
+
+         --  l1 := ptr[0]
+         create D1_P.Make (Void, T, 1)
+         create D1.Make (Void, T, D1_P, 0)
+         create D1_L.Make (Void, T, 1)
+         create A1.Make (Void, T, D1_L, D1)
+         Body.Append (A1)
+
+         --  ptr[4] := l1
+         create D2_P.Make (Void, T, 1)
+         create D2.Make (Void, T, D2_P, 4)
+         create D2_V.Make (Void, T, 1)
+         create A2.Make (Void, T, D2, D2_V)
+         Body.Append (A2)
+
+         --  f ()
+         create F_Call.Make (Void, T, "f")
+         create Ev.Make (Void, T, F_Call)
+         Body.Append (Ev)
+
+         --  g := (*h) ()
+         create H_Addr.Make_Address (Void, T, "h", False)
+         create IC.Make (Void, T, H_Addr)
+         create G_Name.Make (Void, T, "g", False)
+         create A3.Make (Void, T, G_Name, IC)
+         Body.Append (A3)
+
+         create R.Make (T, "mem", 1, 1, True, Body)
+         R.Generate (Code)
+         Code.Dispose
+      end
+
+end

@@ -1,0 +1,60 @@
+class
+   Ast.Expression.Call
+
+inherit
+   Ast.Expression
+
+create
+   Make
+
+--  Direct call used as a value: pushes arguments left-to-right, Call with
+--  result count 1, then Push_Return (1) to fetch that result onto the stack.
+--  (Tagatha's Call does not itself leave a result operand; the caller reads
+--  the returned value with Push_Return -- the Return_Operand mechanism.)
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      N   : String)
+      do
+         Parent := P
+         Source := Src
+         Name := N
+         create Arguments
+      end
+
+   Add_Argument (Arg : Ast.Expression)
+      do
+         Arguments.Append (Arg)
+         Argument_Count := Argument_Count + 1
+      end
+
+   Generate (Code : Tagatha.Code)
+      local
+         It : Aqua.Containers.Linked_List_Iterator [Ast.Expression]
+      do
+         from
+            It := Arguments.New_Cursor
+         until
+            It.After
+         loop
+            It.Element.Generate (Code)
+            It.Next
+         end
+         Code.Call (Name, Argument_Count, 1)
+         Code.Push_Return (1, Content)
+      end
+
+   Set_Value (Code : Tagatha.Code)
+      do
+         Error ("cannot assign to a call")
+      end
+
+   Argument_Count : Integer
+
+   Name      : String
+   Arguments : Aqua.Containers.Linked_List [Ast.Expression]
+
+end

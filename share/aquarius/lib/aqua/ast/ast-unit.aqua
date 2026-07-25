@@ -1,0 +1,60 @@
+class
+   Ast.Unit
+
+inherit
+   Ast
+
+create
+   Make
+
+--  A compilation unit: routines followed by data items, generated into one
+--  Tagatha.Code. Routines come first; data items are emitted afterwards,
+--  since data ops need no active routine.
+
+feature
+
+   Make
+     (Src : Aquarius.Trees.Program_Tree)
+      do
+         Source := Src
+         create Routines
+         create Data_Items
+      end
+
+   Add_Routine (R : Ast.Routine)
+      do
+         Routines.Append (R)
+      end
+
+   Add_Data (D : Ast.Data)
+      do
+         Data_Items.Append (D)
+      end
+
+   Generate (Code : Tagatha.Code)
+      local
+         Rt : Aqua.Containers.Linked_List_Iterator [Ast.Routine]
+         Dt : Aqua.Containers.Linked_List_Iterator [Ast.Data]
+      do
+         from
+            Rt := Routines.New_Cursor
+         until
+            Rt.After
+         loop
+            Rt.Element.Generate (Code)
+            Rt.Next
+         end
+         from
+            Dt := Data_Items.New_Cursor
+         until
+            Dt.After
+         loop
+            Dt.Element.Generate (Code)
+            Dt.Next
+         end
+      end
+
+   Routines   : Aqua.Containers.Linked_List [Ast.Routine]
+   Data_Items : Aqua.Containers.Linked_List [Ast.Data]
+
+end

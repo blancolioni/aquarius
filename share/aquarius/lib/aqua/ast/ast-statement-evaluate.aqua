@@ -1,0 +1,34 @@
+class
+   Ast.Statement.Evaluate
+
+inherit
+   Ast.Statement
+
+create
+   Make
+
+--  Evaluate an expression for its side effects and discard the value it
+--  leaves on the stack (Drop). E.g. a value-returning call whose result is
+--  unused.
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      E   : Ast.Expression)
+      do
+         Parent := P
+         Source := Src
+         Expression := E
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Expression.Generate (Code)
+         Code.Drop
+      end
+
+   Expression : Ast.Expression
+
+end

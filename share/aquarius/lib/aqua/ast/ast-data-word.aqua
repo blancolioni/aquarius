@@ -1,0 +1,50 @@
+class
+   Ast.Data.Word
+
+inherit
+   Ast.Data
+
+create
+   Make,
+   Make_RW
+
+--  A single word of data. Make emits a read-only word (Data_Int); Make_RW a
+--  writable word (Data_RW).
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      V   : Integer)
+      do
+         Parent := P
+         Source := Src
+         Value := V
+         Read_Write := False
+      end
+
+   Make_RW
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      V   : Integer)
+      do
+         Parent := P
+         Source := Src
+         Value := V
+         Read_Write := True
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         if Read_Write then
+            Code.Data_RW (Value)
+         else
+            Code.Data_Int (Value)
+         end
+      end
+
+   Value      : Integer
+   Read_Write : Boolean
+
+end

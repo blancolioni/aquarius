@@ -1,0 +1,84 @@
+class
+   Test_Ir_5
+
+--  Ast.Unit of small routines exercising Block, Result_Value, and the
+--  routine terminators Fail / Raise / Retry_Routine.
+--     setr:     { l1 := 7 } (block local); Result := 3
+--     fail_it:  fail
+--     raise_it: raise 9
+--     retry_it: retry
+
+create
+   Make
+
+feature
+
+   Make
+      local
+         Code : Tagatha.Code
+         T    : Aquarius.Trees.Program_Tree
+         U    : Ast.Unit
+
+         --  setr
+         B_L   : Ast.Expression.Local_Variable
+         B_7   : Ast.Expression.Literal
+         B_A   : Ast.Statement.Assign
+         Blk   : Ast.Statement.Block
+         R_V   : Ast.Expression.Result_Value
+         R_3   : Ast.Expression.Literal
+         R_A   : Ast.Statement.Assign
+         Seq   : Ast.Statement.Sequence
+         R_Setr : Ast.Routine
+
+         --  fail_it
+         Flr   : Ast.Statement.Fail
+         R_Fail : Ast.Routine
+
+         --  raise_it
+         Ex_9  : Ast.Expression.Literal
+         Rse   : Ast.Statement.Raise
+         R_Rse : Ast.Routine
+
+         --  retry_it
+         Rty   : Ast.Statement.Retry_Routine
+         R_Rty : Ast.Routine
+      do
+         create T
+         create Code.Make
+         create U.Make (T)
+
+         --  setr: { l1 := 7 }; Result := 3
+         create B_L.Make (Void, T, 1)
+         create B_7.Make_Integer (Void, T, 7)
+         create B_A.Make (Void, T, B_L, B_7)
+         create Blk.Make (Void, T, 1, B_A)
+         create R_V.Make (Void, T, 1)
+         create R_3.Make_Integer (Void, T, 3)
+         create R_A.Make (Void, T, R_V, R_3)
+         create Seq.Make (Void, T)
+         Seq.Append (Blk)
+         Seq.Append (R_A)
+         create R_Setr.Make (T, "setr", 0, 0, True, Seq)
+         U.Add_Routine (R_Setr)
+
+         --  fail_it: fail
+         create Flr.Make (Void, T)
+         create R_Fail.Make (T, "fail_it", 0, 0, True, Flr)
+         U.Add_Routine (R_Fail)
+
+         --  raise_it: raise 9
+         create Ex_9.Make_Integer (Void, T, 9)
+         create Rse.Make (Void, T, Ex_9)
+         create R_Rse.Make (T, "raise_it", 0, 0, True, Rse)
+         U.Add_Routine (R_Rse)
+
+         --  retry_it: retry
+         create Rty.Make (Void, T)
+         create R_Rty.Make (T, "retry_it", 0, 0, True, Rty)
+         U.Add_Routine (R_Rty)
+
+         U.Generate (Code)
+         Code.Dispose
+      end
+
+end

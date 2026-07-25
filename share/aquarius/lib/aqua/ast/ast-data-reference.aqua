@@ -1,0 +1,31 @@
+class
+   Ast.Data.Reference
+
+inherit
+   Ast.Data
+
+create
+   Make
+
+--  A word of data holding the address of a named label (Data_Ref).
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      N   : String)
+      do
+         Parent := P
+         Source := Src
+         Name := N
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Code.Data_Ref (Name)
+      end
+
+   Name : String
+
+end

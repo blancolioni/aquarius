@@ -1,0 +1,31 @@
+class
+   Ast.Data.Text
+
+inherit
+   Ast.Data
+
+create
+   Make
+
+--  A string constant emitted into the data section (String_Constant).
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      V   : String)
+      do
+         Parent := P
+         Source := Src
+         Value := V
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Code.String_Constant (Value)
+      end
+
+   Value : String
+
+end

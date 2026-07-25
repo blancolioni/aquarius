@@ -10,4 +10,14 @@ feature
       deferred
       end
 
+   Content : Integer
+      --  Operand content: 0 = general word, 1 = floating point.
+      --  Untyped IR keeps every value a word; Content is the sole
+      --  float hook, threaded into each Tagatha push/pop.
+
+   Set_Content (C : Integer)
+      do
+         Content := C
+      end
+
 end

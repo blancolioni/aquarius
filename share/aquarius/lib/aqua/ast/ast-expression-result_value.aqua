@@ -1,0 +1,40 @@
+class
+   Ast.Expression.Result_Value
+
+inherit
+   Ast.Expression
+
+create
+   Make
+
+--  A result slot of the current routine, as an lvalue: assigning to it
+--  stores into result Index (Pop_Result), letting a language do
+--  `Result := expr` then Return with no value. Write-only -- there is no
+--  Tagatha op to read the routine's own result slot. ("Result" is an Aqua
+--  keyword, hence Result_Value.)
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      I   : Integer)
+      do
+         Parent := P
+         Source := Src
+         Index := I
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Error ("routine result slot is write-only")
+      end
+
+   Set_Value (Code : Tagatha.Code)
+      do
+         Code.Pop_Result (Index, Content)
+      end
+
+   Index : Integer
+
+end

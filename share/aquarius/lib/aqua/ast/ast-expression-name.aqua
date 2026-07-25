@@ -1,0 +1,62 @@
+class
+   Ast.Expression.Name
+
+inherit
+   Ast.Expression
+
+create
+   Make,
+   Make_Address
+
+--  A global name (a routine, data label, or other module-level symbol).
+--  Make yields the value at the name (Push_Name); Make_Address yields the
+--  name's address (Push_Name with Address => True, e.g. "#name"). Extern
+--  marks the symbol as imported from another module.
+
+feature
+
+   Make
+     (P      : Ast
+      Src    : Aquarius.Trees.Program_Tree
+      N      : String
+      Extern : Boolean)
+      do
+         Parent := P
+         Source := Src
+         Global_Name := N
+         Is_Extern := Extern
+         Is_Address := False
+      end
+
+   Make_Address
+     (P      : Ast
+      Src    : Aquarius.Trees.Program_Tree
+      N      : String
+      Extern : Boolean)
+      do
+         Parent := P
+         Source := Src
+         Global_Name := N
+         Is_Extern := Extern
+         Is_Address := True
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Code.Push_Name (Global_Name, Is_Extern, Is_Address, Content)
+      end
+
+   Set_Value (Code : Tagatha.Code)
+      do
+         if Is_Address then
+            Error ("cannot assign to the address of a name")
+         else
+            Code.Pop_Name (Global_Name, Is_Extern, Content)
+         end
+      end
+
+   Global_Name : String
+   Is_Extern   : Boolean
+   Is_Address  : Boolean
+
+end

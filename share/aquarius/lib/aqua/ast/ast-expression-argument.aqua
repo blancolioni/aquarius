@@ -1,0 +1,34 @@
+class
+   Ast.Expression.Argument
+
+inherit
+   Ast.Expression
+
+create
+   Make
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      Off : Integer)
+      do
+         Parent := P
+         Source := Src
+         Offset := Off
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Code.Push_Argument (Offset, Content)
+      end
+
+   Set_Value (Code : Tagatha.Code)
+      do
+         Code.Pop_Argument (Offset, Content)
+      end
+
+   Offset : Integer
+
+end

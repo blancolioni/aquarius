@@ -1,0 +1,52 @@
+class
+   Ast.Statement.Call
+
+inherit
+   Ast.Statement
+
+create
+   Make
+
+--  Direct call for effect: pushes arguments left-to-right, then Call with
+--  result count 0, leaving the stack net-zero.
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      N   : String)
+      do
+         Parent := P
+         Source := Src
+         Name := N
+         create Arguments
+      end
+
+   Add_Argument (Arg : Ast.Expression)
+      do
+         Arguments.Append (Arg)
+         Argument_Count := Argument_Count + 1
+      end
+
+   Generate (Code : Tagatha.Code)
+      local
+         It : Aqua.Containers.Linked_List_Iterator [Ast.Expression]
+      do
+         from
+            It := Arguments.New_Cursor
+         until
+            It.After
+         loop
+            It.Element.Generate (Code)
+            It.Next
+         end
+         Code.Call (Name, Argument_Count, 0)
+      end
+
+   Argument_Count : Integer
+
+   Name      : String
+   Arguments : Aqua.Containers.Linked_List [Ast.Expression]
+
+end

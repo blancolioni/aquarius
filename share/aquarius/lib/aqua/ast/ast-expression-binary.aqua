@@ -1,0 +1,42 @@
+class
+   Ast.Expression.Binary
+
+inherit
+   Ast.Expression
+
+create
+   Make
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      O   : Integer
+      L   : Ast.Expression
+      R   : Ast.Expression)
+      do
+         Parent := P
+         Source := Src
+         Op := O
+         Left := L
+         Right := R
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Left.Generate (Code)
+         Right.Generate (Code)
+         Code.Operate (Op)
+      end
+
+   Set_Value (Code : Tagatha.Code)
+      do
+         Error ("cannot assign to a binary expression")
+      end
+
+   Op    : Integer
+   Left  : Ast.Expression
+   Right : Ast.Expression
+
+end

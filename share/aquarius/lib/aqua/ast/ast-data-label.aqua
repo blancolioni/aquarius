@@ -1,0 +1,51 @@
+class
+   Ast.Data.Label
+
+inherit
+   Ast.Data
+
+create
+   Make,
+   Make_RW
+
+--  A label in the data section. Make yields a read-only label
+--  (Data_Label); Make_RW a writable one (Data_Label_RW). The words / refs /
+--  text that follow it (further Ast.Data items) form its contents.
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      N   : String)
+      do
+         Parent := P
+         Source := Src
+         Name := N
+         Read_Write := False
+      end
+
+   Make_RW
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      N   : String)
+      do
+         Parent := P
+         Source := Src
+         Name := N
+         Read_Write := True
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         if Read_Write then
+            Code.Data_Label_RW (Name)
+         else
+            Code.Data_Label (Name)
+         end
+      end
+
+   Name       : String
+   Read_Write : Boolean
+
+end
