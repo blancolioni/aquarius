@@ -243,6 +243,15 @@ package body Ack.Types is
    begin
       if Root_Entity_Type (Typ.all).Contains (Name) then
          return Root_Entity_Type (Typ.all).Get (Name);
+      elsif not Typ.Class.Has_Feature (Get_Name_Id (Name)) then
+         --  Name is reachable through the class (its scope contains it) but
+         --  is not one of the class's features -- e.g. a nested class or a
+         --  type name. Delegating to the class's general lookup avoids
+         --  violating the precondition of Class.Feature (which is
+         --  Has_Feature). Without this guard, Has_Feature itself crashes,
+         --  since it tests Is_Feature (Class.Get (Name)) and Class.Get routes
+         --  back here.
+         return Typ.Class.Get (Name);
       else
          declare
             use type Ack.Classes.Constant_Class_Entity;
