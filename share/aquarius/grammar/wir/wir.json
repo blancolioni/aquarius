@@ -1,0 +1,7 @@
+{
+    "name": "wir",
+    "description": "Wir: word IR, a textual surface for the Aqua Ast.* nodes",
+    "version": "0.1.0",
+    "groups": [
+    ]
+}

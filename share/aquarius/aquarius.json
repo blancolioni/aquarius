@@ -40,6 +40,10 @@
 		"pas": {
 			"name": "Pascal programming language",
 			"plugin": "pascal"
+		},
+		"wir": {
+			"name": "Wir word IR",
+			"plugin": "wir"
 		}
     },
     "install": {

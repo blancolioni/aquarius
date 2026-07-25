@@ -1,0 +1,135 @@
+top_level ::= unit
+
+case_sensitive = false
+
+identifier      ::= !\l[\w]*!
+integer         ::= standard ada_numeric_literal
+string_constant ::= standard ada_string_literal
+delimiter       ::= delimiters "()[]+,;&|"
+symbol          ::= standard ada_symbol
+
+line_comment = "--"
+
+format '(' space_before no_space_after
+format ')' no_space_before space_after
+format '[' space_before no_space_after
+format ']' no_space_before space_after
+format ',' no_space_before space_after
+format ':' space_before space_after
+format ';' no_space_before new_line_after
+format 'is' closing space_before new_line_after
+format 'then' closing space_before space_after
+format 'do' closing space_before space_after
+format 'end' new_line_before
+format routine new_line_before
+format statement new_line_before
+format statement_list indented_child
+
+unit ::= { routine } { data_item }
+
+routine ::=
+   'routine' [ 'public' ] name
+      'args' integer
+      'locals' integer
+   'is'
+      statement_list
+   'end'
+
+statement_list ::= { statement }
+
+statement ::= sequence | assign | return_statement | call_statement
+            | conditional | iteration | label | goto | jump | fail
+            | raise | evaluate | block | retry
+
+sequence ::= 'begin' statement_list 'end' ';'
+
+assign ::= lvalue ':=' expression ';'
+
+return_statement ::= 'return' [ expression ] ';'
+
+call_statement ::= 'call' name '(' [ argument_list ] ')' ';'
+
+conditional ::=
+   'if' expression 'then'
+      statement_list
+   [ 'else'
+      statement_list ]
+   'end' 'if' ';'
+
+iteration ::=
+   'loop' expression 'do'
+      statement_list
+   'end' 'loop' ';'
+
+label ::= 'label' name ';'
+goto  ::= 'goto' name ';'
+jump  ::= 'jump' name ';'
+
+fail     ::= 'fail' ';'
+raise    ::= 'raise' expression ';'
+evaluate ::= 'eval' expression ';'
+retry    ::= 'retry' ';'
+
+block ::=
+   'block' 'locals' integer
+      statement_list
+   'end' 'block' ';'
+
+expression ::= primary [ ':' 'float' ]
+
+primary ::= literal
+          | argument
+          | local_variable
+          | result_slot
+          | binary
+          | unary
+          | name_value
+          | call_expression
+          | indirect_call
+          | dereference
+
+literal ::= [ '-' ] integer
+
+argument       ::= 'arg' integer
+local_variable ::= 'local' integer
+result_slot    ::= 'result' integer
+
+binary ::= '(' expression binary_operator expression ')'
+
+unary ::= unary_operator expression
+
+name_value ::= [ 'addr' ] [ 'extern' ] name
+
+call_expression ::= name '(' [ argument_list ] ')'
+
+indirect_call ::= '*' expression '(' [ argument_list ] ')'
+
+dereference ::= '[' expression [ '+' integer ] ']'
+
+argument_list ::= < expression / ',' >
+
+lvalue ::= argument
+         | local_variable
+         | result_slot
+         | store_name
+         | dereference
+
+store_name ::= [ 'extern' ] name
+
+binary_operator ::= '+' | '-'  | '*'   | '/'  | 'mod'
+                  | '&' | '|'  | 'xor'
+                  | '=' | '/=' | '<'   | '<=' | '>' | '>='
+
+unary_operator ::= '+' | 'neg' | 'not' | 'test'
+
+data_item ::= data_label | data_word | data_reference | data_text
+
+data_label ::= [ 'rw' ] 'data' name ':'
+
+data_word ::= [ 'rw' ] 'word' [ '-' ] integer ';'
+
+data_reference ::= 'ref' name ';'
+
+data_text ::= 'text' string_constant ';'
+
+name ::= identifier
