@@ -420,10 +420,6 @@ explicitly_typed_array_bound ::=
       
 dimension_index ::= '(' constant_expression ')'
 
-task_declaration ::= task_type_declaration
-                   | single_task_declaration
-                   | task_body
-                   
 task_type_declaration ::=
    'task' 'type' defining_identifier [ known_discriminant_part ] [aspect_specification] 
        [ 'is' [ 'new' interface_list 'with' ] task_definition ] ';'
@@ -446,11 +442,6 @@ task_body ::=
        handled_sequence_of_statements
     'end' [identifier] ';'
     
-protected_declaration ::= 
-    single_protected_declaration
-  | protected_type_specification
-  | protected_body
-  
 protected_type_specification ::=
    'protected' 'type' defining_identifier [ known_discriminant_part ] [ aspect_specification ] 'is'
         [ 'new' interface_list 'with' ]
@@ -509,14 +500,15 @@ declarative_item ::=
 basic_declarative_item ::= 
     basic_declaration | aspect_clause | use_clause | use_type_clause | pragma_spec
 
-basic_declaration ::= 
-     type_declaration | subtype_declaration
+basic_declaration ::=
+     type_declaration | incomplete_type_declaration | subtype_declaration
    | object_declaration | number_declaration
    | subprogram_declaration | abstract_subprogram_declaration
    | null_procedure_declaration | expression_function_declaration
    | package_declaration | renaming_declaration
    | exception_declaration | generic_declaration
    | generic_instantiation
+   | task_type_declaration | protected_type_specification
    
 body ::= proper_body | body_stub
 
