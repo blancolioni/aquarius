@@ -590,6 +590,45 @@ package body Aquarius.Programs.Arrangements is
           (Item.Breadth_First_Search
              (Separator_With_New_Line'Access));
 
+      function Breakable_Separator (P : Program_Tree) return Boolean
+      is (P.Is_Separator
+          and then
+            ((Enabled (P.Rules.Space_After)
+              and then not Negative (P.Rules.Space_After))
+             or else Enabled (P.Rules.New_Line_After)
+             or else Enabled (P.Rules.Soft_New_Line_After)));
+
+      function Has_Direct_Breakable_Separator
+        (P : Program_Tree) return Boolean
+      is (for some C of P.Direct_Children (Skip_Separators => False) =>
+            Breakable_Separator (C));
+
+      --  A content soft break (an operator or a '=>') is suppressed when
+      --  it sits inside an element of a separated list, because that
+      --  list's separators break instead, giving each element its own
+      --  line.  For example, the commas of a named-association list break
+      --  while the '=>' inside each association does not.  The break level
+      --  is thus chosen structurally rather than by a global minimum, so
+      --  that a shallow but unrelated soft break (such as a top-level
+      --  'is') does not defeat the suppression.
+      function Inside_Separated_List (P : Program_Tree) return Boolean;
+
+      function Inside_Separated_List (P : Program_Tree) return Boolean is
+         use type Aquarius.Trees.Tree;
+         Node   : Program_Tree := P;
+         Parent : Program_Tree;
+      begin
+         while Node /= null and then Node /= Item loop
+            Parent := Program_Tree (Node.Parent);
+            exit when Parent = null;
+            if Has_Direct_Breakable_Separator (Parent) then
+               return True;
+            end if;
+            Node := Parent;
+         end loop;
+         return False;
+      end Inside_Separated_List;
+
       Got_Start         : Boolean := False;
       Got_Finish        : Boolean := False;
       Applied_Separator : Boolean := False;
@@ -706,8 +745,9 @@ package body Aquarius.Programs.Arrangements is
                         "skipping deeper separator at level" & Level'Img);
                   end if;
                end if;
-            elsif (Program.Has_Soft_New_Line_Rule_Before
-                   or else Had_Soft_New_Line_After)
+            elsif not Inside_Separated_List (Program)
+              and then (Program.Has_Soft_New_Line_Rule_Before
+                        or else Had_Soft_New_Line_After)
             then
                --  A candidate soft break point.  Remember the last
                --  candidate whose preceding content still fits within the
