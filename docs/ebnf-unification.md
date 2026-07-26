@@ -45,16 +45,21 @@ an accident of history, not a semantic necessity.
 ## Character classes dissolve into rules
 
 `[...]` is the most familiar regex construct, but in EBNF `[]` already means
-optional. Don't overload it — **dissolve it**. A character class is just "one of
-a set of characters" = a rule. Promote the class shorthands (`\d \l \w \s .`)
-to a **builtin prelude of character rules**:
+optional. Don't overload it — **dissolve it**. In Unicode, character
+classification is **not** a matter of ranges (see [Ranges are the wrong
+primitive](#ranges-are-the-wrong-primitive)); a class is a named **property**.
+Promote the class shorthands (`\d \l \w \s .`) to a **builtin prelude** backed
+by Unicode General_Category tables (defined in Ada code, not as `.ebnf`
+ranges):
 
 ```ebnf
-letter    ::= 'a'..'z' | 'A'..'Z'
-digit     ::= '0'..'9'
-word_char ::= letter | digit | '_'
-space     ::= ' ' | tab | newline
-any       ::= not nothing        -- ".": any single character
+letter     ::= <Unicode L*>          -- Lu | Ll | Lt | Lm | Lo (a property, not a range)
+uppercase  ::= <Lu>
+lowercase  ::= <Ll>
+digit      ::= '0' .. '9'            -- ASCII, on purpose (see below)
+whitespace ::= <White_Space>
+word_char  ::= letter | digit | '_'
+any        ::= <any scalar value>    -- ".": any single Unicode scalar
 ```
 
 Then `\l` → `letter`, `\d` → `digit`, `\w` → `word_char`, `.` → `any`. These are
@@ -65,11 +70,38 @@ grammars reference them and rarely need raw sets.
 
 Both already idiomatic in this (Ada) codebase:
 
-- **Range** — `'0' .. '9'`. Ada `..`. Covers `[a-z]`.
 - **Complement** — `not '"'`, or set-difference `any - '"'`. Maps straight to the
-  Lexer `not` combinator. Covers `[^"]`.
+  Lexer `not` combinator. Covers `[^"]`. Well-defined over the scalar space
+  ("any scalar ≠ U+0022").
+- **Codepoint range** — `#0000 .. #001F`. A range over **integer codepoints**,
+  for value/validity work only (control chars, surrogate exclusion, encoding
+  bounds). Written on hex codepoint literals to make clear it is numeric, not a
+  span of "characters".
 
-That is the entire addition. Everything else is existing EBNF.
+Small explicit sets stay as `|` alternation or `delimiters "..."`. That is the
+entire addition; everything else is existing EBNF.
+
+## Ranges are the wrong primitive
+
+A general `'a' .. 'z'`-style character range is ASCII-era thinking and mostly
+breaks under Unicode:
+
+- **letter / whitespace / word / upper / lower** are Unicode *properties*
+  (`L*`, `White_Space`, `Nd`, …), scattered across the codespace — **not**
+  contiguous ranges. `'a'..'z' | 'A'..'Z'` is just ASCII parochialism and
+  excludes every non-Latin letter. These must be property builtins.
+- The only genuinely useful character range is **ASCII digit `'0' .. '9'`** —
+  contiguous, and lexers usually *want* ASCII-only digits (an integer literal
+  should not accept Devanagari or fullwidth digits). Kept as a deliberate
+  restriction, not as "digit in general".
+- The other legitimate use of ranges is over **codepoint values**, not
+  characters: control ranges (`#0000..#001F`), surrogate exclusion
+  (`#D800..#DFFF`), max scalar `#10FFFF`. That is the `#.. ..` atom above — a
+  separate, honestly-numeric construct.
+
+So: no general character `..`; classification via property builtins; a narrow
+codepoint-numeric range for value work; ASCII digit as the one kept character
+range.
 
 ## Quoting removes all escaping
 
