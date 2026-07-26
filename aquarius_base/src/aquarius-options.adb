@@ -1,16 +1,39 @@
+with Ada.Command_Line;
+with Ada.Containers.Vectors;
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Vectors;
+with Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;
 with Ada.Text_IO;
-with Parse_Args;
 
 package body Aquarius.Options is
 
-   use Parse_Args;
+   use Ada.Strings.Unbounded;
 
-   AP : Argument_Parser;
+   type Option_Kind is (Bool_Kind, Str_Kind);
+
+   type Option_Info is record
+      Name        : Unbounded_String;
+      Long_Option : Unbounded_String;
+      Usage       : Unbounded_String;
+      Kind        : Option_Kind;
+   end record;
+
+   package Option_Vectors is
+     new Ada.Containers.Vectors (Positive, Option_Info);
+
+   package Boolean_Maps is
+     new Ada.Containers.Indefinite_Ordered_Maps (String, Boolean);
+
+   package String_Maps is
+     new Ada.Containers.Indefinite_Ordered_Maps (String, String);
 
    package String_Vectors is
      new Ada.Containers.Indefinite_Vectors (Positive, String);
 
+   Defined_Options    : Option_Vectors.Vector;
+   Bool_Values        : Boolean_Maps.Map;
+   Str_Values         : String_Maps.Map;
    Source_File_Vector : String_Vectors.Vector;
 
    Aqua_Trace_Option   : constant String := "aqua trace";
@@ -29,13 +52,48 @@ package body Aquarius.Options is
    Tagatha_Trace_Improvements_Option : constant String :=
                                          "tagatha improvements";
 
+   procedure Add_Option
+     (Name        : String;
+      Long_Option : String;
+      Usage       : String;
+      Kind        : Option_Kind);
+
+   function Find_Long (Long : String) return Natural;
+
+   procedure Show_Usage;
+
+   ----------------
+   -- Add_Option --
+   ----------------
+
+   procedure Add_Option
+     (Name        : String;
+      Long_Option : String;
+      Usage       : String;
+      Kind        : Option_Kind)
+   is
+   begin
+      Defined_Options.Append
+        (Option_Info'
+           (Name        => To_Unbounded_String (Name),
+            Long_Option => To_Unbounded_String (Long_Option),
+            Usage       => To_Unbounded_String (Usage),
+            Kind        => Kind));
+      case Kind is
+         when Bool_Kind =>
+            Bool_Values.Insert (Name, False);
+         when Str_Kind =>
+            Str_Values.Insert (Name, "");
+      end case;
+   end Add_Option;
+
    ----------------
    -- Aqua_Trace --
    ----------------
 
    function Aqua_Trace return Boolean is
    begin
-      return AP.Boolean_Value (Aqua_Trace_Option);
+      return Bool_Values (Aqua_Trace_Option);
    end Aqua_Trace;
 
    ----------------
@@ -44,7 +102,7 @@ package body Aquarius.Options is
 
    function Check_File return String is
    begin
-      return AP.String_Value (Check_File_Option);
+      return Str_Values (Check_File_Option);
    end Check_File;
 
    -----------------
@@ -53,7 +111,7 @@ package body Aquarius.Options is
 
    function Clear_Cache return Boolean is
    begin
-      return AP.Boolean_Value (Clear_Cache_Option);
+      return Bool_Values (Clear_Cache_Option);
    end Clear_Cache;
 
    ------------------
@@ -62,110 +120,136 @@ package body Aquarius.Options is
 
    function Code_Trigger return Boolean is
    begin
-      return AP.Boolean_Value (Code_Trigger_Option);
+      return Bool_Values (Code_Trigger_Option);
    end Code_Trigger;
+
+   ---------------
+   -- Find_Long --
+   ---------------
+
+   function Find_Long (Long : String) return Natural is
+   begin
+      for I in 1 .. Defined_Options.Last_Index loop
+         if To_String (Defined_Options (I).Long_Option) = Long then
+            return I;
+         end if;
+      end loop;
+      return 0;
+   end Find_Long;
 
    ----------
    -- Load --
    ----------
 
    function Load return Boolean is
+      use Ada.Command_Line;
+      use Ada.Strings.Fixed;
+
+      Arg_Index       : Natural := 1;
+      No_More_Options : Boolean := False;
+
+      function Fail (Message : String) return Boolean;
+
+      ----------
+      -- Fail --
+      ----------
+
+      function Fail (Message : String) return Boolean is
+      begin
+         Ada.Text_IO.Put_Line (Ada.Text_IO.Standard_Error, Message);
+         return False;
+      end Fail;
+
    begin
+      Add_Option (Aqua_Trace_Option, "aqua-trace",
+                  "Enable trace for Aqua execution", Bool_Kind);
+      Add_Option (Code_Trigger_Option, "code-trigger",
+                  "Run the code trigger on source files", Bool_Kind);
+      Add_Option (Start_Class_Option, "start-class",
+                  "Create and run the Aqua class found in this path",
+                  Str_Kind);
+      Add_Option (Check_File_Option, "check",
+                  "Load a file, report any errors, and exit", Str_Kind);
+      Add_Option (Self_Test_Option, "self-test",
+                  "Run unit tests", Bool_Kind);
+      Add_Option (Clear_Cache_Option, "clear-cache",
+                  "Empty the temporary folder before continuing", Bool_Kind);
+      Add_Option (Help_Option, "help",
+                  "Show help", Bool_Kind);
+      Add_Option (Show_Full_Path_Option, "show-full-path",
+                  "use full path when reporting file names", Bool_Kind);
+      Add_Option (Report_Files_Option, "report-files",
+                  "report all filesystem activity", Bool_Kind);
+      Add_Option (Tagatha_Trace_Improvements_Option,
+                  "tagatha-trace-improvements",
+                  "Log code improvements applied by Tagatha", Bool_Kind);
+      Add_Option (Tagatha_Trace_P_Code_Option, "tagatha-trace-p-code",
+                  "Log code p-code generated by Tagatha", Bool_Kind);
+      Add_Option (Tagatha_Trace_Transfers_Option, "tagatha-trace-transfers",
+                  "Log code transfers generated by Tagatha", Bool_Kind);
 
-      AP.Add_Option
-        (O             => Make_Boolean_Option (False),
-         Name          => Aqua_Trace_Option,
-         Long_Option   => "aqua-trace",
-         Usage         => "Enable trace for Aqua execution");
+      while Arg_Index <= Argument_Count loop
+         declare
+            Arg : constant String := Argument (Arg_Index);
+         begin
+            if not No_More_Options and then Arg = "--" then
+               No_More_Options := True;
+            elsif not No_More_Options
+              and then Arg'Length >= 2
+              and then Arg (Arg'First .. Arg'First + 1) = "--"
+            then
+               declare
+                  Text : constant String := Arg (Arg'First + 2 .. Arg'Last);
+                  Eq   : constant Natural := Index (Text, "=");
+                  Long : constant String :=
+                           (if Eq = 0 then Text
+                            else Text (Text'First .. Eq - 1));
+                  Opt  : constant Natural := Find_Long (Long);
+               begin
+                  if Opt = 0 then
+                     return Fail ("unknown option: --" & Long);
+                  end if;
 
-      AP.Add_Option
-        (O             => Make_Boolean_Option (False),
-         Name          => Code_Trigger_Option,
-         Long_Option   => "code-trigger",
-         Usage         => "Run the code trigger on source files");
-
-      AP.Add_Option
-        (O             => Make_String_Option (""),
-         Name          => Start_Class_Option,
-         Long_Option   => "start-class",
-         Usage         => "Create and run the Aqua class found in this path");
-
-      AP.Add_Option
-        (O             => Make_String_Option (""),
-         Name          => Check_File_Option,
-         Long_Option   => "check",
-         Usage         => "Load a file, report any errors, and exit");
-
-      AP.Add_Option
-        (O             => Make_Boolean_Option (False),
-         Name          => Self_Test_Option,
-         Long_Option   => "self-test",
-         Usage         => "Run unit tests");
-
-      AP.Add_Option
-        (O             => Make_Boolean_Option (False),
-         Name          => Clear_Cache_Option,
-         Long_Option   => "clear-cache",
-         Usage         => "Empty the temporary folder before continuing");
-
-      AP.Add_Option
-        (O             => Make_Boolean_Option (False),
-         Name          => Help_Option,
-         Long_Option   => "help",
-         Usage         => "Show help");
-
-      AP.Add_Option
-        (O             => Make_Boolean_Option (False),
-         Name          => Show_Full_Path_Option,
-         Long_Option   => "show-full-path",
-         Usage         => "use full path when reporting file names");
-
-      AP.Add_Option
-        (O             => Make_Boolean_Option (False),
-         Name          => Report_Files_Option,
-         Long_Option   => "report-files",
-         Usage         => "report all filesystem activity");
-
-      AP.Add_Option
-        (O             => Make_Boolean_Option (False),
-         Name          => Tagatha_Trace_Improvements_Option,
-         Long_Option   => "tagatha-trace-improvements",
-         Usage         => "Log code improvements applied by Tagatha");
-
-      AP.Add_Option
-        (O             => Make_Boolean_Option (False),
-         Name          => Tagatha_Trace_P_Code_Option,
-         Long_Option   => "tagatha-trace-p-code",
-         Usage         => "Log code p-code generated by Tagatha");
-
-      AP.Add_Option
-        (O             => Make_Boolean_Option (False),
-         Name          => Tagatha_Trace_Transfers_Option,
-         Long_Option   => "tagatha-trace-transfers",
-         Usage         => "Log code transfers generated by Tagatha");
-
-      AP.Allow_Tail_Arguments ("files ...");
-
-      AP.Parse_Command_Line;
-
-      if not AP.Parse_Success then
-         Ada.Text_IO.Put_Line
-           (Ada.Text_IO.Standard_Error,
-            AP.Parse_Message);
-         return False;
-      end if;
-
-      if AP.Boolean_Value (Help_Option) then
-         AP.Usage;
-         return False;
-      end if;
-
-      for File_Name of AP.Tail loop
-         Source_File_Vector.Append (File_Name);
+                  declare
+                     Info : constant Option_Info := Defined_Options (Opt);
+                     Name : constant String := To_String (Info.Name);
+                  begin
+                     case Info.Kind is
+                        when Bool_Kind =>
+                           if Eq /= 0 then
+                              return Fail
+                                ("option --" & Long
+                                 & " does not take a value");
+                           end if;
+                           Bool_Values (Name) := True;
+                        when Str_Kind =>
+                           if Eq /= 0 then
+                              Str_Values (Name) :=
+                                Text (Eq + 1 .. Text'Last);
+                           elsif Arg_Index = Argument_Count then
+                              return Fail
+                                ("option --" & Long
+                                 & " requires a value");
+                           else
+                              Arg_Index := Arg_Index + 1;
+                              Str_Values (Name) := Argument (Arg_Index);
+                           end if;
+                     end case;
+                  end;
+               end;
+            else
+               Source_File_Vector.Append (Arg);
+            end if;
+         end;
+         Arg_Index := Arg_Index + 1;
       end loop;
 
-      return True;
+      if Bool_Values (Help_Option) then
+         Show_Usage;
+         return False;
+      end if;
 
+      return True;
    end Load;
 
    ------------------
@@ -174,7 +258,7 @@ package body Aquarius.Options is
 
    function Report_Files return Boolean is
    begin
-      return AP.Boolean_Value (Report_Files_Option);
+      return Bool_Values (Report_Files_Option);
    end Report_Files;
 
    ---------------
@@ -183,7 +267,7 @@ package body Aquarius.Options is
 
    function Self_Test return Boolean is
    begin
-      return AP.Boolean_Value (Self_Test_Option);
+      return Bool_Values (Self_Test_Option);
    end Self_Test;
 
    --------------------
@@ -192,8 +276,23 @@ package body Aquarius.Options is
 
    function Show_Full_Path return Boolean is
    begin
-      return AP.Boolean_Value (Show_Full_Path_Option);
+      return Bool_Values (Show_Full_Path_Option);
    end Show_Full_Path;
+
+   ----------------
+   -- Show_Usage --
+   ----------------
+
+   procedure Show_Usage is
+      use Ada.Text_IO;
+   begin
+      Put_Line ("Usage: aquarius [options] [files ...]");
+      for Info of Defined_Options loop
+         Put_Line
+           ("  --" & To_String (Info.Long_Option)
+            & "  " & To_String (Info.Usage));
+      end loop;
+   end Show_Usage;
 
    -----------------
    -- Source_File --
@@ -219,7 +318,7 @@ package body Aquarius.Options is
 
    function Start_Class return String is
    begin
-      return AP.String_Value ("start class");
+      return Str_Values (Start_Class_Option);
    end Start_Class;
 
    --------------------------------
@@ -228,7 +327,7 @@ package body Aquarius.Options is
 
    function Tagatha_Trace_Improvements return Boolean is
    begin
-      return AP.Boolean_Value (Tagatha_Trace_Improvements_Option);
+      return Bool_Values (Tagatha_Trace_Improvements_Option);
    end Tagatha_Trace_Improvements;
 
    --------------------------
@@ -237,7 +336,7 @@ package body Aquarius.Options is
 
    function Tagatha_Trace_P_Code return Boolean is
    begin
-      return AP.Boolean_Value (Tagatha_Trace_P_Code_Option);
+      return Bool_Values (Tagatha_Trace_P_Code_Option);
    end Tagatha_Trace_P_Code;
 
    -----------------------------
@@ -246,7 +345,7 @@ package body Aquarius.Options is
 
    function Tagatha_Trace_Transfers return Boolean is
    begin
-      return AP.Boolean_Value (Tagatha_Trace_Transfers_Option);
+      return Bool_Values (Tagatha_Trace_Transfers_Option);
    end Tagatha_Trace_Transfers;
 
 end Aquarius.Options;
