@@ -13,6 +13,7 @@ line_comment       = "--"
 
 .format context_clause new_line_after
 .format declarative_part indented_child
+.format package_declarative_items indented_child
 .format sequence_of_statements indented_child
 .format exception_handler indented_child
 .format record_type_definition new_line_before indent_before outdent_after
@@ -159,13 +160,15 @@ subprogram_body ::=
 
 package_declaration ::= package_specification ';'
 
-package_specification ::= 
+package_specification ::=
     'package' defining_program_unit_name
         [ aspect_specification ] 'is'
-      { basic_declarative_item }
+      package_declarative_items
    [ 'private'
-      { basic_declarative_item } ]
+      package_declarative_items ]
     'end' [ matching_name ]
+
+package_declarative_items ::= { basic_declarative_item }
     
 matching_name ::= < identifier / '.' > | operator_symbol
 

@@ -1,8 +1,31 @@
 with Ada.Containers.Vectors;
 
+with Aquarius.Formats;
+
 with Aquarius.Programs.Arrangements.Logging;
 
 package body Aquarius.Programs.Arrangements.Reformatting is
+
+   function Breakable_Separator (Tree : Program_Tree) return Boolean;
+   --  A separator is only a candidate reflow break point if it carries a
+   --  trailing space or a (soft) new-line rule.  A separator such as the
+   --  '.' in a dotted name has no-space rules on both sides and must never
+   --  be broken, so it is excluded here.
+
+   --------------------------
+   -- Breakable_Separator --
+   --------------------------
+
+   function Breakable_Separator (Tree : Program_Tree) return Boolean is
+      use Aquarius.Formats;
+      Rules : constant Immediate_Rules := Tree.Rules;
+   begin
+      return Tree.Is_Separator
+        and then ((Enabled (Rules.Space_After)
+                   and then not Negative (Rules.Space_After))
+                  or else Enabled (Rules.New_Line_After)
+                  or else Enabled (Rules.Soft_New_Line_After));
+   end Breakable_Separator;
 
    type Reformat_Domain is
       record
@@ -93,7 +116,7 @@ package body Aquarius.Programs.Arrangements.Reformatting is
          Depth : Natural)
       is
       begin
-         if Tree.Is_Separator then
+         if Breakable_Separator (Tree) then
             declare
                use Aquarius.Syntax, Separator_Info_Vectors;
                Syntax : constant Syntax_Tree := Tree.Syntax;

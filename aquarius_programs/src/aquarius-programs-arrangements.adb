@@ -801,13 +801,22 @@ package body Aquarius.Programs.Arrangements is
       Context.Stop_Tree := null;
       Context.Stopped := False;
 
-      New_Line (Context);
+      --  The re-arranged region may already have ended on a fresh line,
+      --  for example when Finish is a separator carrying a new-line rule.
+      --  Only start a new line if it did not, otherwise a blank line is
+      --  inserted before the content that follows.
+      if not Context.Got_New_Line then
+         New_Line (Context);
+      end if;
 
       Context.Need_New_Line := False;
       Context.Got_New_Line  := True;
       Logging.Log (Context, Item, "got new line because of rearrangement");
       Context.Need_Space    := False;
       Context.First_On_Line := True;
+      --  Clear any pending indent-cancel left by a trailing separator, so
+      --  that the content resumed after the re-arranged region is indented.
+      Context.Cancel_Indent := False;
       Context.Previous_Indent := Context.Current_Indent;
       Context.Current_Indent := Current_Indent;
 
