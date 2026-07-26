@@ -192,8 +192,6 @@ key_list ::=
 local_declarations ::=
          'local' [ entity_declaration_list ]
 
-local_entity_declaration_list ::= entity_declaration_list
-
 compound ::=
          { instruction [ ';' ] }
 	 
@@ -432,8 +430,6 @@ operator_expression ::= relation { boolean_operator relation }
 
 attachment_test ::= 'attached' expression [ 'as' identifier ]
    
-member_of ::= 'in' | 'not' 'in'
-
 relation ::=
 	range_expression [ relational_operator range_expression ]
 

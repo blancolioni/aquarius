@@ -69,8 +69,6 @@ library_unit_renaming_declaration ::= package_renaming_declaration
 
 library_unit_body ::= subprogram_body | package_body
 
-subunit ::= 'separate' qualified_reference proper_body
-
 context_item ::= with_clause | use_clause | use_type_clause | pragma_spec
 
 with_clause ::= ['limited'] ['private'] 'with' < withed_unit_name : package_name / ',' > ';'
@@ -169,8 +167,6 @@ package_specification ::=
       { basic_declarative_item } ]
     'end' [ matching_name ]
     
-package_rename ::= 'package' defining_qualified_reference 'renames' qualified_reference ';'
-
 matching_name ::= < identifier / '.' > | operator_symbol
 
 generic_instantiation ::=
@@ -277,19 +273,8 @@ default_name ::= subprogram_name
 
 default_expression ::= expression
 
-block ::=
-      declarative_part
-   'begin'
-        handled_sequence_of_statements
-   'end' [ block_name ]
-
 declarative_part ::= { declarative_item }
 
-representation_clause ::= attribute_definition_clause
-                        | record_representation_clause
-                        | enumeration_representation_clause
-                        | at_clause
-                        
 use_type_clause ::= 'use' 'type' type_indication ';'
 
 subtype_declaration ::= 'subtype' subtype_name 'is' type_indication ';'
@@ -319,11 +304,8 @@ object_declaration ::=
  
 exception_declaration ::= defining_identifier_list ':' exception [ aspect_specification ] ';'
 
-variable_type ::= type_indication [ ( default_value | renaming ) ]
-
 exception ::= 'exception' [ renaming ]
 
-default_value ::= ':=' default_value_expression
 renaming ::= 'renames' object_reference
 
 default_value_expression ::= expression
@@ -709,7 +691,7 @@ discrete_range_or_discriminant ::=
         range |
         < discriminant_selector_name / '|' > '=>' expression
 
-discrete_range ::= discrete_subtype_indication | range
+discriminant_selector_name ::= identifier
 
 discrete_subtype_indication ::= subtype_indication
 
@@ -746,25 +728,6 @@ prefix ::= name
 
 qualified_expression ::=
    name [ ''' (aggregate | '(' expression ')') ]
-
-discriminant_constraint ::=
-   '(' < discriminant_association / ',' > ')'
-
-discriminant_association ::=
-   [ < discriminant_selector_name / '|' > '=>' ] expression
-
-discriminant_selector_name ::= identifier
-
-operator ::= ('*' | '/' | 'mod' | 'rem') |
-             ('+' | '-') |
-             ('>' | '<' | '<=' | '>=' | '/=' | '=') |
-             (('and' [ 'then' ]) | ('or' [ 'else' ]) ) |
-             ('&')
-
-atomic_expression ::= object_reference | numeric_literal | string_literal |
-                      character_literal | 'null' |
-                      parenthesised_expression |
-                      aggregate
 
 parenthesised_expression ::= '(' expression ')'
                            | '(' conditional_expression ')'
@@ -805,9 +768,6 @@ iterated_element_association ::=
 selector_expression ::= selector '=>' expression
                       | selector '=>' '<>'
                       | expression
-
-object_reference_with ::=
-        object_reference 'with'
 
 selector ::= list_of_selector_items | 'others'
 
@@ -873,10 +833,6 @@ type_header ::= 'type' defining_type_name
 
 defining_type_name ::= identifier
 
-procedure_name ::= qualified_reference
-
-function_name ::= qualified_reference
-
 package_name ::= qualified_reference
 
 subprogram_name ::= qualified_reference | operator_symbol
@@ -888,16 +844,12 @@ subtype_name ::= identifier
 
 type_name ::= name
 
-block_name ::= name | operator_symbol
-
 defining_program_unit_name ::= defining_qualified_reference : function_name
 
 generic_procedure_name ::= name
 generic_function_name  ::= name
 
 exception_name ::= name
-
-object_name ::= name
 
 callable_entity_name ::= name
 
