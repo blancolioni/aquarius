@@ -36,7 +36,7 @@ line_comment       = "--"
 .format 'return' soft_new_line space_after
 .format 'then' closing space_after space_before
 .format 'loop' closing space_after space_before
-.format 'is' closing space_after space_before
+.format 'is' closing space_after space_before soft_new_line_after
 
 .format ';' no_space_before no_space_after new_line_after
 .format '.' no_space_before no_space_after
