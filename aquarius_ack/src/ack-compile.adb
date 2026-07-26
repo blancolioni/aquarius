@@ -226,10 +226,6 @@ package body Ack.Compile is
                         (Program_Name => Assembler,
                          Args         => Args);
    begin
-      for Arg of Args loop
-         GNAT.OS_Lib.Free (Arg);
-      end loop;
-
       if Exit_Code /= 0 then
          Ada.Text_IO.Put_Line
            (Ada.Text_IO.Standard_Error,
@@ -245,6 +241,10 @@ package body Ack.Compile is
          Ada.Text_IO.New_Line (Ada.Text_IO.Standard_Error);
 
       end if;
+
+      for Arg of Args loop
+         GNAT.OS_Lib.Free (Arg);
+      end loop;
    end Generate_Object_Code;
 
    -------------------
