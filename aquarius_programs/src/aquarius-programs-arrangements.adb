@@ -603,6 +603,66 @@ package body Aquarius.Programs.Arrangements is
       is (for some C of P.Direct_Children (Skip_Separators => False) =>
             Breakable_Separator (C));
 
+      function Has_Separator_Descendant (P : Program_Tree) return Boolean;
+
+      function Has_Separator_Descendant (P : Program_Tree) return Boolean is
+      begin
+         for C of P.Direct_Children (Skip_Separators => False) loop
+            if Breakable_Separator (C)
+              or else Has_Separator_Descendant (C)
+            then
+               return True;
+            end if;
+         end loop;
+         return False;
+      end Has_Separator_Descendant;
+
+      --  An expression operator node (its grammar rule name ends in
+      --  "_operator": boolean_operator, binary_adding_operator, ...).
+      --  Only these govern the separators of their operands; a soft
+      --  keyword such as 'return' does not, even though it is a sibling
+      --  of the construct whose separators would otherwise be governed.
+      function Is_Operator_Node (P : Program_Tree) return Boolean is
+         Name   : constant String := P.Name;
+         Suffix : constant String := "_operator";
+      begin
+         return Name'Length >= Suffix'Length
+           and then Name (Name'Last - Suffix'Length + 1 .. Name'Last)
+                    = Suffix;
+      end Is_Operator_Node;
+
+      --  A content soft operator (e.g. '+') carries a soft-new-line rule
+      --  but contains no breakable separators of its own.
+      function Content_Soft_Operator (P : Program_Tree) return Boolean
+      is (Is_Operator_Node (P)
+          and then P.Has_Soft_New_Line_Rule_Before
+          and then not Has_Separator_Descendant (P));
+
+      --  A separator is "governed" by a shallower content soft operator
+      --  when one of its ancestors has such an operator as a direct
+      --  child: the operator breaks and the separator sits within one of
+      --  its operands, so the separator should not also break.  This
+      --  keeps, for example, the commas of Foo (A, B) intact when the
+      --  enclosing expression Foo (A, B) + Bar (C, D) breaks at '+',
+      --  while still breaking the commas of a plain call Arr (I + J, K).
+      function Governed_By_Content_Soft (S : Program_Tree) return Boolean;
+
+      function Governed_By_Content_Soft (S : Program_Tree) return Boolean is
+         use type Aquarius.Trees.Tree;
+         Node : Program_Tree := S;
+      begin
+         while Node /= null and then Node /= Item loop
+            Node := Program_Tree (Node.Parent);
+            exit when Node = null;
+            for C of Node.Direct_Children (Skip_Separators => False) loop
+               if Content_Soft_Operator (C) then
+                  return True;
+               end if;
+            end loop;
+         end loop;
+         return False;
+      end Governed_By_Content_Soft;
+
       --  A content soft break (an operator or a '=>') is suppressed when
       --  it sits inside an element of a separated list, because that
       --  list's separators break instead, giving each element its own
@@ -698,6 +758,7 @@ package body Aquarius.Programs.Arrangements is
             if Program.Is_Separator then
                if not Cancel_Separator and then Separator /= null
                  and then Program.Syntax = Separator.Syntax
+                 and then not Governed_By_Content_Soft (Program)
                then
                   if Separator_Target_Level = 0 then
                      Separator_Target_Level := Level;
@@ -746,10 +807,16 @@ package body Aquarius.Programs.Arrangements is
                   end if;
                end if;
             elsif not Inside_Separated_List (Program)
-              and then (Program.Has_Soft_New_Line_Rule_Before
+              and then ((Program.Has_Soft_New_Line_Rule_Before
+                         and then not Has_Separator_Descendant (Program))
                         or else Had_Soft_New_Line_After)
             then
-               --  A candidate soft break point.  Remember the last
+               --  A candidate soft break point.  Only content soft breaks
+               --  (operators and soft-after tokens) are greedy candidates;
+               --  a container soft break on a bracketed list moves its
+               --  opening bracket only as an adjunct to its separators
+               --  breaking (see Fire_Container), never on its own here.
+               --  Remember the last
                --  candidate whose preceding content still fits within the
                --  margin; when a later terminal overflows we break here.
                --  Recording the last *fitting* candidate (rather than the

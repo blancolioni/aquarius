@@ -27,6 +27,61 @@ package body Aquarius.Programs.Arrangements.Reformatting is
                   or else Enabled (Rules.Soft_New_Line_After));
    end Breakable_Separator;
 
+   function Has_Separator_Descendant (Tree : Program_Tree) return Boolean;
+   --  True if Tree has a breakable separator anywhere in its subtree.
+
+   function Has_Separator_Descendant (Tree : Program_Tree) return Boolean is
+   begin
+      for C of Tree.Direct_Children (Skip_Separators => False) loop
+         if Breakable_Separator (C)
+           or else Has_Separator_Descendant (C)
+         then
+            return True;
+         end if;
+      end loop;
+      return False;
+   end Has_Separator_Descendant;
+
+   function Governed_By_Content_Soft
+     (Tree : Program_Tree;
+      Top  : Program_Tree) return Boolean;
+   --  True when an ancestor of Tree (up to Top) has a direct child that
+   --  carries a soft-new-line rule but no separators of its own (a content
+   --  soft operator such as '+').  Such a separator sits within an operand
+   --  of a breaking operator and must not itself break; see the matching
+   --  logic in Aquarius.Programs.Arrangements.Re_Arrange.
+
+   function Governed_By_Content_Soft
+     (Tree : Program_Tree;
+      Top  : Program_Tree) return Boolean
+   is
+      Node : Program_Tree := Tree;
+
+      function Is_Operator_Node (P : Program_Tree) return Boolean is
+         Name   : constant String := P.Name;
+         Suffix : constant String := "_operator";
+      begin
+         return Name'Length >= Suffix'Length
+           and then Name (Name'Last - Suffix'Length + 1 .. Name'Last)
+                    = Suffix;
+      end Is_Operator_Node;
+
+   begin
+      while Node /= null and then Node /= Top loop
+         Node := Program_Tree (Node.Parent);
+         exit when Node = null;
+         for C of Node.Direct_Children (Skip_Separators => False) loop
+            if Is_Operator_Node (C)
+              and then C.Has_Soft_New_Line_Rule_Before
+              and then not Has_Separator_Descendant (C)
+            then
+               return True;
+            end if;
+         end loop;
+      end loop;
+      return False;
+   end Governed_By_Content_Soft;
+
    type Reformat_Domain is
       record
          Top, Start, Finish : Program_Tree;
@@ -61,6 +116,31 @@ package body Aquarius.Programs.Arrangements.Reformatting is
      (Domain     : Reformat_Domain;
       Separators : Separator_Info_Vectors.Vector);
 
+   procedure Fire_Container (Sep : Program_Tree; Top : Program_Tree);
+   --  When a separator breaks, move the opening bracket of its enclosing
+   --  list onto its own line by setting the soft-new-line rule on the
+   --  nearest ancestor (bounded by Top) that carries one.
+
+   --------------------
+   -- Fire_Container --
+   --------------------
+
+   procedure Fire_Container (Sep : Program_Tree; Top : Program_Tree) is
+      Container : Program_Tree := Program_Tree (Sep.Parent);
+   begin
+      while Container /= null
+        and then Container /= Top
+        and then not Container.Has_Soft_New_Line_Rule_Before
+      loop
+         Container := Program_Tree (Container.Parent);
+      end loop;
+      if Container /= null
+        and then Container.Has_Soft_New_Line_Rule_Before
+      then
+         Container.Set_Soft_New_Line;
+      end if;
+   end Fire_Container;
+
    -------------------------------
    -- Apply_Separator_New_Lines --
    -------------------------------
@@ -87,6 +167,7 @@ package body Aquarius.Programs.Arrangements.Reformatting is
            and then Depth = Separators.First_Element.Depth
          then
             Tree.Separator_NL := True;
+            Fire_Container (Tree, Domain.Top);
          end if;
       end Apply;
 
@@ -116,7 +197,9 @@ package body Aquarius.Programs.Arrangements.Reformatting is
          Depth : Natural)
       is
       begin
-         if Breakable_Separator (Tree) then
+         if Breakable_Separator (Tree)
+           and then not Governed_By_Content_Soft (Tree, Domain.Top)
+         then
             declare
                use Aquarius.Syntax, Separator_Info_Vectors;
                Syntax : constant Syntax_Tree := Tree.Syntax;
