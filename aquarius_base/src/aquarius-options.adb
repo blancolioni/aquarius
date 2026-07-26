@@ -224,15 +224,16 @@ package body Aquarius.Options is
                            Bool_Values (Name) := True;
                         when Str_Kind =>
                            if Eq /= 0 then
-                              Str_Values (Name) :=
-                                Text (Eq + 1 .. Text'Last);
+                              Str_Values.Replace
+                                (Name, Text (Eq + 1 .. Text'Last));
                            elsif Arg_Index = Argument_Count then
                               return Fail
                                 ("option --" & Long
                                  & " requires a value");
                            else
                               Arg_Index := Arg_Index + 1;
-                              Str_Values (Name) := Argument (Arg_Index);
+                              Str_Values.Replace
+                                (Name, Argument (Arg_Index));
                            end if;
                      end case;
                   end;
