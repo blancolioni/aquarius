@@ -1,31 +1,31 @@
 top_level ::= module
 case_sensitive = true
 
-ident         ::= standard ada_identifier
+ident         ::= .standard ada_identifier
 CharConstant  ::= !('[.]')|(\d+X)!
 integer       ::= !(\d+)|([0-9a-fA-F]+H)!
-string        ::= standard backslash_escaped_string
-delimiter     ::= delimiters "(),;[]^."
+string        ::= .standard backslash_escaped_string
+delimiter     ::= .delimiters "(),;[]^."
 
 block_comment_start = "(*"
  block_comment_end   = "*)"
 
-format ';' no_space_before new_line_after
-format '(' space_before no_space_after
-format ')' no_space_before space_after
-format ',' no_space_before space_after
-format '.' no_space_before no_space_after
-format '~' no_space_after
-format '[' no_space_before no_space_after
-format ']' no_space_before
-format ':=' space_before space_after
-format '{' no_space_after
-format '}' no_space_before
+.format ';' no_space_before new_line_after
+.format '(' space_before no_space_after
+.format ')' no_space_before space_after
+.format ',' no_space_before space_after
+.format '.' no_space_before no_space_after
+.format '~' no_space_after
+.format '[' no_space_before no_space_after
+.format ']' no_space_before
+.format ':=' space_before space_after
+.format '{' no_space_after
+.format '}' no_space_before
 
-format ConstantDeclaration indented_child
-format TypeDeclaration indented_child
-format VariableDeclaration indented_child
-format StatementSequence indented_child
+.format ConstantDeclaration indented_child
+.format TypeDeclaration indented_child
+.format VariableDeclaration indented_child
+.format StatementSequence indented_child
 
 qualident ::= [ident '.'] ident
 identdef ::= ident [ '*' ]

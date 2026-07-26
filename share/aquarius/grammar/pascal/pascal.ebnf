@@ -1,26 +1,26 @@
 top_level ::= program
 case_sensitive = false
 
-identifier         ::= standard ada_identifier
-numeric_literal    ::= standard ada_numeric_literal
-character_literal  ::= standard ada_character_literal
-string_literal     ::= standard backslash_escaped_string
-delimiter          ::= delimiters "(),;[]^."
+identifier         ::= .standard ada_identifier
+numeric_literal    ::= .standard ada_numeric_literal
+character_literal  ::= .standard ada_character_literal
+string_literal     ::= .standard backslash_escaped_string
+delimiter          ::= .delimiters "(),;[]^."
 
 block_comment_start = "(*"
 block_comment_end   = "*)"
 
-format ';' no_space_before new_line_after
-format '(' space_before no_space_after
-format ')' no_space_before space_after
-format ',' no_space_before space_after
-format '.' no_space_before no_space_after
+.format ';' no_space_before new_line_after
+.format '(' space_before no_space_after
+.format ')' no_space_before space_after
+.format ',' no_space_before space_after
+.format '.' no_space_before no_space_after
 
-format constant_definition indented_child
-format type_definition indented_child
-format variable_declaration indented_child
-format statement indented_child
-format 'end' new_line_before
+.format constant_definition indented_child
+.format type_definition indented_child
+.format variable_declaration indented_child
+.format statement indented_child
+.format 'end' new_line_before
 
 program ::= program_heading ';' program_block '.'
 

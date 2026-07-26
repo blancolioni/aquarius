@@ -2,53 +2,53 @@ top_level ::= compilation_unit
 
 case_sensitive = false
 
-identifier         ::= standard ada_identifier
-numeric_literal    ::= standard ada_numeric_literal
-character_literal  ::= standard ada_character_literal
-string_literal     ::= standard ada_string_literal
-delimiter          ::= delimiters "&()+,;|@[]"
-symbol             ::= standard ada_symbol
+identifier         ::= .standard ada_identifier
+numeric_literal    ::= .standard ada_numeric_literal
+character_literal  ::= .standard ada_character_literal
+string_literal     ::= .standard ada_string_literal
+delimiter          ::= .delimiters "&()+,;|@[]"
+symbol             ::= .standard ada_symbol
 
 line_comment       = "--"
 
-format context_clause new_line_after
-format declarative_part indented_child
-format sequence_of_statements indented_child
-format exception_handler indented_child
-format record_type_definition new_line_before indent_before outdent_after
-format record_component_list indented_child
-format formal_part soft_new_line
-format actual_argument_list soft_new_line
-format default_value_expression soft_new_line
-format type_definition soft_new_line
-format 'generic' new_line_after
-format generic_formal_parameter_list indented_child
-format interface_inheritance soft_new_line
-format new_generic_package soft_new_line_before
-format generic_actual_part soft_new_line_before
-format boolean_operator soft_new_line
-format relational_operator soft_new_line
-format binary_adding_operator soft_new_line
-format multiplying_operator soft_new_line
-format array_type_definition soft_new_line
+.format context_clause new_line_after
+.format declarative_part indented_child
+.format sequence_of_statements indented_child
+.format exception_handler indented_child
+.format record_type_definition new_line_before indent_before outdent_after
+.format record_component_list indented_child
+.format formal_part soft_new_line
+.format actual_argument_list soft_new_line
+.format default_value_expression soft_new_line
+.format type_definition soft_new_line
+.format 'generic' new_line_after
+.format generic_formal_parameter_list indented_child
+.format interface_inheritance soft_new_line
+.format new_generic_package soft_new_line_before
+.format generic_actual_part soft_new_line_before
+.format boolean_operator soft_new_line
+.format relational_operator soft_new_line
+.format binary_adding_operator soft_new_line
+.format multiplying_operator soft_new_line
+.format array_type_definition soft_new_line
 
-format 'return' soft_new_line space_after
-format 'then' closing space_after space_before
-format 'loop' closing space_after space_before
-format 'is' closing space_after space_before
+.format 'return' soft_new_line space_after
+.format 'then' closing space_after space_before
+.format 'loop' closing space_after space_before
+.format 'is' closing space_after space_before
 
-format ';' no_space_before no_space_after new_line_after
-format '.' no_space_before no_space_after
-format '(' space_before no_space_after
-format ')' no_space_before space_after
-format '[' space_before no_space_after
-format ']' no_space_before space_after
-format ',' no_space_before space_after
-format ''' no_space_before no_space_after
-format '=>' soft_new_line_after
-format 'with' soft_new_line_after space_after space_before
-format 'of' soft_new_line_before space_after space_before
-format ':' space_after space_before
+.format ';' no_space_before no_space_after new_line_after
+.format '.' no_space_before no_space_after
+.format '(' space_before no_space_after
+.format ')' no_space_before space_after
+.format '[' space_before no_space_after
+.format ']' no_space_before space_after
+.format ',' no_space_before space_after
+.format ''' no_space_before no_space_after
+.format '=>' soft_new_line_after
+.format 'with' soft_new_line_after space_after space_before
+.format 'of' soft_new_line_before space_after space_before
+.format ':' space_after space_before
 
 compilation_unit ::= context_clause library_item
                    

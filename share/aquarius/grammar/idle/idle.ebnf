@@ -1,22 +1,22 @@
 top_level ::= package
 case_sensitive = false
 
-identifier         ::= standard ada_identifier
-numeric_literal    ::= standard ada_numeric_literal
-character_literal  ::= standard ada_character_literal
-string_literal     ::= standard backslash_escaped_string
-delimiter          ::= delimiters "(),;[]^."
+identifier         ::= .standard ada_identifier
+numeric_literal    ::= .standard ada_numeric_literal
+character_literal  ::= .standard ada_character_literal
+string_literal     ::= .standard backslash_escaped_string
+delimiter          ::= .delimiters "(),;[]^."
 
 line_comment = "--"
 
-format '(' space_before no_space_after
-format ')' no_space_before space_after
-format ';' no_space_before new_line_after
-format ':' space_before space_after
-format ',' no_space_before space_after
-format '.' no_space_before no_space_after
+.format '(' space_before no_space_after
+.format ')' no_space_before space_after
+.format ';' no_space_before new_line_after
+.format ':' space_before space_after
+.format ',' no_space_before space_after
+.format '.' no_space_before no_space_after
 
-format declaration_list indented_child
+.format declaration_list indented_child
 
 package ::= interface_declaration
 
