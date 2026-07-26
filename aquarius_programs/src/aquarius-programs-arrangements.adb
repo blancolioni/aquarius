@@ -384,9 +384,24 @@ package body Aquarius.Programs.Arrangements is
       then
          Context.Current_Line := Context.Current_Line + 1;
          declare
-            Align_With : constant Program_Tree :=
-              Program_Tree (Item.Parent.First_Leaf);
+            Parent     : constant Program_Tree :=
+              Program_Tree (Item.Parent);
+            --  Align continuation lines with the first element of the
+            --  separated list (the child immediately before the first
+            --  separator), rather than with the opening bracket.  For a
+            --  list with no leading bracket the first element is the first
+            --  leaf, so that remains the default.
+            Align_With : Program_Tree :=
+              Program_Tree (Parent.First_Leaf);
          begin
+            for I in 1 .. Parent.Child_Count loop
+               if Parent.Program_Child (I).Is_Separator then
+                  if I > 1 then
+                     Align_With := Parent.Program_Child (I - 1);
+                  end if;
+                  exit;
+               end if;
+            end loop;
             Context.Current_Column := Align_With.Start_Column;
          end;
          Context.Got_New_Line  := True;
@@ -506,13 +521,14 @@ package body Aquarius.Programs.Arrangements is
      (Context : in out Arrangement_Context)
    is
       use Aquarius.Locations;
+      Target : constant Column_Index :=
+                 Context.Current_Indent + Context.Soft_Indent;
    begin
-      if Context.Current_Column < Context.Current_Indent then
+      if Context.Current_Column < Target then
          Context.Current_Position :=
            Context.Current_Position
-             + Location_Offset (Context.Current_Indent
-                                - Context.Current_Column);
-         Context.Current_Column := Context.Current_Indent;
+             + Location_Offset (Target - Context.Current_Column);
+         Context.Current_Column := Target;
       end if;
    end Indent;
 
@@ -579,6 +595,11 @@ package body Aquarius.Programs.Arrangements is
       Applied_Separator : Boolean := False;
       Cancel_Separator  : Boolean := False;
       Separator_Level   : Natural := 0;
+      --  Level of the shallowest separator that matches Separator's syntax.
+      --  Only separators at this level are broken, so that (e.g.) the commas
+      --  of an actual argument list break while the commas of a nested
+      --  aggregate argument, which are deeper, do not.
+      Separator_Target_Level : Natural := 0;
 
       Partial_Length   : Column_Count := Context.Current_Indent;
       New_Line_Indent  : constant Column_Index :=
@@ -639,35 +660,67 @@ package body Aquarius.Programs.Arrangements is
                if not Cancel_Separator and then Separator /= null
                  and then Program.Syntax = Separator.Syntax
                then
-                  Logging.Log (Context, Program, "setting separator new line");
-                  Program.Separator_NL := True;
-                  Partial_Length := New_Line_Indent;
-                  Last_Soft_New_Line := null;
-                  Applied_Separator := True;
+                  if Separator_Target_Level = 0 then
+                     Separator_Target_Level := Level;
+
+                     --  When the separators of a list break, also break
+                     --  before the list itself if it carries a
+                     --  soft-new-line rule, so that a bracketed list moves
+                     --  its opening bracket onto its own line, e.g.
+                     --     Do_Something
+                     --       (First, Second, ...)
+                     --  The separator's immediate parent is often an
+                     --  anonymous repeat node, so walk up to the nearest
+                     --  ancestor (bounded by the re-arrangement root) that
+                     --  actually carries the soft-new-line rule.
+                     declare
+                        use type Aquarius.Trees.Tree;
+                        Container : Program_Tree :=
+                          Program_Tree (Program.Parent);
+                     begin
+                        while Container /= null
+                          and then Container /= Item
+                          and then not
+                            Container.Has_Soft_New_Line_Rule_Before
+                        loop
+                           Container := Program_Tree (Container.Parent);
+                        end loop;
+                        if Container /= null
+                          and then Container.Has_Soft_New_Line_Rule_Before
+                        then
+                           Container.Set_Soft_New_Line;
+                        end if;
+                     end;
+                  end if;
+
+                  if Level = Separator_Target_Level then
+                     Logging.Log
+                       (Context, Program, "setting separator new line");
+                     Program.Separator_NL := True;
+                     Partial_Length := New_Line_Indent;
+                     Last_Soft_New_Line := null;
+                     Applied_Separator := True;
+                  else
+                     Logging.Log
+                       (Context, Program,
+                        "skipping deeper separator at level" & Level'Img);
+                  end if;
                end if;
             elsif (Program.Has_Soft_New_Line_Rule_Before
                    or else Had_Soft_New_Line_After)
             then
-               declare
-                  New_Length : constant Column_Count :=
-                                 Program.End_Column
-                                   - Last_Column_Index
-                                 + Partial_Length;
-               begin
-                  if New_Length > Context.Right_Margin then
-                     Logging.Log (Context, Program, "setting last soft new line");
-                     Last_Soft_New_Line := Program;
-                     Last_Soft_Column := Partial_Length;
-                     Last_Soft_Level := Level;
-                  else
-                     Logging.Log (Context, Program,
-                          "ignoring soft new line because line length is"
-                          & New_Length'Image);
-                  end if;
-               end;
-
---                 Program.Set_Soft_New_Line;
---                 Partial_Length := New_Line_Indent;
+               --  A candidate soft break point.  Remember the last
+               --  candidate whose preceding content still fits within the
+               --  margin; when a later terminal overflows we break here.
+               --  Recording the last *fitting* candidate (rather than the
+               --  first overflowing one) keeps the first line within the
+               --  margin instead of one token past it.
+               if Partial_Length <= Context.Right_Margin then
+                  Logging.Log (Context, Program, "candidate soft new line");
+                  Last_Soft_New_Line := Program;
+                  Last_Soft_Column   := Partial_Length;
+                  Last_Soft_Level    := Level;
+               end if;
             end if;
 
             Had_Soft_New_Line_After := False;
