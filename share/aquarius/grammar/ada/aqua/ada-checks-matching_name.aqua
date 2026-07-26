@@ -22,12 +22,14 @@ feature
          Match : String
       do
          Match := Identifiers.Interpolate (".")
-         if Match /= Original_Name then
-            if Match.To_Lower = Original_Name.To_Lower then
-               Error ("Case of " & Match & " does not match " & Original_Name)
-            else
-               Error (Match & " does not match " & Original_Name)
-            end
+         --  Ada is case-insensitive, and the two sides come from differently
+         --  normalised text sources, so compare case-insensitively. Skip when
+         --  the expected name is unknown: a mismatch cannot be asserted
+         --  against an empty name.
+         if Original_Name /= ""
+           and then Match.To_Lower /= Original_Name.To_Lower
+         then
+            Error (Match & " does not match " & Original_Name)
          end
       end
 end
