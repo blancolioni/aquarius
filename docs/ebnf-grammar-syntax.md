@@ -9,14 +9,17 @@ of truth; this doc describes what it accepts.
 
 ## File shape
 
-A file is a flat list of **definitions**, one per logical line. Four kinds:
+A file is a flat list of **definitions**, one per logical line. Three kinds:
 
 | Kind | Form | Purpose |
 |------|------|---------|
-| value-definition  | `name = expr`            | set a scalar property |
+| value-definition  | `name = expr`            | set a configuration property |
 | rule-definition   | `name ::= body`          | define a token or a syntax rule |
-| format-definition | `format target kw...`    | layout/pretty-print hints |
-| xref-definition   | `xref name target`       | cross-reference declaration |
+| format-definition | `.format target kw...`   | layout/pretty-print hints |
+
+The reader has no reserved words: the only keywords (`.format`, `.standard`,
+`.delimiters`) carry a leading `.` so they never collide with a rule or token
+named `format`, `standard`, etc. Everything else is a sigil.
 
 Comments are Ada-style `--` to end of line (the `.ebnf` file's own comment).
 
@@ -33,16 +36,20 @@ Comments are Ada-style `--` to end of line (the `.ebnf` file's own comment).
 
 ## Value definitions (`name = expr`)
 
-`expr` is a string, identifier, or integer. Recognised properties:
+`expr` is a string, identifier, or integer. `name` is a plain identifier drawn
+from a fixed set of configuration settings; an unrecognised name is an **error**
+(`unknown setting: <name>`). Recognised settings:
 
 ```ebnf
 case_sensitive       = false          -- keyword/identifier case folding
 line_comment         = "--"           -- start of line comment
 block_comment_start  = "(*"
 block_comment_end    = "*)"
+continuation         = "\"            -- single-char line-continuation
 ```
 
-The start symbol is a **rule**-definition named `top_level`:
+The start symbol is simply the **first** rule-definition in the file. Its name
+is arbitrary — `top_level` is a convention, nothing relies on it:
 
 ```ebnf
 top_level ::= compilation_unit
@@ -53,18 +60,18 @@ top_level ::= compilation_unit
 Rule-definitions whose body is not plain syntax define lexical classes:
 
 ```ebnf
-identifier ::= standard ada_identifier      -- use a built-in lexer
+identifier ::= .standard ada_identifier     -- use a built-in lexer
 integer    ::= !\d+!                         -- regex body
 string     ::= !\x22[^\x22]*\x22!
-delimiter  ::= delimiters "{},=:"            -- each char is its own token
+delimiter  ::= .delimiters "{},=:"           -- each char is its own token
 ```
 
 Three token-body forms:
 
-- **`standard <name>`** — a built-in lexer. Available:
+- **`.standard <name>`** — a built-in lexer. Available:
   `ada_identifier`, `ada_numeric_literal`, `ada_character_literal`,
   `ada_string_literal`, `ada_symbol`, `ada_comment`.
-- **`delimiters "<chars>"`** — declares each character in the string as a
+- **`.delimiters "<chars>"`** — declares each character in the string as a
   single-character delimiter token.
 - **regex** (`!...!`) — see below.
 
@@ -131,29 +138,17 @@ with_clause ::= 'with' < withed_unit_name : package_name / ',' > ';'
 Here each child parses as `package_name` but is labelled `withed_unit_name` in
 the tree.
 
-### `when` guard
-
-A sequence element may be guarded by a precondition:
-
-```ebnf
-some_rule ::= alternative when flag_a flag_b
-```
-
-`when` is followed by a sequence of identifiers; the alternative is only viable
-when those hold (checked via the parser's `Check_Precondition`). No example in
-the shipped grammars, but the reader accepts it.
-
 ## Format definitions
 
 Layout hints for the pretty-printer. Target is a terminal (`';'`) or a rule
 name; followed by one or more format keywords:
 
 ```ebnf
-format context_clause new_line_after
-format declarative_part indented_child
-format ';' no_space_before no_space_after new_line_after
-format '(' space_before no_space_after
-format ':' space_after space_before
+.format context_clause new_line_after
+.format declarative_part indented_child
+.format ';' no_space_before no_space_after new_line_after
+.format '(' space_before no_space_after
+.format ':' space_after space_before
 ```
 
 Keywords in use across the shipped grammars:
@@ -163,33 +158,22 @@ Keywords in use across the shipped grammars:
 · `soft_new_line_after` · `indent_before` · `outdent_after` · `indented_child` ·
 `closing`
 
-## xref definitions
-
-```ebnf
-xref <identifier> <terminal-or-rule>
-```
-
-Declares a cross-reference. Accepted by the reader; not exercised by the
-shipped grammars.
-
 ## Grammar-of-the-grammar (summary)
 
 Distilled from the bootstrap reader:
 
 ```ebnf
 source-file      ::= { definition }
-definition       ::= value-definition | format-definition
-                   | xref-definition  | rule-definition
+definition       ::= value-definition | format-definition | rule-definition
 value-definition ::= identifier '=' ( string | identifier | integer )
-format-definition::= 'format' terminal-or-rule { identifier }
-xref-definition  ::= 'xref' identifier terminal-or-rule
+format-definition::= '.format' terminal-or-rule { identifier }
 rule-definition  ::= identifier '::=' definition-body
 definition-body  ::= standard-body | delimiter-body
                    | regex | syntax-body
-standard-body    ::= 'standard' identifier
-delimiter-body   ::= 'delimiters' string
+standard-body    ::= '.standard' identifier
+delimiter-body   ::= '.delimiters' string
 syntax-body      ::= sequence-of-rules { '|' sequence-of-rules }
-sequence-of-rules::= { rule [ 'when' { identifier } ] }
+sequence-of-rules::= { rule }
 rule             ::= '{' repeater '}'          -- repeat 0+
                    | '<' repeater '>'          -- repeat 1+
                    | '[' sequence-of-rules ']' -- optional
@@ -207,16 +191,16 @@ terminal-or-rule ::= identifier | terminal
 top_level ::= json_value
 case_sensitive = false
 
-format ':' no_space_before
-format ',' no_space_before new_line_after
-format '{' new_line_after
-format '}' new_line_before
-format component_value indent_before outdent_after
+.format ':' no_space_before
+.format ',' no_space_before new_line_after
+.format '{' new_line_after
+.format '}' new_line_before
+.format component_value indent_before outdent_after
 
 identifier ::= !\l[\w_]*!
 integer    ::= !\d+!
 string     ::= !\x22[^\x22]*\x22!
-delimiter  ::= delimiters "{},=:"
+delimiter  ::= .delimiters "{},=:"
 
 json_value      ::= primitive_value | array_value | object_value
 primitive_value ::= null_value | boolean_value | integer_value | string_value

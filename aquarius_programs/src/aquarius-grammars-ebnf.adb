@@ -50,7 +50,6 @@ package body Aquarius.Grammars.EBNF is
          New_Choice (Grammar.Frame, Internal),
          [Grammar.Reference_Name (Internal, "value-definition"),
           Grammar.Reference_Name (Internal, "format-definition"),
-          Grammar.Reference_Name (Internal, "xref-definition"),
           Grammar.Reference_Name (Internal, "rule-definition")]);
       Add_Non_Terminal
         (Grammar, "value-definition",
@@ -61,16 +60,10 @@ package body Aquarius.Grammars.EBNF is
       Add_Non_Terminal
         (Grammar, "format-definition",
          New_Sequence (Grammar.Frame, Internal),
-         [Grammar.Reference_Terminal (Internal, "format"),
+         [Grammar.Reference_Terminal (Internal, ".format"),
           Grammar.Reference_Name (Internal, "terminal-or-rule"),
           Grammar.Reference_Name (Internal, "list-of-formats",
                           Indent_Rule => True)]);
-      Add_Non_Terminal
-        (Grammar, "xref-definition",
-         New_Sequence (Grammar.Frame, Internal),
-         [Grammar.Reference_Terminal (Internal, "xref"),
-          Grammar.Reference_Name (Internal, "identifier"),
-          Grammar.Reference_Name (Internal, "terminal-or-rule")]);
 
       Add_Non_Terminal (Grammar, "terminal-or-rule",
                         New_Choice (Grammar.Frame, Internal),
@@ -103,7 +96,7 @@ package body Aquarius.Grammars.EBNF is
 
       Add_Non_Terminal (Grammar, "standard-body",
                         New_Sequence (Grammar.Frame, Internal),
-                        [Grammar.Reference_Terminal (Internal, "standard"),
+                        [Grammar.Reference_Terminal (Internal, ".standard"),
                          Grammar.Reference_Name (Internal, "identifier")]);
 
       Add_Non_Terminal (Grammar, "regular-expression-body",
@@ -112,7 +105,7 @@ package body Aquarius.Grammars.EBNF is
 
       Add_Non_Terminal (Grammar, "delimiter-body",
                         New_Sequence (Grammar.Frame, Internal),
-                        [Grammar.Reference_Terminal (Internal, "delimiters"),
+                        [Grammar.Reference_Terminal (Internal, ".delimiters"),
                          Grammar.Reference_Name (Internal, "string")]);
 
       Add_Non_Terminal
@@ -124,18 +117,7 @@ package body Aquarius.Grammars.EBNF is
 
       Add_Non_Terminal (Grammar, "sequence-of-rules",
                         New_Repeat (Grammar.Frame, Internal, False, null),
-                        [Grammar.Reference_Name (Internal, "rule"),
-                         Grammar.Reference_Name (Internal, "optional_when")]);
-
-      Add_Non_Terminal (Grammar, "optional_when",
-                        New_Optional (Grammar.Frame, Internal),
-                        [Grammar.Reference_Terminal (Internal, "when"),
-                         Grammar.Reference_Name (Internal,
-                                         "sequence_of_identifiers")]);
-
-      Add_Non_Terminal (Grammar, "sequence_of_identifiers",
-                        New_Repeat (Grammar.Frame, Internal, False, null),
-                        Grammar.Reference_Name (Internal, "identifier"));
+                        Grammar.Reference_Name (Internal, "rule"));
 
       Add_Non_Terminal (Grammar, "rule",
                         New_Choice (Grammar.Frame, Internal),

@@ -2,39 +2,39 @@ top_level ::= class_declaration
 case_sensitive = false
 
 identifier         ::= !\l[\w]*!
-integer            ::= standard ada_numeric_literal
+integer            ::= .standard ada_numeric_literal
 real               ::= ![0-9]+\.[0-9]+([eE][0-9]+)?!
 character_constant ::= !\'[.]\'!
-string_constant     ::= standard ada_string_literal
+string_constant     ::= .standard ada_string_literal
 
 line_comment = "--"
 
-format '[' space_before no_space_after
-format ']' no_space_before space_after
-format '(' space_before no_space_after
-format ')' no_space_before space_after
-format ';' no_space_before new_line_after
-format ':' space_before space_after
-format ',' no_space_before space_after
-format '.' no_space_before no_space_after
+.format '[' space_before no_space_after
+.format ']' no_space_before space_after
+.format '(' space_before no_space_after
+.format ')' no_space_before space_after
+.format ';' no_space_before new_line_after
+.format ':' space_before space_after
+.format ',' no_space_before space_after
+.format '.' no_space_before no_space_after
 
-format 'end' new_line_before
-format 'local' new_line_before
+.format 'end' new_line_before
+.format 'local' new_line_before
 
-format note_list indented_child
-format inherit_list indented_child
-format feature_adaptation indented_child
-format feature_declaration_list indented_child
-format new_export_list indented_child
-format attribute indented_child
-format deferred new_line_after
-format assertion_clause indented_child
-format entity_declaration_list indented_child
-format compound indented_child
-format instruction new_line_before
-format until_expression indented_child
+.format note_list indented_child
+.format inherit_list indented_child
+.format feature_adaptation indented_child
+.format feature_declaration_list indented_child
+.format new_export_list indented_child
+.format attribute indented_child
+.format deferred new_line_after
+.format assertion_clause indented_child
+.format entity_declaration_list indented_child
+.format compound indented_child
+.format instruction new_line_before
+.format until_expression indented_child
 
-format feature_declaration new_line_before
+.format feature_declaration new_line_before
 
 class_declaration ::=
    [ notes ]

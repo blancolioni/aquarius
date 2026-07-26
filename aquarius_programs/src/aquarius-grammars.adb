@@ -229,7 +229,7 @@ package body  Aquarius.Grammars is
          end if;
          Grammar.Continuation := Value (Value'First);
       else
-         Aquarius.Errors.Warning
+         Aquarius.Errors.Error
            (Declaration,
             "unknown setting: " & Name);
       end if;

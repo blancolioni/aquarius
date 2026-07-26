@@ -3,27 +3,27 @@ top_level ::= unit
 case_sensitive = false
 
 identifier      ::= !\l[\w]*!
-integer         ::= standard ada_numeric_literal
-string_constant ::= standard ada_string_literal
-delimiter       ::= delimiters "()[]+,;&|"
-symbol          ::= standard ada_symbol
+integer         ::= .standard ada_numeric_literal
+string_constant ::= .standard ada_string_literal
+delimiter       ::= .delimiters "()[]+,;&|"
+symbol          ::= .standard ada_symbol
 
 line_comment = "--"
 
-format '(' space_before no_space_after
-format ')' no_space_before space_after
-format '[' space_before no_space_after
-format ']' no_space_before space_after
-format ',' no_space_before space_after
-format ':' space_before space_after
-format ';' no_space_before new_line_after
-format 'is' closing space_before new_line_after
-format 'then' closing space_before space_after
-format 'do' closing space_before space_after
-format 'end' new_line_before
-format routine new_line_before
-format statement new_line_before
-format statement_list indented_child
+.format '(' space_before no_space_after
+.format ')' no_space_before space_after
+.format '[' space_before no_space_after
+.format ']' no_space_before space_after
+.format ',' no_space_before space_after
+.format ':' space_before space_after
+.format ';' no_space_before new_line_after
+.format 'is' closing space_before new_line_after
+.format 'then' closing space_before space_after
+.format 'do' closing space_before space_after
+.format 'end' new_line_before
+.format routine new_line_before
+.format statement new_line_before
+.format statement_list indented_child
 
 unit ::= { routine } { data_item }
 

@@ -1,16 +1,16 @@
 top_level ::= json_value
 case_sensitive = false
 
-format ':' no_space_before
-format ',' no_space_before new_line_after
-format '{' new_line_after
-format '}' new_line_before
-format component_value indent_before outdent_after
+.format ':' no_space_before
+.format ',' no_space_before new_line_after
+.format '{' new_line_after
+.format '}' new_line_before
+.format component_value indent_before outdent_after
 
 identifier ::= !\l[\w_]*!
 integer    ::= !\d+!
 string     ::= !\x22[^\x22]*\x22!
-delimiter  ::= delimiters "{},=:"
+delimiter  ::= .delimiters "{},=:"
 
 json_value ::= primitive_value | array_value | object_value
 
