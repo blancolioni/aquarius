@@ -1,8 +1,0 @@
-deferred class
-    Pascal.Has_Ast
-
-feature
-
-   Tree : Ast
-
-end
