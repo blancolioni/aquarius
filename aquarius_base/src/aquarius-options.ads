@@ -5,6 +5,8 @@ package Aquarius.Options is
    function Start_Class return String;
 
    function Check_File return String;
+
+   function Test_File return String;
    --  path of a file to load and check for errors; empty if not given
 
    function Source_File_Count return Natural;

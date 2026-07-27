@@ -8,6 +8,10 @@
             "stage": "semantic"
         },
         {
+            "name": "test",
+            "stage": "test"
+        },
+        {
             "name": "generate",
             "stage": "code"
         }

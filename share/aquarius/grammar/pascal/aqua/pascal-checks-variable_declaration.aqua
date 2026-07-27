@@ -15,6 +15,7 @@ feature
          It     : Aqua.Containers.Linked_List_Iterator [String]
          Name   : String
          Ignore : Integer
+         Decl   : Aquarius.Entities.Declaration
       do
          from
             It := Child.Names.New_Cursor
@@ -26,6 +27,11 @@ feature
                Error ("duplicate declaration: " & Name)
             else
                Ignore := Scope.Declare (Name)
+               --  Record the variable in the standard entity model, keyed
+               --  in the scope so a later access can resolve and refer to it.
+               create Decl.Make (Name, Name, "variable", Current)
+               Environment.Add_Declaration (Decl)
+               Scope.Add_Declaration (Decl)
             end
             It.Next
          end

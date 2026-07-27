@@ -6,6 +6,10 @@
         {
             "name": "checks",
             "stage": "semantic"
+        },
+        {
+            "name": "test",
+            "stage": "test"
         }
     ]
 }
