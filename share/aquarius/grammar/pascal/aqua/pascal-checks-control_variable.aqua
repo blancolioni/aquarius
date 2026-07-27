@@ -19,6 +19,8 @@ feature
          N := Concatenated_Image
          if Scope.Is_Declared (N) then
             Offset := Scope.Offset (N)
+            --  The for-loop control variable is written by the loop.
+            Refer (Current, "write", Scope.Find_Declaration (N))
          else
             Error ("undeclared variable: " & N)
          end

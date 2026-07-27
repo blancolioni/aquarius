@@ -19,6 +19,7 @@ feature
    Make
       do
          create Names
+         create Declarations
          Count := 0
       end
 
@@ -70,8 +71,39 @@ feature
          end
       end
 
+   Add_Declaration (Declaration : Aquarius.Entities.Declaration)
+      do
+         Declarations.Append (Declaration)
+      end
+
+   Find_Declaration (Name : String)
+      : detachable Aquarius.Entities.Declaration
+      local
+         It    : Aqua.Containers.Linked_List_Iterator
+                    [Aquarius.Entities.Declaration]
+         Cand  : Aquarius.Entities.Declaration
+         Key   : String
+         Found : Boolean
+      do
+         Key := Name.To_Lower
+         from
+            It := Declarations.New_Cursor
+         until
+            It.After or else Found
+         loop
+            Cand := It.Element
+            if Cand.Name.To_Lower.Equal (Key) then
+               Result := Cand
+               Found := True
+            end
+            It.Next
+         end
+      end
+
 feature { None }
 
    Names : Aqua.Containers.Linked_List [String]
+
+   Declarations : Aqua.Containers.Linked_List [Aquarius.Entities.Declaration]
 
 end

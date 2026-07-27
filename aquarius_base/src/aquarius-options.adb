@@ -40,6 +40,7 @@ package body Aquarius.Options is
    Code_Trigger_Option : constant String := "code trigger";
    Start_Class_Option  : constant String := "start class";
    Check_File_Option   : constant String := "check file";
+   Test_File_Option    : constant String := "test file";
    Self_Test_Option    : constant String := "self test";
    Clear_Cache_Option  : constant String := "clear cache";
    Help_Option         : constant String := "help";
@@ -114,6 +115,15 @@ package body Aquarius.Options is
       return Bool_Values (Clear_Cache_Option);
    end Clear_Cache;
 
+   ---------------
+   -- Test_File --
+   ---------------
+
+   function Test_File return String is
+   begin
+      return Str_Values (Test_File_Option);
+   end Test_File;
+
    ------------------
    -- Code_Trigger --
    ------------------
@@ -170,6 +180,9 @@ package body Aquarius.Options is
                   Str_Kind);
       Add_Option (Check_File_Option, "check",
                   "Load a file, report any errors, and exit", Str_Kind);
+      Add_Option (Test_File_Option, "test",
+                  "Load a file, run the grammar's test actions, and exit",
+                  Str_Kind);
       Add_Option (Self_Test_Option, "self-test",
                   "Run unit tests", Bool_Kind);
       Add_Option (Clear_Cache_Option, "clear-cache",

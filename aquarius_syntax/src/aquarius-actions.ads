@@ -30,6 +30,13 @@ package Aquarius.Actions is
    --  Code_Trigger: the action is executed in order to generate
    --  code for the tree.
 
+   --  Code_Trigger: (see above).
+
+   --  Test_Trigger: the action inspects the tree and the semantic
+   --  results (e.g. the recorded declarations and cross references) and
+   --  reports failures as error messages. Run after Semantic_Trigger by
+   --  the --test driver mode; not part of normal compilation.
+
    --  Manual_Trigger: the action can only be executed manually.
 
    --  More on Parse_Trigger actions: these actions are generally
@@ -56,6 +63,7 @@ package Aquarius.Actions is
       Semantic_Trigger,
       Project_Trigger,
       Code_Trigger,
+      Test_Trigger,
       Manual_Trigger);
 
    type Action_Position is private;

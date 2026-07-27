@@ -1,0 +1,76 @@
+class
+   Pascal.Test.Program
+
+inherit
+   Aquarius.Trees.Program_Tree
+   Aquarius.Entities.Node
+   Aqua.Text_IO
+
+--  Test-stage visitor bound to the top node. Runs under Test_Trigger, after
+--  the semantic stage has populated the shared Aquarius.Entities.Environment.
+--  It walks the recorded declarations and cross references, prints each, and
+--  fails via Error (turned into a non-zero exit by the --test driver) if no
+--  declarations or no cross references were recorded. Because it runs in the
+--  same plugin VM as the semantic actions, it sees the Environment they built.
+
+feature
+
+   After_Node
+      local
+         Decl_Cursor : Aqua.Containers.Linked_List_Iterator
+                          [Aquarius.Entities.Declaration]
+         Ref_Cursor  : Aqua.Containers.Linked_List_Iterator
+                          [Aquarius.Entities.Reference]
+         Decl_Count  : Integer
+         Ref_Count   : Integer
+      do
+         from
+            Decl_Cursor := Environment.Declarations.New_Cursor
+         until
+            Decl_Cursor.After
+         loop
+            Decl_Count := Decl_Count + 1
+            Put_Line ("declaration: " & Decl_Cursor.Element.Qualified_Name
+                      & " [" & Decl_Cursor.Element.Category & "]")
+            Decl_Cursor.Next
+         end
+
+         from
+            Ref_Cursor := Environment.References.New_Cursor
+         until
+            Ref_Cursor.After
+         loop
+            Ref_Count := Ref_Count + 1
+            Put_Line ("cross reference: " & Ref_Cursor.Element.Reference_Type
+                      & " -> " & Referenced_Name (Ref_Cursor.Element)
+                      & " at " & Reference_Location (Ref_Cursor.Element))
+            Ref_Cursor.Next
+         end
+
+         Put_Line ("recorded " & Decl_Count.To_String & " declarations, "
+                   & Ref_Count.To_String & " cross references")
+
+         if Decl_Count = 0 then
+            Error ("no declarations were recorded")
+         end
+
+         if Ref_Count = 0 then
+            Error ("no cross references were recorded")
+         end
+      end
+
+   Referenced_Name (Reference : Aquarius.Entities.Reference) : String
+      do
+         if attached Reference.Declaration as D then
+            Result := D.Qualified_Name
+         else
+            Result := "<unresolved>"
+         end
+      end
+
+   Reference_Location (Reference : Aquarius.Entities.Reference) : String
+      do
+         Result := Reference.Reference_Tree.Start_Location_Image
+      end
+
+end

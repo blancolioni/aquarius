@@ -1,0 +1,20 @@
+class
+   Pascal.Checks.Assignment_Statement
+
+inherit
+   Pascal.Checks.Node
+
+--  assignment_statement ::= variable_access ':=' expression. Marks the
+--  left-hand variable_access as an assignment target before it reduces, so the
+--  cross reference it records is classified as a write rather than a read. The
+--  Before hook fires before the child subtree (and its After_Node, where the
+--  reference is recorded) runs.
+
+feature
+
+   Before_Variable_Access (Child : Pascal.Checks.Variable_Access)
+      do
+         Child.Set_Target
+      end
+
+end

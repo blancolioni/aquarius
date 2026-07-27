@@ -159,6 +159,60 @@ begin
       end if;
    end;
 
+   declare
+      Test_Path : constant String := Aquarius.Options.Test_File;
+   begin
+      if Test_Path /= "" then
+         declare
+            use type Aquarius.Grammars.Aquarius_Grammar;
+            use Aquarius.Messages;
+            Grammar : constant Aquarius.Grammars.Aquarius_Grammar :=
+              Aquarius.Grammars.Manager.Get_Grammar_For_File
+                (File_Name => Test_Path);
+         begin
+            if Grammar = null then
+               Ada.Text_IO.Put_Line
+                 (Ada.Text_IO.Standard_Error,
+                  Test_Path & ": no grammar found");
+               Ada.Command_Line.Set_Exit_Status (1);
+            elsif not Aquarius.Plugins.Manager.Load (Grammar) then
+               Ada.Command_Line.Set_Exit_Status (1);
+            else
+               declare
+                  Source : constant Aquarius.Sources.Source_Reference :=
+                    Aquarius.Sources.Files.File_Source (Test_Path);
+                  Stream : constant Aquarius.Streams.Reader_Reference :=
+                    Aquarius.Streams.Files.File_Reader (Test_Path);
+                  Program : constant Aquarius.Programs.Program_Tree :=
+                    Aquarius.Reader.Read
+                      (Grammar => Grammar,
+                       Source  => Source,
+                       Stream  => Stream);
+                  List : Message_List;
+               begin
+                  --  Run the semantic checks to populate the entity model,
+                  --  then run the test actions, which inspect the recorded
+                  --  declarations and cross references and attach any failure
+                  --  messages to the tree.
+                  Grammar.Run_Action_Trigger
+                    (Program, Aquarius.Actions.Semantic_Trigger);
+                  Grammar.Run_Action_Trigger
+                    (Program, Aquarius.Actions.Test_Trigger);
+                  Program.Get_Messages (List);
+                  Aquarius.Messages.Console.Show_Messages (List);
+                  if Highest_Level (List) > Warning then
+                     Ada.Command_Line.Set_Exit_Status (1);
+                  else
+                     Ada.Text_IO.Put_Line (Test_Path & ": tests passed");
+                  end if;
+               end;
+            end if;
+         end;
+         Aquarius.Library.Shut_Down;
+         return;
+      end if;
+   end;
+
    if Aquarius.Options.Source_File_Count > 0 then
       for I in 1 .. Aquarius.Options.Source_File_Count loop
          declare
