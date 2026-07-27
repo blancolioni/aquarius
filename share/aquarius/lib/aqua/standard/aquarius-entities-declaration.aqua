@@ -1,0 +1,38 @@
+class
+   Aquarius.Entities.Declaration
+
+create
+   Make
+
+--  A declared object discovered by a semantic stage: a name bound somewhere in
+--  the source. Name is the local (simple) name; Qualified_Name the fully
+--  qualified path; Category a grammar-defined kind string ("package",
+--  "procedure-body", "variable", "type", ...). Defining_Tree is the parse-tree
+--  node that introduces the name, used by the user interface to jump to the
+--  definition.
+
+feature
+
+   Name           : String
+   Qualified_Name : String
+   Category       : String
+   Top_Level      : Boolean
+   Defining_Tree  : Aquarius.Trees.Program_Tree
+
+   Make (Decl_Name           : String
+         Decl_Qualified_Name : String
+         Decl_Category       : String
+         Decl_Tree           : Aquarius.Trees.Program_Tree)
+      do
+         Name := Decl_Name
+         Qualified_Name := Decl_Qualified_Name
+         Category := Decl_Category
+         Defining_Tree := Decl_Tree
+      end
+
+   Set_Top_Level
+      do
+         Top_Level := True
+      end
+
+end

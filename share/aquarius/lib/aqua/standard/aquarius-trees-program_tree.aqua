@@ -60,34 +60,6 @@ feature
          Tree.Error (Message)
       end
 
-   Create_Entity (Defining_Name_Tree   : Aquarius.Trees.Program_Tree
-                  Name, Qualified_Name : String
-                  Class_Name           : String
-                  Top_Level            : Boolean) : Komnenos.Entity
-      require
-         Tree_Set : Have_Tree
-      do
-         Result := Tree.Create_Entity (Defining_Name_Tree, Name, Qualified_Name, Class_Name, Top_Level)
-      end
-   
-   Find_Entity (Entity_Name    : String
-                Class_Name     : String) : Komnenos.Entity
-      require
-         Tree_Set : Have_Tree
-      do
-         Result := tree.Find_Entity (Entity_Name, Class_Name)
-      end
-   
-   
-   Cross_Reference (Referrer_Entity   : Komnenos.Entity
-                    Referenced_Entity : Komnenos.Entity
-                    Reference_Type    : String)
-      require
-         Tree_Set : Have_Tree
-      do
-         Tree.Cross_Reference (Referrer_Entity, Referenced_Entity, Reference_Type)
-      end
-
    --  Node property bag: a String-keyed store on the parse-tree node itself,
    --  used to hand results from one action group (stage) to a later one. The
    --  semantic stage runs fully before the code stage and the node persists

@@ -1,0 +1,57 @@
+class
+   Aquarius.Entities.Scope
+
+inherit
+   Aquarius.Entities.Node
+
+--  Base for a parse-tree node that contains a bunch of declared objects (a
+--  lexical scope: a block, a package, a record, ...). Holds the declarations
+--  that belong directly to it and resolves a simple name against them. Parent
+--  is the enclosing scope, if any, so Lookup can walk outward.
+--
+--  Find/Lookup scan with String.Equal (value equality); the '=' operator is
+--  reference equality inside a generic in the Aqua VM (issue #60).
+
+feature
+
+   Declarations : Aqua.Containers.Linked_List [Aquarius.Entities.Declaration]
+
+   Parent : detachable Aquarius.Entities.Scope
+
+   Add_Declaration (Declaration : Aquarius.Entities.Declaration)
+      do
+         Declarations.Append (Declaration)
+      end
+
+   Find (Name : String) : detachable Aquarius.Entities.Declaration
+      local
+         It    : Aqua.Containers.Linked_List_Iterator
+                    [Aquarius.Entities.Declaration]
+         Found : Boolean
+      do
+         from
+            It := Declarations.New_Cursor
+         until
+            It.After or else Found
+         loop
+            if It.Element.Name.Equal (Name) then
+               Result := It.Element
+               Found := True
+            end
+            It.Next
+         end
+      end
+
+   Lookup (Name : String) : detachable Aquarius.Entities.Declaration
+      local
+         Local_Match : detachable Aquarius.Entities.Declaration
+      do
+         Local_Match := Find (Name)
+         if attached Local_Match as M then
+            Result := M
+         elsif attached Parent as P then
+            Result := P.Lookup (Name)
+         end
+      end
+
+end

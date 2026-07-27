@@ -1,0 +1,29 @@
+class
+   Aquarius.Entities.Declarer
+
+inherit
+   Aquarius.Entities.Node
+
+--  Mixin for a parse-tree node that declares a single object (a subprogram, a
+--  variable, a type, ...). Declare binds the name to a defining tree and
+--  registers the resulting Declaration in the shared Environment; the
+--  Declaration is kept in the Declaration field so later stages and child
+--  references can reach it. Defining_Tree is passed in (rather than taken from
+--  Current) so this stays tree-free and can be mixed into a class that already
+--  inherits Program_Tree.
+
+feature
+
+   Declaration : detachable Aquarius.Entities.Declaration
+
+   Declare (Defining_Tree  : Aquarius.Trees.Program_Tree
+            Name           : String
+            Qualified_Name : String
+            Category       : String) : Aquarius.Entities.Declaration
+      do
+         create Result.Make (Name, Qualified_Name, Category, Defining_Tree)
+         Declaration := Result
+         Environment.Add_Declaration (Result)
+      end
+
+end

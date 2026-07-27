@@ -1,0 +1,32 @@
+class
+   Aquarius.Entities.Reference
+
+create
+   Make
+
+--  A cross reference: a use-site of a declared object. Reference_Tree is the
+--  parse-tree node where the name is used; Declaration is the object referred
+--  to (may be unresolved, hence detachable); Referenced_Tree is a convenience
+--  copy of the declaration's defining tree; Reference_Type names the kind of
+--  use -- "read", "write", "call", "inherit", "implement", "raise", ...
+
+feature
+
+   Reference_Tree  : Aquarius.Trees.Program_Tree
+   Referenced_Tree : detachable Aquarius.Trees.Program_Tree
+   Declaration     : detachable Aquarius.Entities.Declaration
+   Reference_Type  : String
+
+   Make (Ref_Tree   : Aquarius.Trees.Program_Tree
+         Ref_Type   : String
+         Referenced : detachable Aquarius.Entities.Declaration)
+      do
+         Reference_Tree := Ref_Tree
+         Reference_Type := Ref_Type
+         if attached Referenced as D then
+            Declaration := D
+            Referenced_Tree := D.Defining_Tree
+         end
+      end
+
+end

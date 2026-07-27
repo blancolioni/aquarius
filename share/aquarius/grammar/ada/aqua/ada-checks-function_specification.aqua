@@ -14,7 +14,7 @@ feature
             Put_Line ("function body: " & Full_Name)
          else
             Put_Line ("new function: " & Full_Name)
-            Entity := Create_Entity (Child, Local_Name, Full_Name, "function", Top_Level)
+            Declare_Entity (Child, "function")
          end
       end
 

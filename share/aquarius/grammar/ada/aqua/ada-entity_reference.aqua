@@ -2,18 +2,24 @@ class Ada.Entity_Reference
 
 create
    Make
-   
+
+--  A pending name use collected during name resolution: the used Name, the
+--  parse-tree node Tree it occurs at, and the Declaration it resolved to (if
+--  any). Turned into an Aquarius.Entities.Reference by the enclosing scope.
+
 feature
-   Name      : String
-   Tree      : Aquarius.Trees.Program_Tree
-   Entity    : Komnenos.Entity
-   
-   Make (Ref_Name   : String
-         Ref_Entity : Komnenos.Entity
-         Ref_Tree   : Aquarius.Trees.Program_Tree)
+   Name        : String
+   Tree        : Aquarius.Trees.Program_Tree
+   Declaration : detachable Aquarius.Entities.Declaration
+
+   Make (Ref_Name        : String
+         Ref_Declaration : detachable Aquarius.Entities.Declaration
+         Ref_Tree        : Aquarius.Trees.Program_Tree)
       do
          Name := Ref_Name
          Tree := Ref_Tree
-         Entity := Ref_Entity
+         if attached Ref_Declaration as D then
+            Declaration := D
+         end
       end
 end

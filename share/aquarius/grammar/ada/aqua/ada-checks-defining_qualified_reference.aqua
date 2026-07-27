@@ -1,15 +1,16 @@
 class Ada.Checks.Defining_Qualified_Reference inherit
    Aquarius.Trees.Program_Tree
    Aqua.Text_IO
-   
+   Aquarius.Entities.Node
+
 feature
 
-   Context     : detachable Komnenos.Entity
-   New_Context : detachable Komnenos.Entity
-   
+   Context     : detachable Aquarius.Entities.Declaration
+   New_Context : detachable Aquarius.Entities.Declaration
+
    Reference   : Aqua.Containers.Linked_List[Ada.Entity_Reference]
    Identifiers : String_List
-   
+
    After_Identifier (Child : Ada.Checks.Identifier)
       local
          Ref : Ada.Entity_Reference
@@ -17,12 +18,12 @@ feature
       do
          Context := New_Context
          Id := Child.Standard_Text
-         
+
          if attached Context then
-            New_Context := Find_Entity (Id, "")
+            New_Context := Environment.Find_Named (Id)
          else
             if Identifiers.Is_Empty then
-               New_Context := Find_Entity (Id, "")
+               New_Context := Environment.Find_Named (Id)
                if attached New_Context then
                   create Ref.Make (Id, New_Context, Child)
                   Reference.Append (Ref)
