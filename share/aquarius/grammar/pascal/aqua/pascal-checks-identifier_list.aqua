@@ -1,8 +1,8 @@
 class
-   Pascal.Generate.Identifier_List
+   Pascal.Checks.Identifier_List
 
 inherit
-   Pascal.Generate.Node
+   Pascal.Checks.Node
 
 --  identifier_list ::= < identifier / ',' >. Collects the names in source
 --  order; the enclosing declaration reads them via Names.

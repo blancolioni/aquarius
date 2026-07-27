@@ -5,19 +5,10 @@ inherit
    Aquarius.Trees.Program_Tree
 
 --  Base for every generate visitor. Inheriting Program_Tree lets a visitor
---  pass Current as the Src argument to the Ast.*.Make constructors, and read
---  its own token text via Concatenated_Image.
---
---  Scope is the demo's single shared symbol table (name -> 1-based local
---  offset). It is a once value, so all visitors see the same instance across
---  one compilation. Variable declarations populate it (they reduce before the
---  statement part), and variable accesses read it.
-
-feature
-
-   Scope : Pascal.Generate.Scope
-      once
-         create Result.Make
-      end
+--  pass Current as the Src argument to the Ast.*.Make constructors, read its
+--  own token text via Concatenated_Image, and read the node properties the
+--  semantic stage attached (Get_Integer_Property). The code stage keeps no
+--  symbol table: name resolution and offset allocation happen in the semantic
+--  stage (Pascal.Checks.*), which hands offsets off via node properties.
 
 end

@@ -1,8 +1,8 @@
 class
-   Pascal.Generate.Variable_Identifier
+   Pascal.Checks.Variable_Identifier
 
 inherit
-   Pascal.Generate.Node
+   Pascal.Checks.Node
 
 --  Leaf: variable_identifier ::= identifier. Read by parents via
 --  Concatenated_Image.
