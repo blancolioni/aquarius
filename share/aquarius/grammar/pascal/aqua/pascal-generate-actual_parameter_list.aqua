@@ -1,0 +1,21 @@
+class
+   Pascal.Generate.Actual_Parameter_List
+
+inherit
+   Pascal.Generate.Node
+
+--  actual_parameter_list ::= '(' < actual_parameter / ',' > ')'. Collects the
+--  argument expressions in source order; the call reads them via Exprs.
+
+feature
+
+   Exprs : Aqua.Containers.Linked_List [Ast.Expression]
+
+   After_Actual_Parameter (Child : Pascal.Generate.Actual_Parameter)
+      do
+         if attached Child.Expr as E then
+            Exprs.Append (E)
+         end
+      end
+
+end

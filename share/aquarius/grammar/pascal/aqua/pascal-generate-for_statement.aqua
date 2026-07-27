@@ -1,0 +1,104 @@
+class
+   Pascal.Generate.For_Statement
+
+inherit
+   Pascal.Generate.Stmt_Node
+
+--  for_statement ::= 'for' control_variable ':=' initial_value for_direction
+--                    final_value 'do' statement.
+--
+--  Lowered to a pre-tested loop over the control variable's frame local:
+--
+--     cv := initial;
+--     loop cv <= final do     -- cv >= final for 'downto'
+--        <body>;
+--        cv := cv + 1         -- cv - 1 for 'downto'
+--     end loop;
+
+feature
+
+   After_Control_Variable (Child : Pascal.Generate.Control_Variable)
+      do
+         CV := Child.Concatenated_Image
+      end
+
+   After_Initial_Value (Child : Pascal.Generate.Initial_Value)
+      do
+         Init := Child.Expr
+      end
+
+   After_For_Direction (Child : Pascal.Generate.For_Direction)
+      do
+         Down := Child.Is_Down
+      end
+
+   After_Final_Value (Child : Pascal.Generate.Final_Value)
+      do
+         Final := Child.Expr
+      end
+
+   After_Statement (Child : Pascal.Generate.Statement)
+      do
+         Body := Child.Stmt
+      end
+
+   After_Node
+      local
+         O           : Ast.Operator
+         Off         : Integer
+         Cond_Op     : Integer
+         Incr_Op     : Integer
+         Init_Assign : Ast.Statement.Assign
+         Incr_Assign : Ast.Statement.Assign
+         Cond_Expr   : Ast.Expression.Binary
+         Incr_Expr   : Ast.Expression.Binary
+         One         : Ast.Expression.Literal
+         Loop_Body   : Ast.Statement.Sequence
+         Outer       : Ast.Statement.Sequence
+         The_Loop    : Ast.Statement.Iteration
+      do
+         if attached CV as C then
+            if attached Init as I0 then
+               if attached Final as F0 then
+                  if attached Body as B0 then
+                     Off := Scope.Offset (C)
+                     if Down then
+                        Cond_Op := O.Greater_Equal
+                        Incr_Op := O.Subtract
+                     else
+                        Cond_Op := O.Less_Equal
+                        Incr_Op := O.Add
+                     end
+                     create Init_Assign.Make (Void, Current, New_Local (Off), I0)
+                     create Cond_Expr.Make (Void, Current, Cond_Op, New_Local (Off), F0)
+                     create One.Make_Integer (Void, Current, 1)
+                     create Incr_Expr.Make (Void, Current, Incr_Op, New_Local (Off), One)
+                     create Incr_Assign.Make (Void, Current, New_Local (Off), Incr_Expr)
+                     create Loop_Body.Make (Void, Current)
+                     Loop_Body.Append (B0)
+                     Loop_Body.Append (Incr_Assign)
+                     create The_Loop.Make (Void, Current, Cond_Expr, Loop_Body)
+                     create Outer.Make (Void, Current)
+                     Outer.Append (Init_Assign)
+                     Outer.Append (The_Loop)
+                     Set_Stmt (Outer)
+                  end
+               end
+            end
+         end
+      end
+
+feature { None }
+
+   CV    : detachable String
+   Init  : detachable Ast.Expression
+   Final : detachable Ast.Expression
+   Body  : detachable Ast.Statement
+   Down  : Boolean
+
+   New_Local (Off : Integer) : Ast.Expression.Local_Variable
+      do
+         create Result.Make (Void, Current, Off)
+      end
+
+end

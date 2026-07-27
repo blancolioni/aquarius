@@ -1,0 +1,25 @@
+class
+   Pascal.Generate.Stmt_Node
+
+inherit
+   Pascal.Generate.Node
+
+--  A node whose synthesized value is an Ast.Statement.
+
+feature
+
+   Stmt : detachable Ast.Statement
+
+   Set_Stmt (S : Ast.Statement)
+      do
+         Stmt := S
+      end
+
+   Copy_Stmt (S : detachable Ast.Statement)
+      do
+         if attached S as The_Statement then
+            Set_Stmt (The_Statement)
+         end
+      end
+
+end

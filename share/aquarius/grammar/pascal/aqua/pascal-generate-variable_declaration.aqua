@@ -1,0 +1,28 @@
+class
+   Pascal.Generate.Variable_Declaration
+
+inherit
+   Pascal.Generate.Node
+
+--  variable_declaration ::= identifier_list ':' type_denoter ';'. Each name
+--  is declared as a frame local in the shared Scope (types are ignored in the
+--  demo: every variable is one word).
+
+feature
+
+   After_Identifier_List (Child : Pascal.Generate.Identifier_List)
+      local
+         It     : Aqua.Containers.Linked_List_Iterator [String]
+         Ignore : Integer
+      do
+         from
+            It := Child.Names.New_Cursor
+         until
+            It.After
+         loop
+            Ignore := Scope.Declare (It.Element)
+            It.Next
+         end
+      end
+
+end

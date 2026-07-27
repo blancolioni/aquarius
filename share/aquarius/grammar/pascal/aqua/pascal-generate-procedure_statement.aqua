@@ -1,0 +1,49 @@
+class
+   Pascal.Generate.Procedure_Statement
+
+inherit
+   Pascal.Generate.Stmt_Node
+
+--  procedure_statement ::= procedure_identifier [ actual_parameter_list ].
+--  Ast.Statement.Call: a direct call for effect (result count 0). The callee
+--  is referenced by name; the demo does not generate the procedure body.
+
+feature
+
+   After_Procedure_Identifier (Child : Pascal.Generate.Procedure_Identifier)
+      do
+         Nm := Child.Concatenated_Image
+      end
+
+   After_Actual_Parameter_List (Child : Pascal.Generate.Actual_Parameter_List)
+      do
+         Args := Child
+      end
+
+   After_Node
+      local
+         C  : Ast.Statement.Call
+         It : Aqua.Containers.Linked_List_Iterator [Ast.Expression]
+      do
+         if attached Nm as N then
+            create C.Make (Void, Current, N)
+            if attached Args as AL then
+               from
+                  It := AL.Exprs.New_Cursor
+               until
+                  It.After
+               loop
+                  C.Add_Argument (It.Element)
+                  It.Next
+               end
+            end
+            Set_Stmt (C)
+         end
+      end
+
+feature { None }
+
+   Nm   : detachable String
+   Args : detachable Pascal.Generate.Actual_Parameter_List
+
+end

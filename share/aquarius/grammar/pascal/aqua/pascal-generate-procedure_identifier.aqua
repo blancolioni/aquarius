@@ -1,0 +1,9 @@
+class
+   Pascal.Generate.Procedure_Identifier
+
+inherit
+   Pascal.Generate.Node
+
+--  Leaf: procedure_identifier ::= identifier. Read via Concatenated_Image.
+
+end

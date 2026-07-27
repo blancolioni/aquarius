@@ -1,0 +1,40 @@
+class
+   Pascal.Generate.Term
+
+inherit
+   Pascal.Generate.Expr_Node
+
+--  term ::= < factor / multiplying_operator >. Left-folds the factors.
+
+feature
+
+   After_Factor (Child : Pascal.Generate.Factor)
+      local
+         B : Ast.Expression.Binary
+      do
+         if attached Left as L then
+            if attached Child.Expr as R then
+               create B.Make (Void, Current, Pending_Op, L, R)
+               Left := B
+            end
+         else
+            Left := Child.Expr
+         end
+      end
+
+   After_Multiplying_Operator (Child : Pascal.Generate.Multiplying_Operator)
+      do
+         Pending_Op := Child.Op
+      end
+
+   After_Node
+      do
+         Copy_Expr (Left)
+      end
+
+feature { None }
+
+   Left       : detachable Ast.Expression
+   Pending_Op : Integer
+
+end

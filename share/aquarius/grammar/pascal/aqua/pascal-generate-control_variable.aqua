@@ -1,0 +1,10 @@
+class
+   Pascal.Generate.Control_Variable
+
+inherit
+   Pascal.Generate.Node
+
+--  Leaf: control_variable ::= variable_identifier. Read by for_statement via
+--  Concatenated_Image.
+
+end

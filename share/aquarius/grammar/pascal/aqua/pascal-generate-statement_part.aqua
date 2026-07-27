@@ -1,0 +1,16 @@
+class
+   Pascal.Generate.Statement_Part
+
+inherit
+   Pascal.Generate.Stmt_Node
+
+--  statement_part ::= compound_statement.
+
+feature
+
+   After_Compound_Statement (Child : Pascal.Generate.Compound_Statement)
+      do
+         Copy_Stmt (Child.Stmt)
+      end
+
+end

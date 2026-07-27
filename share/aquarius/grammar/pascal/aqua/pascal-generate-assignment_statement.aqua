@@ -1,0 +1,39 @@
+class
+   Pascal.Generate.Assignment_Statement
+
+inherit
+   Pascal.Generate.Stmt_Node
+
+--  assignment_statement ::= variable_access ':=' expression. Ast.Statement.
+--  Assign evaluates the value, then the target lvalue consumes it.
+
+feature
+
+   After_Variable_Access (Child : Pascal.Generate.Variable_Access)
+      do
+         Target := Child.Expr
+      end
+
+   After_Expression (Child : Pascal.Generate.Expression)
+      do
+         Value := Child.Expr
+      end
+
+   After_Node
+      local
+         A : Ast.Statement.Assign
+      do
+         if attached Target as T then
+            if attached Value as V then
+               create A.Make (Void, Current, T, V)
+               Set_Stmt (A)
+            end
+         end
+      end
+
+feature { None }
+
+   Target : detachable Ast.Expression
+   Value  : detachable Ast.Expression
+
+end

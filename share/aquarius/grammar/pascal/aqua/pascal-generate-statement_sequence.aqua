@@ -1,0 +1,38 @@
+class
+   Pascal.Generate.Statement_Sequence
+
+inherit
+   Pascal.Generate.Stmt_Node
+
+--  statement_sequence ::= < statement / ';' >. Lowers to an
+--  Ast.Statement.Sequence; empty statements (no Stmt) are skipped.
+
+feature
+
+   After_Statement (Child : Pascal.Generate.Statement)
+      do
+         if attached Child.Stmt as S then
+            The_Sequence.Append (S)
+         end
+      end
+
+   After_Node
+      do
+         Set_Stmt (The_Sequence)
+      end
+
+feature { None }
+
+   Held_Sequence : detachable Ast.Statement.Sequence
+
+   The_Sequence : Ast.Statement.Sequence
+      do
+         if attached Held_Sequence as S then
+            Result := S
+         else
+            create Result.Make (Void, Current)
+            Held_Sequence := Result
+         end
+      end
+
+end

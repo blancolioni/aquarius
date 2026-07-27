@@ -1,0 +1,22 @@
+class
+   Pascal.Generate.Statement
+
+inherit
+   Pascal.Generate.Stmt_Node
+
+--  statement ::= [ label ':' ] [ (simple_statement | structured_statement) ].
+--  An empty statement leaves Stmt void.
+
+feature
+
+   After_Simple_Statement (Child : Pascal.Generate.Simple_Statement)
+      do
+         Copy_Stmt (Child.Stmt)
+      end
+
+   After_Structured_Statement (Child : Pascal.Generate.Structured_Statement)
+      do
+         Copy_Stmt (Child.Stmt)
+      end
+
+end

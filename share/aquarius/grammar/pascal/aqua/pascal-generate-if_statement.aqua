@@ -1,0 +1,44 @@
+class
+   Pascal.Generate.If_Statement
+
+inherit
+   Pascal.Generate.Stmt_Node
+
+--  if_statement ::= 'if' expression 'then' statement [ 'else' statement ].
+--  The two statement children arrive in source order: then-part, else-part.
+
+feature
+
+   After_Expression (Child : Pascal.Generate.Expression)
+      do
+         Condition := Child.Expr
+      end
+
+   After_Statement (Child : Pascal.Generate.Statement)
+      do
+         if attached Then_Part then
+            Else_Part := Child.Stmt
+         else
+            Then_Part := Child.Stmt
+         end
+      end
+
+   After_Node
+      local
+         C : Ast.Statement.Conditional
+      do
+         if attached Condition as Cond then
+            if attached Then_Part as T then
+               create C.Make (Void, Current, Cond, T, Else_Part)
+               Set_Stmt (C)
+            end
+         end
+      end
+
+feature { None }
+
+   Condition : detachable Ast.Expression
+   Then_Part : detachable Ast.Statement
+   Else_Part : detachable Ast.Statement
+
+end

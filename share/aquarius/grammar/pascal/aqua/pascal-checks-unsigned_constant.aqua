@@ -1,0 +1,18 @@
+class
+   Pascal.Checks.Unsigned_Constant
+
+inherit
+   Aqua.Text_IO
+
+--  unsigned_constant ::= numeric_literal | string_literal | 'nil'.
+--  Demo check: observe numeric literals (mirrors Oberon.Checks.Factor's
+--  After_Integer). No diagnostic raised yet; the hook proves the group runs.
+
+feature
+
+   After_Numeric_Literal (Child : String)
+      do
+         --  Put_Line ("numeric literal: " & Child)
+      end
+
+end

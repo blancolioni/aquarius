@@ -1,0 +1,20 @@
+class
+   Pascal.Generate.Unsigned_Constant
+
+inherit
+   Pascal.Generate.Expr_Node
+
+--  unsigned_constant ::= numeric_literal | string_literal | 'nil'. The demo
+--  handles integer literals; string/nil are out of scope.
+
+feature
+
+   After_Numeric_Literal (Child : String)
+      local
+         L : Ast.Expression.Literal
+      do
+         create L.Make_Integer (Void, Current, Child.To_Integer)
+         Set_Expr (L)
+      end
+
+end
