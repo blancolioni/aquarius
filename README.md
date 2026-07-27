@@ -1,5 +1,69 @@
 # aquarius
- An EBNF compiler
+
+Aquarius is a language workbench written in Ada. You describe a language with an
+EBNF grammar file and Aquarius gives you a working front end for it: a lexer, a
+parser, a formatter, and a place to hang semantic analysis and code generation.
+The same machinery drives its own bundled languages, its editor, and its Aqua
+compiler.
+
+## What it does
+
+Give Aquarius a `.ebnf` grammar (see
+[docs/ebnf-grammar-syntax.md](docs/ebnf-grammar-syntax.md)) and it will:
+
+- **Lex and parse** source into a *program tree* — a concrete syntax tree that
+  keeps enough detail to round-trip the text.
+- **Format** that tree back to source using the layout hints in the grammar
+  (`.format` directives), so the same rules that parse also pretty-print.
+- **Run actions** attached to grammar rules at defined stages (*triggers*):
+  `semantic` for analysis, `test` for grammar unit tests, `code` for
+  generation. Actions can be written in the built-in Aqua language and run on
+  the embedded Aqua VM.
+- **Build a semantic model** — declarations, references, scopes and
+  environments — that actions populate and query.
+
+Bundled grammars live under [share/aquarius/grammar/](share/aquarius/grammar/):
+`ada`, `aqua`, `json`, `lox`, `oberon`, `pascal`, `wir`, and others.
+
+### Aqua
+
+Aqua is Aquarius' own Eiffel-like object-oriented language. The `ack` compiler
+compiles it through the [tagatha](tagatha/) intermediate representation to a
+target (e.g. PDP-11), and the [aqua_vm](aqua_vm/) executes the result. Aqua is
+both a target language for the workbench and the language grammar actions are
+written in. Its object and virtual-table layout is documented
+[below](#object-layout).
+
+## Command line
+
+The `aquarius-driver` executable (`bin/aquarius`) dispatches on its options:
+
+| Invocation | Effect |
+|------------|--------|
+| `aquarius --start-class <file.aqua>` | Compile an Aqua root class and run it on the Aqua VM |
+| `aquarius --check <file>` | Load/parse a grammar or source file, report errors, exit (no render) |
+| `aquarius --test <file>` | Parse a file and run its grammar's `test` actions |
+| `aquarius <file>` | Parse, arrange and re-render a source file under its grammar |
+| `aquarius --self-test` | Run the internal test suite |
+
+## Crate layout
+
+Aquarius is an Alire workspace of several crates, pinned locally:
+
+| Crate | Role |
+|-------|------|
+| `aquarius` | Top-level: driver, library, test harness |
+| `aquarius_base` | Base packages |
+| `aquarius_trees` | Generic tree infrastructure |
+| `aquarius_syntax` | Syntax trees |
+| `aquarius_programs` | Program trees, grammars, EBNF reader |
+| `aquarius_plugins` | Plugin system (loads per-grammar behaviour) |
+| `aquarius_ack` | Ack compiler for Aqua |
+| `aquarius_devices` | Aqua VM devices |
+| `aquarius_io` | IO operations |
+| `aquarius_ui` | Abstract UI |
+| `aquarius_ui_gtk` | GtkAda code-bubbles frontend (currently disabled in the driver) |
+| `tagatha`, `aqua_vm`, `aqua_as`, `wl_lib` | Backend IR, VM, assembler, support library |
 
 ## Build
 
