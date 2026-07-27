@@ -1,0 +1,20 @@
+class
+   Pascal.Generate.For_Direction
+
+inherit
+   Pascal.Generate.Node
+
+--  for_direction ::= 'to' | 'downto'. A wrapper non-terminal so the loop
+--  direction can be read without an After_<keyword> hook (which the binder
+--  rejects).
+
+feature
+
+   Is_Down : Boolean
+
+   After_Node
+      do
+         Is_Down := Concatenated_Image = "downto"
+      end
+
+end

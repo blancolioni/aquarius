@@ -1,0 +1,16 @@
+class
+   Pascal.Generate.Program_Block
+
+inherit
+   Pascal.Generate.Stmt_Node
+
+--  program_block ::= block. Copies the block's statement up.
+
+feature
+
+   After_Block (Child : Pascal.Generate.Block)
+      do
+         Copy_Stmt (Child.Stmt)
+      end
+
+end

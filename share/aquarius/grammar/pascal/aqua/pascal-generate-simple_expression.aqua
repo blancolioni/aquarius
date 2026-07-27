@@ -1,0 +1,57 @@
+class
+   Pascal.Generate.Simple_Expression
+
+inherit
+   Pascal.Generate.Expr_Node
+
+--  simple_expression ::= [ sign ] < term / adding_operator >. Left-folds the
+--  terms; a leading '-' negates the whole result.
+
+feature
+
+   After_Sign (Child : Pascal.Generate.Sign)
+      do
+         Negative := Child.Is_Minus
+      end
+
+   After_Term (Child : Pascal.Generate.Term)
+      local
+         B : Ast.Expression.Binary
+      do
+         if attached Left as L then
+            if attached Child.Expr as R then
+               create B.Make (Void, Current, Pending_Op, L, R)
+               Left := B
+            end
+         else
+            Left := Child.Expr
+         end
+      end
+
+   After_Adding_Operator (Child : Pascal.Generate.Adding_Operator)
+      do
+         Pending_Op := Child.Op
+      end
+
+   After_Node
+      local
+         O : Ast.Operator
+         U : Ast.Expression.Unary
+      do
+         if attached Left as L then
+            if Negative then
+               create U.Make (Void, Current, O.Negate, L)
+               Set_Expr (U)
+            else
+               Set_Expr (L)
+            end
+         end
+      end
+
+feature { None }
+
+   Left       : detachable Ast.Expression
+   Pending_Op : Integer
+   Negative   : Boolean
+
+end

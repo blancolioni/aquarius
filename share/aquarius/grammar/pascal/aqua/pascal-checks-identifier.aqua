@@ -1,0 +1,18 @@
+class
+   Pascal.Checks.Identifier
+
+inherit
+   Aqua.Text_IO
+
+--  Leaf hook over the identifier token class. A no-op placeholder for the
+--  demo semantic group (mirrors Oberon.Checks.Identdef); left in place as the
+--  attachment point for future name-resolution checks.
+
+feature
+
+   After_Identifier (Name : String)
+      do
+         --  Put_Line ("identifier: " & Name)
+      end
+
+end

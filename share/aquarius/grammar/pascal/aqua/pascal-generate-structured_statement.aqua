@@ -1,0 +1,28 @@
+class
+   Pascal.Generate.Structured_Statement
+
+inherit
+   Pascal.Generate.Stmt_Node
+
+--  structured_statement ::= compound_statement | conditional_statement
+--                         | repetitive_statement | with_statement.
+--  with is out of demo scope.
+
+feature
+
+   After_Compound_Statement (Child : Pascal.Generate.Compound_Statement)
+      do
+         Copy_Stmt (Child.Stmt)
+      end
+
+   After_Conditional_Statement (Child : Pascal.Generate.Conditional_Statement)
+      do
+         Copy_Stmt (Child.Stmt)
+      end
+
+   After_Repetitive_Statement (Child : Pascal.Generate.Repetitive_Statement)
+      do
+         Copy_Stmt (Child.Stmt)
+      end
+
+end

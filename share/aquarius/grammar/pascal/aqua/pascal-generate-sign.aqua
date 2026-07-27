@@ -1,0 +1,18 @@
+class
+   Pascal.Generate.Sign
+
+inherit
+   Pascal.Generate.Node
+
+--  sign ::= '+' | '-'.
+
+feature
+
+   Is_Minus : Boolean
+
+   After_Node
+      do
+         Is_Minus := Concatenated_Image = "-"
+      end
+
+end

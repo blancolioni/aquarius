@@ -1,0 +1,42 @@
+class
+   Pascal.Generate.Expression
+
+inherit
+   Pascal.Generate.Expr_Node
+
+--  expression ::= < simple_expression / relational_operator >. Left-folds the
+--  operands into Ast.Expression.Binary. A bare simple_expression passes
+--  through unchanged.
+
+feature
+
+   After_Simple_Expression (Child : Pascal.Generate.Simple_Expression)
+      local
+         B : Ast.Expression.Binary
+      do
+         if attached Left as L then
+            if attached Child.Expr as R then
+               create B.Make (Void, Current, Pending_Op, L, R)
+               Left := B
+            end
+         else
+            Left := Child.Expr
+         end
+      end
+
+   After_Relational_Operator (Child : Pascal.Generate.Relational_Operator)
+      do
+         Pending_Op := Child.Op
+      end
+
+   After_Node
+      do
+         Copy_Expr (Left)
+      end
+
+feature { None }
+
+   Left       : detachable Ast.Expression
+   Pending_Op : Integer
+
+end

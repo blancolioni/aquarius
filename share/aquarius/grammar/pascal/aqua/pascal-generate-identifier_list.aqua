@@ -1,0 +1,19 @@
+class
+   Pascal.Generate.Identifier_List
+
+inherit
+   Pascal.Generate.Node
+
+--  identifier_list ::= < identifier / ',' >. Collects the names in source
+--  order; the enclosing declaration reads them via Names.
+
+feature
+
+   Names : Aqua.Containers.Linked_List [String]
+
+   After_Identifier (Id : String)
+      do
+         Names.Append (Id)
+      end
+
+end

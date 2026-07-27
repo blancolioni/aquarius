@@ -1,0 +1,17 @@
+class
+   Pascal.Generate.Conditional_Statement
+
+inherit
+   Pascal.Generate.Stmt_Node
+
+--  conditional_statement ::= if_statement | case_statement. case is out of
+--  demo scope.
+
+feature
+
+   After_If_Statement (Child : Pascal.Generate.If_Statement)
+      do
+         Copy_Stmt (Child.Stmt)
+      end
+
+end

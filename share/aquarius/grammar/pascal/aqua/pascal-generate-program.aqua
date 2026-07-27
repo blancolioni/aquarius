@@ -1,0 +1,56 @@
+class
+   Pascal.Generate.Program
+
+inherit
+   Pascal.Generate.Node
+
+--  Top level: program_heading ';' program_block '.'. Builds an Ast.Unit with
+--  a single public routine (the program body) whose locals are the variables
+--  declared in the block, then opens a Tagatha.Code, lowers the unit, and
+--  disposes -- the same shape as Wir.Generate.Unit.
+--
+--  A Pascal program body has no explicit return, so an implicit valueless
+--  return is appended to terminate the routine (emit its epilogue).
+
+feature
+
+   After_Program_Heading (Child : Pascal.Generate.Program_Heading)
+      do
+         Nm := Child.Name
+      end
+
+   After_Program_Block (Child : Pascal.Generate.Program_Block)
+      do
+         Body := Child.Stmt
+      end
+
+   After_Node
+      local
+         U     : Ast.Unit
+         R     : Ast.Routine
+         Code  : Tagatha.Code
+         Seq   : Ast.Statement.Sequence
+         Ret   : Ast.Statement.Return
+      do
+         if attached Nm as N then
+            if attached Body as B then
+               create Seq.Make (Void, Current)
+               Seq.Append (B)
+               create Ret.Make (Void, Current)
+               Seq.Append (Ret)
+               create U.Make (Current)
+               create R.Make (Current, N, 0, Scope.Count, True, Seq)
+               U.Add_Routine (R)
+               create Code.Make
+               U.Generate (Code)
+               Code.Dispose
+            end
+         end
+      end
+
+feature { None }
+
+   Nm   : detachable String
+   Body : detachable Ast.Statement
+
+end

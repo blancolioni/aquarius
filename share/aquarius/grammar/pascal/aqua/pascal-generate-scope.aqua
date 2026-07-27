@@ -1,0 +1,58 @@
+class
+   Pascal.Generate.Scope
+
+create
+   Make
+
+--  A flat symbol table mapping a variable name to its 1-based Tagatha local
+--  offset, in declaration order. The demo resolves every variable_access to a
+--  frame local of the single main routine; nested procedure scopes are not
+--  isolated (see plan notes).
+--
+--  Names are stored lower-cased (Pascal is case-insensitive) and compared with
+--  String.Equal (value equality), not the '=' operator, which is reference
+--  equality in the Aqua VM.
+
+feature
+
+   Make
+      do
+         create Names
+         Count := 0
+      end
+
+   Count : Integer
+
+   Declare (Name : String) : Integer
+      do
+         Names.Append (Name.To_Lower)
+         Count := Count + 1
+         Result := Count
+      end
+
+   Offset (Name : String) : Integer
+      local
+         It  : Aqua.Containers.Linked_List_Iterator [String]
+         Key : String
+         I   : Integer
+      do
+         Key := Name.To_Lower
+         from
+            It := Names.New_Cursor
+            I := 0
+         until
+            It.After
+         loop
+            I := I + 1
+            if It.Element.Equal (Key) then
+               Result := I
+            end
+            It.Next
+         end
+      end
+
+feature { None }
+
+   Names : Aqua.Containers.Linked_List [String]
+
+end

@@ -1,0 +1,31 @@
+class
+   Pascal.Generate.Adding_Operator
+
+inherit
+   Pascal.Generate.Node
+
+--  adding_operator ::= '+' | '-' | 'or'. Mapped to the Ast.Operator ordinal;
+--  'or' is the bitwise word op (demo simplification).
+
+feature
+
+   Op : Integer
+
+   After_Node
+      local
+         O : Ast.Operator
+         S : String
+      do
+         S := Concatenated_Image
+         if S = "+" then
+            Op := O.Add
+         elsif S = "-" then
+            Op := O.Subtract
+         elsif S = "or" then
+            Op := O.Bit_Or
+         else
+            Error ("unknown adding operator: " & S)
+         end
+      end
+
+end

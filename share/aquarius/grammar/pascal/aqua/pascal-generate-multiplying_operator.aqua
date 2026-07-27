@@ -1,0 +1,36 @@
+class
+   Pascal.Generate.Multiplying_Operator
+
+inherit
+   Pascal.Generate.Node
+
+--  multiplying_operator ::= '*' | '/' | 'div' | 'mod' | 'and'. Mapped to the
+--  Ast.Operator ordinal. Integer '/' and 'div' both map to Divide; 'and' is
+--  the bitwise word op (demo simplification of Pascal boolean semantics).
+
+feature
+
+   Op : Integer
+
+   After_Node
+      local
+         O : Ast.Operator
+         S : String
+      do
+         S := Concatenated_Image
+         if S = "*" then
+            Op := O.Multiply
+         elsif S = "/" then
+            Op := O.Divide
+         elsif S = "div" then
+            Op := O.Divide
+         elsif S = "mod" then
+            Op := O.Modulo
+         elsif S = "and" then
+            Op := O.Bit_And
+         else
+            Error ("unknown multiplying operator: " & S)
+         end
+      end
+
+end

@@ -1,0 +1,37 @@
+class
+   Pascal.Generate.Relational_Operator
+
+inherit
+   Pascal.Generate.Node
+
+--  relational_operator ::= '=' | '<>' | '<' | '>' | '<=' | '>=' | 'in'.
+--  Mapped to the Ast.Operator ordinal; 'in' (set membership) is out of scope.
+
+feature
+
+   Op : Integer
+
+   After_Node
+      local
+         O : Ast.Operator
+         S : String
+      do
+         S := Concatenated_Image
+         if S = "=" then
+            Op := O.Compare_Equal
+         elsif S = "<>" then
+            Op := O.Compare_Not_Equal
+         elsif S = "<" then
+            Op := O.Less
+         elsif S = ">" then
+            Op := O.Greater
+         elsif S = "<=" then
+            Op := O.Less_Equal
+         elsif S = ">=" then
+            Op := O.Greater_Equal
+         else
+            Error ("unknown relational operator: " & S)
+         end
+      end
+
+end

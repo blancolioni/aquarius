@@ -1,0 +1,16 @@
+class
+   Pascal.Generate.Final_Value
+
+inherit
+   Pascal.Generate.Expr_Node
+
+--  final_value ::= expression.
+
+feature
+
+   After_Expression (Child : Pascal.Generate.Expression)
+      do
+         Copy_Expr (Child.Expr)
+      end
+
+end

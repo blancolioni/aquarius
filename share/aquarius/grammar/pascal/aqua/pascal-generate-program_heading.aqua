@@ -1,0 +1,20 @@
+class
+   Pascal.Generate.Program_Heading
+
+inherit
+   Pascal.Generate.Node
+
+--  'program' identifier [ '(' program_parameter_list ')' ]. The program name
+--  is the only identifier that is a direct token child (parameter identifiers
+--  are nested under program_parameter_list), so After_Identifier fires once.
+
+feature
+
+   Name : String
+
+   After_Identifier (Id : String)
+      do
+         Name := Id
+      end
+
+end

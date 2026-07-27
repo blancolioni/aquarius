@@ -1,0 +1,39 @@
+class
+   Pascal.Generate.Factor
+
+inherit
+   Pascal.Generate.Expr_Node
+
+--  factor ::= variable_access | unsigned_constant | set_constructor
+--           | '(' expression ')' | 'not' factor.
+--  set_constructor is out of demo scope.
+
+feature
+
+   After_Variable_Access (Child : Pascal.Generate.Variable_Access)
+      do
+         Copy_Expr (Child.Expr)
+      end
+
+   After_Unsigned_Constant (Child : Pascal.Generate.Unsigned_Constant)
+      do
+         Copy_Expr (Child.Expr)
+      end
+
+   After_Expression (Child : Pascal.Generate.Expression)
+      do
+         Copy_Expr (Child.Expr)
+      end
+
+   After_Factor (Child : Pascal.Generate.Factor)
+      local
+         O : Ast.Operator
+         U : Ast.Expression.Unary
+      do
+         if attached Child.Expr as E then
+            create U.Make (Void, Current, O.Logical_Not, E)
+            Set_Expr (U)
+         end
+      end
+
+end

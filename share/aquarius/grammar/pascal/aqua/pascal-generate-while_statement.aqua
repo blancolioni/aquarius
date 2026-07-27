@@ -1,0 +1,38 @@
+class
+   Pascal.Generate.While_Statement
+
+inherit
+   Pascal.Generate.Stmt_Node
+
+--  while_statement ::= 'while' expression 'do' statement. Pre-tested loop.
+
+feature
+
+   After_Expression (Child : Pascal.Generate.Expression)
+      do
+         Condition := Child.Expr
+      end
+
+   After_Statement (Child : Pascal.Generate.Statement)
+      do
+         Body := Child.Stmt
+      end
+
+   After_Node
+      local
+         I : Ast.Statement.Iteration
+      do
+         if attached Condition as Cond then
+            if attached Body as B then
+               create I.Make (Void, Current, Cond, B)
+               Set_Stmt (I)
+            end
+         end
+      end
+
+feature { None }
+
+   Condition : detachable Ast.Expression
+   Body      : detachable Ast.Statement
+
+end
