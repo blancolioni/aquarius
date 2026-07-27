@@ -5,14 +5,16 @@ inherit
    Pascal.Checks.Node
 
 --  Top level. After the whole program has been walked (so every declaration
---  has been counted), pin the routine's local count on the program node as the
---  "pascal.locals" property for the code stage.
+--  has been counted), expose the routine's local count as Locals; the code
+--  stage's Pascal.Generate.Program reads it via type-injection (#66).
 
 feature
 
+   Locals : Integer
+
    After_Node
       do
-         Set_Integer_Property ("pascal.locals", Scope.Count)
+         Locals := Scope.Count
       end
 
 end

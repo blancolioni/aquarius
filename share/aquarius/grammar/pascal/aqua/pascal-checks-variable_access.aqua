@@ -5,12 +5,14 @@ inherit
    Pascal.Checks.Node
 
 --  variable_access ::= variable_identifier { variable_suffix }. Resolves the
---  name to its frame-local offset and pins it on this node as the
---  "pascal.offset" property for the code stage to read. An undeclared name is
---  a semantic error (rather than a code-stage crash). Scalars only (suffixes
---  are out of demo scope).
+--  name to its frame-local offset and exposes it as the public Offset field.
+--  The code-stage Pascal.Generate.Variable_Access for the same node receives
+--  this object by type-injection (issue #66) and reads Offset directly. An
+--  undeclared name is a semantic error. Scalars only.
 
 feature
+
+   Offset : Integer
 
    After_Variable_Identifier (Child : Pascal.Checks.Variable_Identifier)
       do
@@ -21,7 +23,7 @@ feature
       do
          if attached Nm as N then
             if Scope.Is_Declared (N) then
-               Set_Integer_Property ("pascal.offset", Scope.Offset (N))
+               Offset := Scope.Offset (N)
             else
                Error ("undeclared variable: " & N)
             end

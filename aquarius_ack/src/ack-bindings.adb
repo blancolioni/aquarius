@@ -27,6 +27,18 @@ package body Ack.Bindings is
      new WL.String_Maps
        (Ack.Classes.Constant_Class_Entity, Ack.Classes."=");
 
+   --  Maps a class's qualified name to the list of its "group reference"
+   --  attributes -- attributes whose type is another visitor class in the same
+   --  grammar (e.g. Pascal.Generate.Factor with a field of type
+   --  Pascal.Checks.Factor). Each such attribute is auto-injected, per node,
+   --  from the property bag when the class's visitor is materialised, giving a
+   --  later stage typed access to an earlier stage's object for the same node.
+   --  Kept per class (not group-global) so a class's generated _Aqua_Binding
+   --  subclass only gets setters for the attributes it actually declares.
+   package Class_Reference_Maps is
+     new WL.String_Maps
+       (List_Of_Constant_Entities.List, List_Of_Constant_Entities."=");
+
    type Implicit_Call_Record is
       record
          Feature_Name : Ada.Strings.Unbounded.Unbounded_String;
@@ -85,7 +97,7 @@ package body Ack.Bindings is
       Group             : Aquarius.Actions.Action_Group)
       return Boolean
    is
-      References     : List_Of_Constant_Entities.List;
+      Class_References : Class_Reference_Maps.Map;
       Binding_Table  : Ack.Bindings.Actions.Ack_Binding_Table;
       Binding_Vector : Binding_Record_Vectors.Vector;
       Local_Classes  : Link_Name_To_Class_Maps.Map;
@@ -113,6 +125,11 @@ package body Ack.Bindings is
            Ack.Classes.Class_Entity_Record'Class;
          Property : not null access constant Root_Entity_Type'Class)
          return Boolean;
+
+      function Refs_Of (Class_Full_Name : String)
+         return List_Of_Constant_Entities.List;
+      --  The group-reference attributes declared by the named class (empty if
+      --  none). Resolved at write time so declaration order does not matter.
 
       procedure Load_Class
         (Directory_Entry : Ada.Directories.Directory_Entry_Type);
@@ -180,7 +197,20 @@ package body Ack.Bindings is
              (Class,
               Ack.Features.Feature_Entity_Record'Class (Feature.all)'Access)
          then
-            References.Append (Constant_Entity_Type (Feature));
+            declare
+               Key : constant String := Class.Qualified_Name;
+               L   : List_Of_Constant_Entities.List;
+            begin
+               if Class_References.Contains (Key) then
+                  L := Class_References.Element (Key);
+               end if;
+               L.Append (Constant_Entity_Type (Feature));
+               if Class_References.Contains (Key) then
+                  Class_References.Replace (Key, L);
+               else
+                  Class_References.Insert (Key, L);
+               end if;
+            end;
             return;
          end if;
 
@@ -210,7 +240,8 @@ package body Ack.Bindings is
                           Child_Class          => <>,
                           Position             => Position,
                           Has_Feature_Binding  => True,
-                          References           => References,
+                          References           =>
+                            List_Of_Constant_Entities.Empty_List,
                           Implicit_Calls       => <>);
             begin
 
@@ -442,6 +473,21 @@ package body Ack.Bindings is
            and then Property_Top_Name = Class_Top_Name;
       end Is_Group_Reference;
 
+      -------------
+      -- Refs_Of --
+      -------------
+
+      function Refs_Of (Class_Full_Name : String)
+         return List_Of_Constant_Entities.List
+      is
+      begin
+         if Class_References.Contains (Class_Full_Name) then
+            return Class_References.Element (Class_Full_Name);
+         else
+            return List_Of_Constant_Entities.Empty_List;
+         end if;
+      end Refs_Of;
+
       ----------------
       -- Load_Class --
       ----------------
@@ -471,7 +517,6 @@ package body Ack.Bindings is
             Ada.Text_IO.Put_Line ("loading: " & Source_Name);
          end if;
 
-         References.Clear;
          if Tree_Name /= ""
            and then Grammar.Have_Syntax (Tree_Name)
          then
@@ -682,9 +727,12 @@ package body Ack.Bindings is
             Child_String      : constant Boolean :=
                                   Child_Name = "String";
 
+            Parent_Refs       : constant List_Of_Constant_Entities.List :=
+                                  Refs_Of (Parent_Name);
+
          begin
 
-            if not Binding.References.Is_Empty then
+            if not Parent_Refs.Is_Empty then
                declare
                   use Ada.Directories;
                   Parent_Class_File : File_Type;
@@ -700,7 +748,7 @@ package body Ack.Bindings is
                             & " inherit " & Parent_Name);
                   Put_Line (Parent_Class_File,
                             "feature");
-                  for Ref of Binding.References loop
+                  for Ref of Parent_Refs loop
                      Put_Line (Parent_Class_File,
                                "   Set_Binding_" & Ref.Declared_Name
                                & " (Item : "
@@ -731,7 +779,7 @@ package body Ack.Bindings is
             if Has_Child and then not Child_String then
                Put_Converter ("Convert_C", Child_Class_Name);
             end if;
-            for Ref of Binding.References loop
+            for Ref of Parent_Refs loop
                Put_Converter ("Convert_Ref_" & Ref.Declared_Name,
                               Class_Name =>
                                 Ref.Get_Type.Class_Context.Qualified_Name);
@@ -770,7 +818,7 @@ package body Ack.Bindings is
                end if;
             end if;
 
-            for Ref of Binding.References loop
+            for Ref of Parent_Refs loop
                Check_Class_Binding (Ref);
             end loop;
 
@@ -906,7 +954,7 @@ package body Ack.Bindings is
                if Rec.Has_Feature_Binding
                  or else not Rec.Implicit_Calls.Is_Empty
                then
-                  if not Rec.References.Is_Empty then
+                  if not Refs_Of (Parent_Name).Is_Empty then
                      Aqua_Bound_Classes.Include (Parent_Name);
                   end if;
                end if;
@@ -954,7 +1002,7 @@ package body Ack.Bindings is
 
                      if (Rec.Has_Feature_Binding
                          or else not Rec.Implicit_Calls.Is_Empty)
-                       and then not Rec.References.Is_Empty
+                       and then not Refs_Of (-Rec.Parent_Full_Name).Is_Empty
                      then
                         Load_Object_File (Name, Rec);
                      end if;

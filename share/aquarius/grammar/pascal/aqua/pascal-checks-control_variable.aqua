@@ -4,11 +4,13 @@ class
 inherit
    Pascal.Checks.Node
 
---  control_variable ::= variable_identifier (the for-loop variable). Resolve
---  it like any variable_access: pin its frame-local offset on this node as
---  "pascal.offset", or report an undeclared-variable error.
+--  control_variable ::= variable_identifier (the for-loop variable). Resolves
+--  its frame-local offset and exposes it as Offset; the code stage reads it via
+--  type-injection (#66). Undeclared name is a semantic error.
 
 feature
+
+   Offset : Integer
 
    After_Node
       local
@@ -16,7 +18,7 @@ feature
       do
          N := Concatenated_Image
          if Scope.Is_Declared (N) then
-            Set_Integer_Property ("pascal.offset", Scope.Offset (N))
+            Offset := Scope.Offset (N)
          else
             Error ("undeclared variable: " & N)
          end

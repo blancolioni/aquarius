@@ -5,16 +5,17 @@ inherit
    Pascal.Generate.Node
 
 --  Top level: program_heading ';' program_block '.'. Builds an Ast.Unit with
---  a single public routine (the program body) whose locals are the variables
---  declared in the block, then opens a Tagatha.Code, lowers the unit, and
---  disposes -- the same shape as Wir.Generate.Unit.
+--  a single public routine (the program body), opens a Tagatha.Code, lowers
+--  the unit, and disposes -- the same shape as Wir.Generate.Unit.
 --
---  The routine's local count is the "pascal.locals" property the semantic
---  stage pinned on this node. A Pascal program body has no explicit return, so
---  an implicit valueless return is appended to terminate the routine (emit its
---  epilogue).
+--  The routine's local count comes from the semantic-stage Pascal.Checks.Program
+--  for this node, injected by type (issue #66) into Checks. A Pascal program
+--  body has no explicit return, so an implicit valueless return is appended to
+--  terminate the routine (emit its epilogue).
 
 feature
+
+   Checks : detachable Pascal.Checks.Program
 
    After_Program_Heading (Child : Pascal.Generate.Program_Heading)
       do
@@ -28,20 +29,24 @@ feature
 
    After_Node
       local
-         U     : Ast.Unit
-         R     : Ast.Routine
-         Code  : Tagatha.Code
-         Seq   : Ast.Statement.Sequence
-         Ret   : Ast.Statement.Return
+         U      : Ast.Unit
+         R      : Ast.Routine
+         Code   : Tagatha.Code
+         Seq    : Ast.Statement.Sequence
+         Ret    : Ast.Statement.Return
+         Locals : Integer
       do
          if attached Nm as N then
             if attached Body as B then
+               if attached Checks as C then
+                  Locals := C.Locals
+               end
                create Seq.Make (Void, Current)
                Seq.Append (B)
                create Ret.Make (Void, Current)
                Seq.Append (Ret)
                create U.Make (Current)
-               create R.Make (Current, N, 0, Get_Integer_Property ("pascal.locals"), True, Seq)
+               create R.Make (Current, N, 0, Locals, True, Seq)
                U.Add_Routine (R)
                create Code.Make
                U.Generate (Code)
