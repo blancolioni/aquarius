@@ -1,39 +1,58 @@
 note
    Conforming_Child_Node: Copy_Top_Level
-   
+
 class Ada.Declared
-   
+
+inherit
+   Aquarius.Entities.Declarer
+
+--  Base for a parse tree that declares an object. Inherits the standard
+--  Aquarius.Entities.Declarer, so a declaration node carries its resolved
+--  Declaration and registers it in the shared Environment via Declare.
+
 feature
 
    Top_Level  : Boolean
    Full_Name  : String
    Local_Name : String
-   Entity     : Komnenos.Entity
 
    Set_Name (Ids : String_List)
       do
          Full_Name := Ids.Interpolate (".")
          Local_Name := Ids.Last_Element
       end
-      
+
+   Declare_Entity (Defining_Tree : Aquarius.Trees.Program_Tree
+                   Category      : String)
+      local
+         Decl : Aquarius.Entities.Declaration
+      do
+         Decl := Declare (Defining_Tree, Local_Name, Full_Name, Category)
+         if Top_Level then
+            Decl.Set_Top_Level
+         end
+      end
+
    Copy (D : Ada.Declared)
       do
          Full_Name  := D.Full_Name
          Local_Name := D.Local_Name
-         Entity     := D.Entity
+         if attached D.Declaration as Existing then
+            Declaration := Existing
+         end
          Top_Level  := D.Top_Level
       end
-      
+
    Set_Top_Level
       do
          Top_Level := True
       end
-      
+
    Copy_Top_Level (To : Ada.Declared)
       do
          if Top_Level then
             To.Set_Top_Level
          end
       end
-      
+
 end

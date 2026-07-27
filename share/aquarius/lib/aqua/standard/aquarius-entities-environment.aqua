@@ -1,0 +1,76 @@
+class
+   Aquarius.Entities.Environment
+
+create
+   Make
+
+--  Aggregates every declaration and cross reference found in a compilation.
+--  The user interface walks this to list declarations, jump to a definition,
+--  and follow references. Populated by the semantic stage via
+--  Aquarius.Entities.Declarer (declarations) and Aquarius.Entities.Node.Refer
+--  (references).
+--
+--  Lookup scans with String.Equal (value equality); the '=' operator is
+--  reference equality inside a generic in the Aqua VM (issue #60).
+
+feature
+
+   Make
+      do
+         create Declarations
+         create References
+      end
+
+   Declarations : Aqua.Containers.Linked_List [Aquarius.Entities.Declaration]
+   References   : Aqua.Containers.Linked_List [Aquarius.Entities.Reference]
+
+   Add_Declaration (Declaration : Aquarius.Entities.Declaration)
+      do
+         Declarations.Append (Declaration)
+      end
+
+   Add_Reference (Reference : Aquarius.Entities.Reference)
+      do
+         References.Append (Reference)
+      end
+
+   Find_Declaration (Qualified_Name : String)
+      : detachable Aquarius.Entities.Declaration
+      local
+         It    : Aqua.Containers.Linked_List_Iterator
+                    [Aquarius.Entities.Declaration]
+         Found : Boolean
+      do
+         from
+            It := Declarations.New_Cursor
+         until
+            It.After or else Found
+         loop
+            if It.Element.Qualified_Name.Equal (Qualified_Name) then
+               Result := It.Element
+               Found := True
+            end
+            It.Next
+         end
+      end
+
+   Find_Named (Name : String) : detachable Aquarius.Entities.Declaration
+      local
+         It    : Aqua.Containers.Linked_List_Iterator
+                    [Aquarius.Entities.Declaration]
+         Found : Boolean
+      do
+         from
+            It := Declarations.New_Cursor
+         until
+            It.After or else Found
+         loop
+            if It.Element.Name.Equal (Name) then
+               Result := It.Element
+               Found := True
+            end
+            It.Next
+         end
+      end
+
+end

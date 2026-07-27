@@ -10,9 +10,9 @@ feature
          Set_Name (Child.Identifiers)
          
          if Part_Of_Body then
-            
+
          else
-            Entity := Create_Entity (Child, Local_Name, Full_Name, "procedure-spec", Top_Level)
+            Declare_Entity (Child, "procedure-spec")
          end
       end
 

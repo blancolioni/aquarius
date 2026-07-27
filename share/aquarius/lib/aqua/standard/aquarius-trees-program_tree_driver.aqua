@@ -110,35 +110,6 @@ feature
          Send_String (8, Name)
       end
          
-   Create_Entity (Defining_Name_Tree   : Aquarius.Trees.Program_Tree
-                  Name, Qualified_Name : String
-                  Class_Name           : String
-                  Top_Level            : Boolean) : Komnenos.Entity
-      local
-         Mem  : System.Memory.Mem
-         Text : String
-      do
-         Text := Name & "/" & Qualified_Name & "/" & Class_Name & "/" & Defining_Name_Tree.Start_Location_Image
-         Text.Write_To_Memory (Text_Address)
-         if Top_Level then
-            Mem.Put_Word_32 (Argument_Address, 1)
-         end
-         Set_Tree_Driver (17)
-      end
-         
-   
-   Find_Entity (Entity_Name    : String
-                Class_Name     : String) : Komnenos.Entity
-      do end
-   
-   
-   Cross_Reference (Referrer_Entity   : Komnenos.Entity
-                    Referenced_Entity : Komnenos.Entity
-                    Reference_Type    : String)
-      do end
-   
-feature
-
    Make_From_Index (Index : System.Word_32)
       do
          External_Tree_Index := Index

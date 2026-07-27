@@ -1,0 +1,30 @@
+class
+   Aquarius.Entities.Node
+
+--  Shared base for the semantic-stage entity mixins. Holds the single
+--  Environment for the whole compilation (a system-wide once, so every
+--  Declarer/Scope/reference site sees the same store).
+--
+--  It deliberately does NOT inherit Aquarius.Trees.Program_Tree: it is mixed
+--  into grammar visitor classes that already inherit Program_Tree, and keeping
+--  it tree-free avoids repeated inheritance of Program_Tree. The tree that a
+--  reference occurs at is passed in to Refer instead.
+
+feature
+
+   Environment : Aquarius.Entities.Environment
+      once
+         create Result.Make
+      end
+
+   Refer (Reference_Tree : Aquarius.Trees.Program_Tree
+          Reference_Type : String
+          Referenced     : detachable Aquarius.Entities.Declaration)
+      local
+         Reference : Aquarius.Entities.Reference
+      do
+         create Reference.Make (Reference_Tree, Reference_Type, Referenced)
+         Environment.Add_Reference (Reference)
+      end
+
+end

@@ -22,7 +22,7 @@ feature
          Defining_Name := Child.Identifiers.Interpolate (".")
 
          across Child.Reference as Ref loop
-            Ref.Tree.Cross_Reference (Entity, Ref.Entity, "reference")
+            Refer (Ref.Tree, "reference", Ref.Declaration)
          end
       end
 

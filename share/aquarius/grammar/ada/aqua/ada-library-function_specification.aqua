@@ -13,7 +13,7 @@ feature
             
          else
             Put_Line ("new function spec: " & Full_Name)
-            Entity := Create_Entity (Child, Local_Name, Full_Name, "function-spec", Top_Level)
+            Declare_Entity (Child, "function-spec")
          end
       end
 end

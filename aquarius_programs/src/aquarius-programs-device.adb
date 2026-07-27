@@ -22,10 +22,7 @@ package body Aquarius.Programs.Device is
       Start_Column,
       End_Column,
       Start_Position,
-      End_Position,
-      Create_Entity,
-      Find_Entity,
-      Cross_Reference);
+      End_Position);
 
    function Is_Command (Value : Natural) return Boolean
    is (Value <= Driver_Command'Pos (Driver_Command'Last));
@@ -248,63 +245,6 @@ package body Aquarius.Programs.Device is
                   Props.Insert (Name, Value);
                end if;
             end;
-
-         when Create_Entity =>
-
-            null;
-
-            --  declare
-            --     use type Aqua.Word;
-            --
-            --     Specification : constant String :=
-            --                       Driver.Read_String;
-            --     Name_Left     : constant Natural :=
-            --                       Specification'First - 1;
-            --     Q_Name_Left   : constant Natural :=
-            --                       Ada.Strings.Fixed.Index
-            --                         (Specification, "/", Name_Left + 1);
-            --     Class_Name_Left : constant Natural :=
-            --                         Ada.Strings.Fixed.Index
-            --                           (Specification, "/", Q_Name_Left + 1);
-            --     Location_Left   : constant Natural :=
-            --                         Ada.Strings.Fixed.Index
-            --                     (Specification, "/", Class_Name_Left + 1);
-            --     Name            : constant String :=
-            --                         Specification
-            --                           (Name_Left + 1 .. Q_Name_Left - 1);
-            --     Qualified_Name  : constant String :=
-            --                         Specification
-            --                     (Q_Name_Left + 1 .. Class_Name_Left - 1);
-            --     Class_Name      : constant String :=
-            --                         Specification
-            --                           (Class_Name_Left + 1
-            --                            .. Location_Left - 1);
-            --     Top_Level       : constant Boolean :=
-            --                         Driver.Get_Word (8) /= 0;
-            --  begin
-            --
-            --     declare
-            --        use Aquarius.Programs.Komnenos_Entities;
-            --     begin
-            --        Create_Aquarius_Source_Entity
-            --          (Table     => Komnenos.Entities.Tables.Active_Table,
-            --           Name             => Name,
-            --           Qualified_Name   => Qualified_Name,
-            --           Class_Name       => Class_Name,
-            --           Top_Level        => Top_Level,
-            --           Compilation_Unit => Driver.Current.Program_Root,
-            --           Defining_Name    => Driver.Current,
-            --           Entity_Spec      => Driver.Current,
-            --           Entity_Body      => Driver.Current);
-            --     end;
-            --
-            --  end;
-
-         when Find_Entity =>
-            null;
-
-         when Cross_Reference =>
-            null;
 
       end case;
    end Execute_Command;

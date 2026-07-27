@@ -8,7 +8,7 @@ feature
    After_Defining_Program_Unit_Name (Child : Ada.Library.Defining_Program_Unit_Name)
       do
          Set_Name (Child.Identifiers)
-         Entity := Create_Entity (Child, Local_Name, Full_Name, "package", Top_Level)
+         Declare_Entity (Child, "package")
          Put_Line ("Ada.Library: new package: " & Full_Name)
       end
       

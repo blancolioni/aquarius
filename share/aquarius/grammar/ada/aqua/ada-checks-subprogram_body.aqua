@@ -15,7 +15,7 @@ feature
       do
          Local_Name := Child.Local_Name
          Full_Name := Child.Full_Name
-         Entity := Create_Entity (Current, Local_Name, Full_Name, "procedure-body", Top_Level)
+         Declare_Entity (Current, "procedure-body")
       end
 
    Before_Matching_Name (Child : Ada.Checks.Matching_Name)
