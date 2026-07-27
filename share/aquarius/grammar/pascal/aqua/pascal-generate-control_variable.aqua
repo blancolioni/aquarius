@@ -4,7 +4,19 @@ class
 inherit
    Pascal.Generate.Node
 
---  Leaf: control_variable ::= variable_identifier. Read by for_statement via
---  Concatenated_Image.
+--  Leaf: control_variable ::= variable_identifier. The semantic stage resolved
+--  the name and pinned its frame-local offset on this node ("pascal.offset");
+--  the enclosing for_statement reads it via Offset.
+
+feature
+
+   Offset : Integer
+
+   After_Node
+      do
+         if Has_Node_Property ("pascal.offset") then
+            Offset := Get_Integer_Property ("pascal.offset")
+         end
+      end
 
 end

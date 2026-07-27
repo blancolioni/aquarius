@@ -1,0 +1,34 @@
+class
+   Pascal.Checks.Variable_Declaration
+
+inherit
+   Pascal.Checks.Node
+
+--  variable_declaration ::= identifier_list ':' type_denoter ';'. Allocates a
+--  frame-local offset per name in the shared Scope; a name already declared in
+--  scope is a semantic error.
+
+feature
+
+   After_Identifier_List (Child : Pascal.Checks.Identifier_List)
+      local
+         It     : Aqua.Containers.Linked_List_Iterator [String]
+         Name   : String
+         Ignore : Integer
+      do
+         from
+            It := Child.Names.New_Cursor
+         until
+            It.After
+         loop
+            Name := It.Element
+            if Scope.Is_Declared (Name) then
+               Error ("duplicate declaration: " & Name)
+            else
+               Ignore := Scope.Declare (Name)
+            end
+            It.Next
+         end
+      end
+
+end

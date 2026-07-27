@@ -1,0 +1,22 @@
+class
+   Pascal.Checks.Node
+
+inherit
+   Aquarius.Trees.Program_Tree
+
+--  Base for the semantic-stage visitors. Inheriting Program_Tree provides
+--  Concatenated_Image, Error, and the node property bag (Set_Integer_Property
+--  / Get_Integer_Property) used to hand resolved offsets to the code stage.
+--
+--  Scope is the single shared symbol table for the compilation, a once value
+--  so every visitor sees the same instance. Declarations populate it (they
+--  reduce before the statement part), accesses read it.
+
+feature
+
+   Scope : Pascal.Checks.Scope
+      once
+         create Result.Make
+      end
+
+end

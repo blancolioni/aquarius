@@ -1,0 +1,35 @@
+class
+   Pascal.Checks.Variable_Access
+
+inherit
+   Pascal.Checks.Node
+
+--  variable_access ::= variable_identifier { variable_suffix }. Resolves the
+--  name to its frame-local offset and pins it on this node as the
+--  "pascal.offset" property for the code stage to read. An undeclared name is
+--  a semantic error (rather than a code-stage crash). Scalars only (suffixes
+--  are out of demo scope).
+
+feature
+
+   After_Variable_Identifier (Child : Pascal.Checks.Variable_Identifier)
+      do
+         Nm := Child.Concatenated_Image
+      end
+
+   After_Node
+      do
+         if attached Nm as N then
+            if Scope.Is_Declared (N) then
+               Set_Integer_Property ("pascal.offset", Scope.Offset (N))
+            else
+               Error ("undeclared variable: " & N)
+            end
+         end
+      end
+
+feature { None }
+
+   Nm : detachable String
+
+end

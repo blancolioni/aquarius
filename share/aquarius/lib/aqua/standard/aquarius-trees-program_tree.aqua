@@ -87,5 +87,39 @@ feature
       do
          Tree.Cross_Reference (Referrer_Entity, Referenced_Entity, Reference_Type)
       end
-      
+
+   --  Node property bag: a String-keyed store on the parse-tree node itself,
+   --  used to hand results from one action group (stage) to a later one. The
+   --  semantic stage runs fully before the code stage and the node persists
+   --  across both, so a value written here in 'semantic' is readable in
+   --  'code'. (The aqua VM is a bump allocator with no GC and property values
+   --  are raw words, so a plain Integer is safe to store.)
+
+   Has_Node_Property (Name : String) : Boolean
+      require
+         Tree_Set : Have_Tree
+      do
+         Result := Tree.Has_Property (Name)
+      end
+
+   Set_Integer_Property (Name : String; Value : Integer)
+      require
+         Tree_Set : Have_Tree
+      local
+         Addr : System.Address
+      do
+         Addr.Convert_From (Value)
+         Tree.Set_Property (Name, Addr)
+      end
+
+   Get_Integer_Property (Name : String) : Integer
+      require
+         Tree_Set : Have_Tree
+      local
+         Addr : System.Address
+      do
+         Addr := Tree.Get_Property (Name)
+         Result.Convert_From (Addr)
+      end
+
 end

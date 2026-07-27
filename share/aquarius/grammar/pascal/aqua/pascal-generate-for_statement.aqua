@@ -19,7 +19,8 @@ feature
 
    After_Control_Variable (Child : Pascal.Generate.Control_Variable)
       do
-         CV := Child.Concatenated_Image
+         Off_Value := Child.Offset
+         Have_CV := True
       end
 
    After_Initial_Value (Child : Pascal.Generate.Initial_Value)
@@ -57,11 +58,11 @@ feature
          Outer       : Ast.Statement.Sequence
          The_Loop    : Ast.Statement.Iteration
       do
-         if attached CV as C then
+         if Have_CV then
             if attached Init as I0 then
                if attached Final as F0 then
                   if attached Body as B0 then
-                     Off := Scope.Offset (C)
+                     Off := Off_Value
                      if Down then
                         Cond_Op := O.Greater_Equal
                         Incr_Op := O.Subtract
@@ -90,11 +91,12 @@ feature
 
 feature { None }
 
-   CV    : detachable String
-   Init  : detachable Ast.Expression
-   Final : detachable Ast.Expression
-   Body  : detachable Ast.Statement
-   Down  : Boolean
+   Off_Value : Integer
+   Have_CV   : Boolean
+   Init      : detachable Ast.Expression
+   Final     : detachable Ast.Expression
+   Body      : detachable Ast.Statement
+   Down      : Boolean
 
    New_Local (Off : Integer) : Ast.Expression.Local_Variable
       do

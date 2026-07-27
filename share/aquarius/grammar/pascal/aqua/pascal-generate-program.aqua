@@ -9,8 +9,10 @@ inherit
 --  declared in the block, then opens a Tagatha.Code, lowers the unit, and
 --  disposes -- the same shape as Wir.Generate.Unit.
 --
---  A Pascal program body has no explicit return, so an implicit valueless
---  return is appended to terminate the routine (emit its epilogue).
+--  The routine's local count is the "pascal.locals" property the semantic
+--  stage pinned on this node. A Pascal program body has no explicit return, so
+--  an implicit valueless return is appended to terminate the routine (emit its
+--  epilogue).
 
 feature
 
@@ -39,7 +41,7 @@ feature
                create Ret.Make (Void, Current)
                Seq.Append (Ret)
                create U.Make (Current)
-               create R.Make (Current, N, 0, Scope.Count, True, Seq)
+               create R.Make (Current, N, 0, Get_Integer_Property ("pascal.locals"), True, Seq)
                U.Add_Routine (R)
                create Code.Make
                U.Generate (Code)

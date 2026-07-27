@@ -1,0 +1,18 @@
+class
+   Pascal.Checks.Program
+
+inherit
+   Pascal.Checks.Node
+
+--  Top level. After the whole program has been walked (so every declaration
+--  has been counted), pin the routine's local count on the program node as the
+--  "pascal.locals" property for the code stage.
+
+feature
+
+   After_Node
+      do
+         Set_Integer_Property ("pascal.locals", Scope.Count)
+      end
+
+end

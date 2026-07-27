@@ -4,30 +4,23 @@ class
 inherit
    Pascal.Generate.Expr_Node
 
---  variable_access ::= variable_identifier { variable_suffix }. The demo
---  handles scalar variables only (no suffixes): resolves the name to its
---  frame-local offset and yields an Ast.Expression.Local_Variable, which
---  serves as both rvalue (Generate) and assignment target (Set_Value).
+--  variable_access ::= variable_identifier { variable_suffix }. The semantic
+--  stage already resolved the name and pinned the frame-local offset on this
+--  node as the "pascal.offset" property; the code stage just reads it and
+--  yields an Ast.Expression.Local_Variable (rvalue and assignment target).
 
 feature
-
-   After_Variable_Identifier (Child : Pascal.Generate.Variable_Identifier)
-      do
-         Nm := Child.Concatenated_Image
-      end
 
    After_Node
       local
          L : Ast.Expression.Local_Variable
       do
-         if attached Nm as N then
-            create L.Make (Void, Current, Scope.Offset (N))
+         if Has_Node_Property ("pascal.offset") then
+            create L.Make (Void, Current, Get_Integer_Property ("pascal.offset"))
             Set_Expr (L)
+         else
+            Error ("internal: variable_access has no resolved pascal.offset")
          end
       end
-
-feature { None }
-
-   Nm : detachable String
 
 end
