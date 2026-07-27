@@ -4,18 +4,20 @@ class
 inherit
    Pascal.Generate.Node
 
---  Leaf: control_variable ::= variable_identifier. The semantic stage resolved
---  the name and pinned its frame-local offset on this node ("pascal.offset");
---  the enclosing for_statement reads it via Offset.
+--  Leaf: control_variable ::= variable_identifier. The semantic-stage
+--  Pascal.Checks.Control_Variable for this node is injected by type (#66); the
+--  enclosing for_statement reads the resolved offset via Offset.
 
 feature
+
+   Checks : detachable Pascal.Checks.Control_Variable
 
    Offset : Integer
 
    After_Node
       do
-         if Has_Node_Property ("pascal.offset") then
-            Offset := Get_Integer_Property ("pascal.offset")
+         if attached Checks as C then
+            Offset := C.Offset
          end
       end
 

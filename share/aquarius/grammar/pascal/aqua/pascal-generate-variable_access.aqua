@@ -5,21 +5,25 @@ inherit
    Pascal.Generate.Expr_Node
 
 --  variable_access ::= variable_identifier { variable_suffix }. The semantic
---  stage already resolved the name and pinned the frame-local offset on this
---  node as the "pascal.offset" property; the code stage just reads it and
---  yields an Ast.Expression.Local_Variable (rvalue and assignment target).
+--  stage's Pascal.Checks.Variable_Access for the SAME node is injected here by
+--  type (issue #66): the framework populates Checks with that node's
+--  earlier-stage object, so the resolved offset is read as a typed field
+--  (Checks.Offset) -- no property-bag marshalling. Yields an
+--  Ast.Expression.Local_Variable (rvalue and assignment target).
 
 feature
+
+   Checks : detachable Pascal.Checks.Variable_Access
 
    After_Node
       local
          L : Ast.Expression.Local_Variable
       do
-         if Has_Node_Property ("pascal.offset") then
-            create L.Make (Void, Current, Get_Integer_Property ("pascal.offset"))
+         if attached Checks as C then
+            create L.Make (Void, Current, C.Offset)
             Set_Expr (L)
          else
-            Error ("internal: variable_access has no resolved pascal.offset")
+            Error ("internal: variable_access not resolved by semantic stage")
          end
       end
 
