@@ -1,0 +1,21 @@
+class
+   Pascal.Checks.Constant_Definition
+
+inherit
+   Pascal.Checks.Node
+
+--  constant_definition ::= identifier '=' constant. Records the constant's name
+--  in the current entity scope (issue #74). The constant's value is not checked
+--  and the name is not entered into the flat offset Scope, so a reference to it
+--  in an expression is not yet resolved (minimal semantic pass).
+
+feature
+
+   After_Identifier (Name : String)
+      local
+         Ignore : Aquarius.Entities.Declaration
+      do
+         Ignore := Record_Declaration (Current, Name, "constant")
+      end
+
+end

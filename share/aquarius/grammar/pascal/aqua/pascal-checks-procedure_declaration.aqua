@@ -1,0 +1,18 @@
+class
+   Pascal.Checks.Procedure_Declaration
+
+inherit
+   Pascal.Checks.Node
+
+--  procedure_declaration ::= procedure_heading ';' (directive | procedure_block).
+--  Closes the child scope opened by the heading once the whole declaration
+--  (parameters plus body) has reduced (issue #74).
+
+feature
+
+   After_Node
+      do
+         Leave_Scope
+      end
+
+end

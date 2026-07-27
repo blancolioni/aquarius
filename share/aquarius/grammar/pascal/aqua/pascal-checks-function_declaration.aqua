@@ -1,0 +1,18 @@
+class
+   Pascal.Checks.Function_Declaration
+
+inherit
+   Pascal.Checks.Node
+
+--  function_declaration ::= function_heading ';' (directive | function_block).
+--  Closes the child scope opened by the heading once the whole declaration has
+--  reduced (issue #74).
+
+feature
+
+   After_Node
+      do
+         Leave_Scope
+      end
+
+end

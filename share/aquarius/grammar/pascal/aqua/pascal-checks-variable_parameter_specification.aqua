@@ -1,0 +1,28 @@
+class
+   Pascal.Checks.Variable_Parameter_Specification
+
+inherit
+   Pascal.Checks.Node
+
+--  variable_parameter_specification ::= 'var' identifier_list ':'
+--  type_identifier. As value_parameter_specification, but the parameter is
+--  passed by reference; recorded with the "var-parameter" category (issue #74).
+
+feature
+
+   After_Identifier_List (Child : Pascal.Checks.Identifier_List)
+      local
+         It     : Aqua.Containers.Linked_List_Iterator [String]
+         Ignore : Aquarius.Entities.Declaration
+      do
+         from
+            It := Child.Names.New_Cursor
+         until
+            It.After
+         loop
+            Ignore := Record_Declaration (Current, It.Element, "var-parameter")
+            It.Next
+         end
+      end
+
+end

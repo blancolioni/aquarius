@@ -1,0 +1,20 @@
+class
+   Pascal.Checks.Type_Definition
+
+inherit
+   Pascal.Checks.Node
+
+--  type_definition ::= identifier '=' type_denoter. Records the type's name in
+--  the current entity scope (issue #74). The denoted type is not resolved and
+--  no structural type model is built (minimal semantic pass).
+
+feature
+
+   After_Identifier (Name : String)
+      local
+         Ignore : Aquarius.Entities.Declaration
+      do
+         Ignore := Record_Declaration (Current, Name, "type")
+      end
+
+end

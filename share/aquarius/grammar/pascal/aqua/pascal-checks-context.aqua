@@ -1,0 +1,27 @@
+class
+   Pascal.Checks.Context
+
+create
+   Make
+
+--  Mutable holder for the current entity scope during the semantic walk. Held
+--  as a system-wide once by Pascal.Checks.Node, so every visitor shares one
+--  current-scope pointer. Procedure and function declarations push a child
+--  scope on entry and pop it on exit, giving nested entity scopes without
+--  touching the flat offset table (Pascal.Checks.Scope) that the code stage
+--  uses. A once feature cannot be reassigned, hence this mutable wrapper.
+
+feature
+
+   Active_Scope : detachable Aquarius.Entities.Scope
+
+   Set_Current (Scope : Aquarius.Entities.Scope)
+      do
+         Active_Scope := Scope
+      end
+
+   Make
+      do
+      end
+
+end

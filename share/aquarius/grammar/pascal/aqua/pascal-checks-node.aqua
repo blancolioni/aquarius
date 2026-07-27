@@ -23,4 +23,85 @@ feature
          create Result.Make
       end
 
+   --  Entity-model scope tree (issue #74). Separate from the flat offset Scope
+   --  above: this records const/type/var/procedure/function/parameter
+   --  declarations in nested Aquarius.Entities.Scope objects (a child scope per
+   --  procedure/function body), while the flat Scope keeps driving offset
+   --  allocation and variable_access resolution for the code stage. Global_Scope
+   --  is the outermost scope, holding the pre-declared built-in types and
+   --  procedures; the program pushes its own scope beneath it.
+
+   Global_Scope : Aquarius.Entities.Scope
+      once
+         create Result.Make
+      end
+
+   Context : Pascal.Checks.Context
+      once
+         create Result.Make
+      end
+
+   Current_Scope : Aquarius.Entities.Scope
+      do
+         if attached Context.Active_Scope as C then
+            Result := C
+         else
+            Result := Global_Scope
+         end
+      end
+
+   Enter_Scope (Scope : Aquarius.Entities.Scope)
+      do
+         Scope.Set_Parent (Current_Scope)
+         Context.Set_Current (Scope)
+      end
+
+   Leave_Scope
+      do
+         if attached Context.Active_Scope as C then
+            if attached C.Parent as P then
+               Context.Set_Current (P)
+            end
+         end
+      end
+
+   Record_Declaration (Tree     : Aquarius.Trees.Program_Tree
+                       Name     : String
+                       Category : String) : Aquarius.Entities.Declaration
+      --  Create a declaration, register it in the shared Environment and in the
+      --  current entity scope. Returns it so callers can ignore or keep it.
+      do
+         create Result.Make (Name, Name, Category, Tree)
+         Environment.Add_Declaration (Result)
+         Current_Scope.Add_Declaration (Result)
+      end
+
+   Ensure_Builtins
+      --  Pre-declare Pascal's required built-in types and I/O procedures once,
+      --  in Global_Scope. Guarded on emptiness because the plugin reuses one VM
+      --  (and hence one Environment/Global_Scope once) across files.
+      do
+         if Global_Scope.Declarations.Is_Empty then
+            Declare_Builtin ("integer",  "builtin-type")
+            Declare_Builtin ("real",     "builtin-type")
+            Declare_Builtin ("boolean",  "builtin-type")
+            Declare_Builtin ("char",     "builtin-type")
+            Declare_Builtin ("text",     "builtin-type")
+            Declare_Builtin ("write",    "builtin-procedure")
+            Declare_Builtin ("writeln",  "builtin-procedure")
+            Declare_Builtin ("read",     "builtin-procedure")
+            Declare_Builtin ("readln",   "builtin-procedure")
+         end
+      end
+
+   Declare_Builtin (Name : String; Category : String)
+      local
+         Decl : Aquarius.Entities.Declaration
+      do
+         create Decl.Make (Name, Name, Category, Current)
+         Decl.Set_Top_Level
+         Environment.Add_Declaration (Decl)
+         Global_Scope.Add_Declaration (Decl)
+      end
+
 end

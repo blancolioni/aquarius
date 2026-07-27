@@ -4,6 +4,9 @@ class
 inherit
    Aquarius.Entities.Node
 
+create
+   Make
+
 --  Base for a parse-tree node that contains a bunch of declared objects (a
 --  lexical scope: a block, a package, a record, ...). Holds the declarations
 --  that belong directly to it and resolves a simple name against them. Parent
@@ -14,9 +17,19 @@ inherit
 
 feature
 
+   Make
+      do
+         create Declarations
+      end
+
    Declarations : Aqua.Containers.Linked_List [Aquarius.Entities.Declaration]
 
    Parent : detachable Aquarius.Entities.Scope
+
+   Set_Parent (Enclosing : Aquarius.Entities.Scope)
+      do
+         Parent := Enclosing
+      end
 
    Add_Declaration (Declaration : Aquarius.Entities.Declaration)
       do

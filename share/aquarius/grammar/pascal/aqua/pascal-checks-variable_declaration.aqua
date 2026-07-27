@@ -32,6 +32,9 @@ feature
                create Decl.Make (Name, Name, "variable", Current)
                Environment.Add_Declaration (Decl)
                Scope.Add_Declaration (Decl)
+               --  Also record in the current entity scope (issue #74): the
+               --  program scope, or a procedure/function's own child scope.
+               Current_Scope.Add_Declaration (Decl)
             end
             It.Next
          end
