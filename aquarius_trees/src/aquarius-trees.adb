@@ -52,7 +52,13 @@ package body Aquarius.Trees is
          New_Child.Left := null;
       end if;
       New_Child.Right := null;
-      New_Child.Parent := Tree (Item);
+      --  Item is an anonymous access parameter; when Add_Child is reached via
+      --  Expand_All (whose Item is an in-out formal, e.g. during
+      --  ambiguous-token expansion) the static accessibility level of Item is
+      --  deeper than the named Tree type, so a checked conversion Tree (Item)
+      --  fails even though the designated tree is heap-allocated and
+      --  long-lived. Take the access unchecked to record the parent link.
+      New_Child.Parent := Root_Tree_Type'Class (Item.all)'Unchecked_Access;
       Item.Children.Append (Tree (New_Child));
    end Add_Child;
 

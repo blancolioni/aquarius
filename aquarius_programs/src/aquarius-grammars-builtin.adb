@@ -25,6 +25,8 @@ package body Aquarius.Grammars.Builtin is
 
    Backslash_Escaped_String : Lexer;
 
+   Pascal_String_Literals   : Lexer;
+
    ----------------------------
    -- Create_Standard_Lexers --
    ----------------------------
@@ -50,6 +52,13 @@ package body Aquarius.Grammars.Builtin is
         (Literal ('"') & Literal ('"')) or (not Literal ('"'));
       Backslash_Escaped_String_Element : constant Lexer :=
         (Literal ('\') & Any) or (not (Literal ('\') or Literal ('"')));
+      --  Pascal string: single-quoted, a doubled quote '' escapes one quote.
+      --  Also accept double-quoted strings, as some dialects (and several of
+      --  the sample programs) use them interchangeably.
+      Pascal_SQ_Element : constant Lexer :=
+        (Literal (''') & Literal (''')) or (not Literal ('''));
+      Pascal_DQ_Element : constant Lexer :=
+        (Literal ('"') & Literal ('"')) or (not Literal ('"'));
       Haskell_Symbol : constant Lexer :=
         One_Of ("!#$%&*+./<=>?@^|-~\");
 
@@ -88,6 +97,15 @@ package body Aquarius.Grammars.Builtin is
         & Optional (Repeat (Backslash_Escaped_String_Element))
         & Literal ('"');
 
+      Pascal_String_Literals :=
+        (Literal (''')
+         & Optional (Repeat (Pascal_SQ_Element))
+         & Literal ('''))
+        or
+        (Literal ('"')
+         & Optional (Repeat (Pascal_DQ_Element))
+         & Literal ('"'));
+
       Hash_Line_Comment :=
         Literal ('#') & Repeat (Any);
       Have_Lexers := True;
@@ -121,6 +139,8 @@ package body Aquarius.Grammars.Builtin is
          return Ada_Comments;
       elsif Name = "backslash_escaped_string" then
          return Backslash_Escaped_String;
+      elsif Name = "pascal_string_literal" then
+         return Pascal_String_Literals;
       elsif Name = "symbol_sequence" then
          return Symbol_Sequence;
       elsif Name = "haskell_varid" then

@@ -20,7 +20,7 @@ package body Aquarius.Reader is
      (Stream         : Aquarius.Streams.Reader_Reference;
       Line           : out Ada.Strings.Unbounded.Unbounded_String;
       Line_Start     : in out Locations.Updateable_Location_Interface'Class;
-      Line_Number    : in out Positive;
+      Line_Number    : in out Natural;
       Grammar        : Aquarius.Grammars.Aquarius_Grammar;
       Vertical_Space : out Aquarius.Locations.Line_Count);
 
@@ -32,7 +32,7 @@ package body Aquarius.Reader is
      (Stream         : Aquarius.Streams.Reader_Reference;
       Line           : out Ada.Strings.Unbounded.Unbounded_String;
       Line_Start     : in out Locations.Updateable_Location_Interface'Class;
-      Line_Number    : in out Positive;
+      Line_Number    : in out Natural;
       Grammar        : Aquarius.Grammars.Aquarius_Grammar;
       Vertical_Space : out Aquarius.Locations.Line_Count)
    is
@@ -111,6 +111,10 @@ package body Aquarius.Reader is
 
       while not Stream.End_Of_Stream loop
          Line_Start.Update_Location (Stream.all);
+         --  Count every physical line read, not just blank ones, so that
+         --  Line_Number tracks the source line the returned text came from
+         --  (used in syntax-error messages).
+         Line_Number := Line_Number + 1;
          declare
             Full_Line     : constant String := Strip (Stream.Get_Line);
             Expanded_Line : constant String := Expand_Tabs (Full_Line);
@@ -126,7 +130,6 @@ package body Aquarius.Reader is
                return;
             end if;
             Vertical_Space := Vertical_Space + 1;
-            Line_Number := Line_Number + 1;
          end;
       end loop;
 
@@ -165,8 +168,16 @@ package body Aquarius.Reader is
                               (if Grammar.Have_Block_Comment
                                then Grammar.Block_Comment_End
                                else "");
+      Block_Comment_Start_2 : constant String :=
+                              (if Grammar.Have_Block_Comment_2
+                               then Grammar.Block_Comment_Start_2
+                               else "");
+      Block_Comment_End_2 : constant String :=
+                              (if Grammar.Have_Block_Comment_2
+                               then Grammar.Block_Comment_End_2
+                               else "");
 
-      Line_Number       : Positive := 1;
+      Line_Number       : Natural := 0;
 
       function Token_OK (Tok : Aquarius.Tokens.Token) return Boolean
       is (Token_OK (Tok, Context));
@@ -259,47 +270,77 @@ package body Aquarius.Reader is
                   end if;
                end if;
 
-               --  explicit check for block comment
-               if Grammar.Have_Block_Comment
-                 and then First + Block_Comment_Start'Length - 1 <= Line_Last
-                 and then Slice (Line, First,
-                                 First + Block_Comment_Start'Length - 1)
-                 = Block_Comment_Start
-               then
-                  First := First + Block_Comment_Start'Length;
+               --  explicit check for block comment. A grammar may declare two
+               --  independent delimiter pairs (e.g. Pascal's (* *) and { });
+               --  detect either start and scan to the matching close.
+               declare
+                  Is_Start_1 : constant Boolean :=
+                    Grammar.Have_Block_Comment
+                      and then First + Block_Comment_Start'Length - 1
+                               <= Line_Last
+                      and then Slice (Line, First,
+                                      First + Block_Comment_Start'Length - 1)
+                               = Block_Comment_Start;
+                  Is_Start_2 : constant Boolean :=
+                    Grammar.Have_Block_Comment_2
+                      and then First + Block_Comment_Start_2'Length - 1
+                               <= Line_Last
+                      and then Slice (Line, First,
+                                      First + Block_Comment_Start_2'Length - 1)
+                               = Block_Comment_Start_2;
+               begin
+                  if Is_Start_1 or else Is_Start_2 then
+                     declare
+                        Start_Length : constant Positive :=
+                          (if Is_Start_1 then Block_Comment_Start'Length
+                           else Block_Comment_Start_2'Length);
+                        Comment_End  : constant String :=
+                          (if Is_Start_1 then Block_Comment_End
+                           else Block_Comment_End_2);
+                        Found        : Boolean := False;
+                     begin
+                        First := First + Start_Length;
 
-                  declare
-                     Found        : Boolean := False;
-                  begin
+                        while not Found loop
 
-                     while not Found loop
+                           declare
+                              End_Index : Natural := 0;
+                           begin
+                              if First <= Length (Line) then
+                                 End_Index :=
+                                   Index (Line, Comment_End, First);
+                              end if;
 
-                        declare
-                           End_Index : constant Natural :=
-                                         Index
-                                           (Line, Block_Comment_End, First);
-                        begin
-                           if End_Index > 0 then
-                              First := End_Index + Block_Comment_End'Length;
-                              Found := True;
-                              exit;
-                           end if;
+                              if End_Index > 0 then
+                                 First := End_Index + Comment_End'Length;
+                                 Found := True;
+                                 exit;
+                              end if;
 
-                           Get_Line
-                             (Stream         => Stream,
-                              Line           => Line,
-                              Line_Start     => Line_Start,
-                              Line_Number    => Line_Number,
-                              Grammar        => Grammar,
-                              Vertical_Space => Vertical_Space);
-                           First := 1;
-                        end;
-                     end loop;
+                              Get_Line
+                                (Stream         => Stream,
+                                 Line           => Line,
+                                 Line_Start     => Line_Start,
+                                 Line_Number    => Line_Number,
+                                 Grammar        => Grammar,
+                                 Vertical_Space => Vertical_Space);
+                              First := 1;
 
-                     goto Restart_Space_Scan;
+                              --  Unterminated comment at end of input: stop
+                              --  rather than loop forever on an empty line.
+                              exit when Length (Line) = 0;
 
-                  end;
-               end if;
+                              --  A block comment spanning several lines
+                              --  replaces Line, so Line_Last (used by the
+                              --  outer scan and by Slice below) must follow.
+                              Line_Last := Length (Line);
+                           end;
+                        end loop;
+
+                        goto Restart_Space_Scan;
+                     end;
+                  end if;
+               end;
 
                Context.Update_Location (Line_Start);
 

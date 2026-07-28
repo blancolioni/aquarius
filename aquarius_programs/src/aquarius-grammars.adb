@@ -221,6 +221,10 @@ package body  Aquarius.Grammars is
          Block_Comment_Start (Grammar, Value);
       elsif Name = "block_comment_end" then
          Block_Comment_End (Grammar, Value);
+      elsif Name = "block_comment_start_2" then
+         Block_Comment_Start_2 (Grammar, Value);
+      elsif Name = "block_comment_end_2" then
+         Block_Comment_End_2 (Grammar, Value);
       elsif Name = "continuation" then
          if Value'Length /= 1 then
             Aquarius.Errors.Error
@@ -282,6 +286,54 @@ package body  Aquarius.Grammars is
    begin
       return Aquarius.Names.To_String (Grammar.Block_Comment_Start);
    end Block_Comment_Start;
+
+   -------------------------
+   -- Block_Comment_End_2 --
+   -------------------------
+
+   function Block_Comment_End_2
+     (Grammar : Aquarius_Grammar_Record)
+      return String
+   is
+   begin
+      return Aquarius.Names.To_String (Grammar.Block_Comment_End_2);
+   end Block_Comment_End_2;
+
+   -------------------------
+   -- Block_Comment_End_2 --
+   -------------------------
+
+   procedure Block_Comment_End_2
+     (Grammar : in out Aquarius_Grammar_Record;
+      Text    : String)
+   is
+   begin
+      Grammar.Block_Comment_End_2 := Aquarius.Names.To_Aquarius_Name (Text);
+   end Block_Comment_End_2;
+
+   ---------------------------
+   -- Block_Comment_Start_2 --
+   ---------------------------
+
+   procedure Block_Comment_Start_2
+     (Grammar : in out Aquarius_Grammar_Record;
+      Text    : String)
+   is
+   begin
+      Grammar.Block_Comment_Start_2 := Aquarius.Names.To_Aquarius_Name (Text);
+   end Block_Comment_Start_2;
+
+   ---------------------------
+   -- Block_Comment_Start_2 --
+   ---------------------------
+
+   function Block_Comment_Start_2
+     (Grammar : Aquarius_Grammar_Record)
+      return String
+   is
+   begin
+      return Aquarius.Names.To_String (Grammar.Block_Comment_Start_2);
+   end Block_Comment_Start_2;
 
    -------------------
    -- Check_Grammar --
@@ -442,6 +494,19 @@ package body  Aquarius.Grammars is
    begin
       return Grammar.Block_Comment_Start /= Null_Aquarius_Name;
    end Have_Block_Comment;
+
+   --------------------------
+   -- Have_Block_Comment_2 --
+   --------------------------
+
+   function Have_Block_Comment_2
+     (Grammar : Aquarius_Grammar_Record)
+      return Boolean
+   is
+      use Aquarius.Names;
+   begin
+      return Grammar.Block_Comment_Start_2 /= Null_Aquarius_Name;
+   end Have_Block_Comment_2;
 
    -----------------------
    -- Have_Line_Comment --
@@ -607,6 +672,10 @@ package body  Aquarius.Grammars is
                      Line_Comment        => Aquarius.Names.Null_Aquarius_Name,
                      Block_Comment_Start => Aquarius.Names.Null_Aquarius_Name,
                      Block_Comment_End   => Aquarius.Names.Null_Aquarius_Name,
+                     Block_Comment_Start_2 =>
+                       Aquarius.Names.Null_Aquarius_Name,
+                     Block_Comment_End_2 =>
+                       Aquarius.Names.Null_Aquarius_Name,
                      Error_Token         => Aquarius.Tokens.Null_Token,
                      Error_Syntax        => null,
                      Error               => False,
