@@ -1,0 +1,7 @@
+{
+    "name": "repro",
+    "description": "Minimal grammar reproducing issue #76",
+    "version": "0.1.0",
+    "groups": [
+    ]
+}

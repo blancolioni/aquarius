@@ -1387,6 +1387,16 @@ package body Aquarius.Programs.Parser is
 
                Parse_Into_New_Repeater (Program);
 
+            elsif Is_At_Root (Location) then
+
+               --  The walk has reached the top of the tree without finding a
+               --  place for the token: this parse (an ambiguity option) cannot
+               --  consume it. Deactivate it so it is pruned, instead of moving
+               --  right of a non-existent parent, which raises Cursor_Error.
+               --  Finish_Parse stops its own walk on the same Is_At_Root
+               --  condition. See issues #75 / #76.
+               A.Active := False;
+
             else
 
                Move_To_Right_Of_Parent (Context, Current);
