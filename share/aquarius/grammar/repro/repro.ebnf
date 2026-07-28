@@ -1,0 +1,23 @@
+top_level ::= compound
+
+case_sensitive = false
+
+identifier      ::= .standard ada_identifier
+numeric_literal ::= .standard ada_numeric_literal
+delimiter       ::= .delimiters "(),;[]^."
+
+compound ::= 'begin' < statement / ';' > 'end'
+
+statement ::= [ (labelled_statement | assignment | case_statement) ]
+
+labelled_statement ::= label ':' statement
+
+label ::= numeric_literal
+
+assignment ::= identifier ':=' operand
+
+operand ::= identifier | numeric_literal
+
+case_statement ::= 'case' operand 'of' < case_element / ';' > [ ';' ] 'end'
+
+case_element ::= numeric_literal ':' statement

@@ -44,6 +44,10 @@
 		"wir": {
 			"name": "Wir word IR",
 			"plugin": "wir"
+		},
+		"rpr": {
+			"name": "Repro grammar for issue #76",
+			"plugin": "repro"
 		}
     },
     "install": {
