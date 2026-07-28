@@ -1,0 +1,26 @@
+class
+   Pascal.Checks.Procedure_Heading
+
+inherit
+   Pascal.Checks.Node
+
+--  procedure_heading ::= 'procedure' identifier [ formal_parameter_list ].
+--  Records the procedure name in the enclosing scope, then opens a child scope
+--  so the formal parameters (which reduce after the name) and the body's local
+--  declarations nest inside it (issue #74). The matching Leave_Scope is done by
+--  Pascal.Checks.Procedure_Declaration.After_Node, which fires after the whole
+--  heading and block have reduced.
+
+feature
+
+   After_Identifier (Name : String)
+      local
+         Ignore     : Aquarius.Entities.Declaration
+         Proc_Scope : Aquarius.Entities.Scope
+      do
+         Ignore := Record_Declaration (Current, Name, "procedure")
+         create Proc_Scope.Make
+         Enter_Scope (Proc_Scope)
+      end
+
+end

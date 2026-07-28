@@ -59,6 +59,20 @@ package Aquarius.Grammars is
       Text    : String)
      with Pre => Grammar.Have_Block_Comment;
 
+   --  A grammar may declare a second block-comment delimiter pair (e.g.
+   --  Pascal accepts both (* *) and { }); it is independent of the first.
+
+   procedure Block_Comment_Start_2
+     (Grammar : in out Aquarius_Grammar_Record;
+      Text    : String)
+     with Pre => not Grammar.Have_Block_Comment_2,
+     Post => Grammar.Have_Block_Comment_2;
+
+   procedure Block_Comment_End_2
+     (Grammar : in out Aquarius_Grammar_Record;
+      Text    : String)
+     with Pre => Grammar.Have_Block_Comment_2;
+
    not overriding
    procedure Add_Value (Grammar     : in out Aquarius_Grammar_Record;
                         Declaration : Aquarius.Trees.Tree;
@@ -248,6 +262,20 @@ package Aquarius.Grammars is
       return String
      with Pre => Grammar.Have_Block_Comment;
 
+   function Have_Block_Comment_2
+     (Grammar : Aquarius_Grammar_Record)
+      return Boolean;
+
+   function Block_Comment_Start_2
+     (Grammar : Aquarius_Grammar_Record)
+      return String
+     with Pre => Grammar.Have_Block_Comment_2;
+
+   function Block_Comment_End_2
+     (Grammar : Aquarius_Grammar_Record)
+      return String
+     with Pre => Grammar.Have_Block_Comment_2;
+
    function Have_Syntax
      (Grammar : Aquarius_Grammar_Record'Class;
       Name    : String)
@@ -339,6 +367,10 @@ private
                                  Aquarius.Names.Null_Aquarius_Name;
          Block_Comment_End   : Aquarius.Names.Aquarius_Name :=
                                  Aquarius.Names.Null_Aquarius_Name;
+         Block_Comment_Start_2 : Aquarius.Names.Aquarius_Name :=
+                                   Aquarius.Names.Null_Aquarius_Name;
+         Block_Comment_End_2   : Aquarius.Names.Aquarius_Name :=
+                                   Aquarius.Names.Null_Aquarius_Name;
          Error_Token         : Aquarius.Tokens.Token;
          Error_Syntax        : Aquarius.Syntax.Syntax_Tree;
          Error               : Boolean;

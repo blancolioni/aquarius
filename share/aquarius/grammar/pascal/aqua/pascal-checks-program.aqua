@@ -4,13 +4,25 @@ class
 inherit
    Pascal.Checks.Node
 
---  Top level. After the whole program has been walked (so every declaration
---  has been counted), expose the routine's local count as Locals; the code
---  stage's Pascal.Generate.Program reads it via type-injection (#66).
+--  Top level. Before the walk, pre-declare the built-ins and open the program's
+--  own entity scope (issue #74). After the whole program has been walked (so
+--  every declaration has been counted), expose the routine's local count as
+--  Locals; the code stage's Pascal.Generate.Program reads it via type-injection
+--  (#66).
 
 feature
 
    Locals : Integer
+
+   Before_Node
+      local
+         Program_Scope : Aquarius.Entities.Scope
+      do
+         Ensure_Builtins
+         Context.Set_Current (Global_Scope)
+         create Program_Scope.Make
+         Enter_Scope (Program_Scope)
+      end
 
    After_Node
       do

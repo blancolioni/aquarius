@@ -1,0 +1,26 @@
+class
+   Pascal.Checks.Function_Heading
+
+inherit
+   Pascal.Checks.Node
+
+--  function_heading ::= 'function' identifier [ formal_parameter_list ] ':'
+--  result_type. Records the function name in the enclosing scope, then opens a
+--  child scope for its parameters and body (issue #74). The result_type's own
+--  identifier is nested (inside result_type), so After_Identifier fires only
+--  for the function name. Pascal.Checks.Function_Declaration.After_Node closes
+--  the scope.
+
+feature
+
+   After_Identifier (Name : String)
+      local
+         Ignore     : Aquarius.Entities.Declaration
+         Func_Scope : Aquarius.Entities.Scope
+      do
+         Ignore := Record_Declaration (Current, Name, "function")
+         create Func_Scope.Make
+         Enter_Scope (Func_Scope)
+      end
+
+end
