@@ -1,0 +1,87 @@
+class
+   Test_Literal_Receiver
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-literal-receiver"
+      end
+
+   Execute
+      local
+         X, R : Integer
+         Flag : Boolean
+      do
+         Success := True
+         X := 5
+
+         --  an integer literal as the receiver of an operator; this used to
+         --  type as ANY, which has no aliased "+"
+         R := 1 + X
+         if R /= 6 then
+            Success := False
+            Fail_Message := "1 + X expected 6, found " & R.To_String
+         end
+
+         R := 0 - X
+         if Success and then R /= -5 then
+            Success := False
+            Fail_Message := "0 - X expected -5, found " & R.To_String
+         end
+
+         --  both operands constant, so the result is folded at compile time
+         R := 10 - 12
+         if Success and then R /= -2 then
+            Success := False
+            Fail_Message := "10 - 12 expected -2, found " & R.To_String
+         end
+
+         --  a negative literal as the receiver: works since #19 folded the
+         --  sign into the literal, but only once the receiver typechecks
+         R := -7 + 10
+         if Success and then R /= 3 then
+            Success := False
+            Fail_Message := "-7 + 10 expected 3, found " & R.To_String
+         end
+
+         --  a literal receiver in a comparison; the context type is BOOLEAN,
+         --  so the literal falls back to INTEGER
+         Flag := 0 < X
+         if Success and then not Flag then
+            Success := False
+            Fail_Message := "0 < X expected true, found false"
+         end
+
+         --  a folded comparison has to be signed, or this reads -7 as a
+         --  large unsigned word and answers false
+         Flag := -7 < 2
+         if Success and then not Flag then
+            Success := False
+            Fail_Message := "-7 < 2 expected true, found false"
+         end
+
+         Flag := 2 < -7
+         if Success and then Flag then
+            Success := False
+            Fail_Message := "2 < -7 expected false, found true"
+         end
+
+         --  division of non-negative constants still folds
+         R := 47 / 5
+         if Success and then R /= 9 then
+            Success := False
+            Fail_Message := "47 / 5 expected 9, found " & R.To_String
+         end
+
+         R := 47 mod 5
+         if Success and then R /= 2 then
+            Success := False
+            Fail_Message := "47 mod 5 expected 2, found " & R.To_String
+         end
+      end
+
+end

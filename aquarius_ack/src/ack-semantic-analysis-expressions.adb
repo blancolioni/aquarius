@@ -164,12 +164,51 @@ package body Ack.Semantic.Analysis.Expressions is
       Left      : constant Node_Id := Field_1 (Operator_Node);
       Right     : constant Node_Id := Field_2 (Operator_Node);
       Left_Type : Ack.Types.Type_Entity;
+
+      function Left_Expected_Type return Ack.Types.Type_Entity;
+
+      ------------------------
+      -- Left_Expected_Type --
+      ------------------------
+
+      function Left_Expected_Type return Ack.Types.Type_Entity is
+         Value : constant Node_Id :=
+                   (if Kind (Left) = N_Constant
+                    then Constant_Value (Left)
+                    else No_Node);
+      begin
+         if Value = No_Node
+           or else Kind (Value) /= N_Integer_Constant
+         then
+            --  string, character and boolean constants type themselves, and
+            --  any other expression carries its own type, so ANY is enough
+            return Types.Type_Any;
+         elsif Expression_Type /= null
+           and then Expression_Type.Conforms_To (Types.Type_Integral (Left))
+           and then not Expression_Type.Deferred
+           and then not Ack.Types.Type_Entity
+                          (Expression_Type).Is_Generic_Formal_Type
+         then
+            --  the literal takes the type of its context, so that e.g. a
+            --  Word_32 destination resolves the operator on Word_32
+            return Ack.Types.Type_Entity (Expression_Type);
+         else
+            --  no usable context type (ANY, BOOLEAN, a deferred type or a
+            --  generic formal), so give the literal the default integer type
+            return Types.Type_Integer;
+         end if;
+      end Left_Expected_Type;
+
    begin
+      --  An integer literal takes its type from context (see the
+      --  N_Integer_Constant case in Analyse_Expression), so a literal in
+      --  receiver position has to be handed a concrete integral type, or the
+      --  alias lookup below finds no operator on ANY.
       Analyse_Expression
         (Class           => Class,
          Container       => Container,
          Attachment      => Attachment,
-         Expression_Type => Types.Type_Any,
+         Expression_Type => Left_Expected_Type,
          Expression      => Left);
       Left_Type := Ack.Types.Type_Entity (Get_Type (Left));
 
