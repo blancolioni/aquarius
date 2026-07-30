@@ -33,7 +33,7 @@ feature
          end
 
          --  Minimum = -(Maximum) - 1 for two's-complement 32-bit
-         if Success and then Min /= Zero - Max - One then
+         if Success and then Min /= 0 - Max - 1 then
             Success := False
             Fail_Message := "Minimum expected -(Maximum)-1"
          end

@@ -18,6 +18,9 @@ package body Ack.Semantic.Types is
    function Type_Character return Ack.Types.Type_Entity
    is (Get_Top_Level_Type ("character"));
 
+   function Type_Integer return Ack.Types.Type_Entity
+   is (Get_Top_Level_Type ("integer"));
+
    function Type_String return Ack.Types.Type_Entity
    is (Get_Top_Level_Type ("string"));
 
