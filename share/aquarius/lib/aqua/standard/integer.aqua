@@ -69,10 +69,8 @@ feature
    LT (Right : Integer) : Boolean external "intrinsic"
 
    Minimum : Integer
-      local
-         Zero : Integer
       do
-         Result := Zero - Maximum - 1
+         Result := -2147483648
       end
 
    Maximum : Integer

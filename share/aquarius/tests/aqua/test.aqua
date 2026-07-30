@@ -82,6 +82,8 @@ feature
          Test_List.Append (T)
          create { Test_Integer_To_String } T
          Test_List.Append (T)
+         create { Test_Negative_Literals } T
+         Test_List.Append (T)
          create { Test_Bag_Linked_List } T
          Test_List.Append (T)
          create { Test_Sequence_Linked_List } T
