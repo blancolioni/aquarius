@@ -1,0 +1,88 @@
+class
+   Test_Negative_Literals
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-negative-literals"
+      end
+
+   Execute
+      local
+         Zero, X, A, R, Min, Neg : Integer
+      do
+         Success := True
+         Zero := 0
+         X := 5
+
+         Neg := -1
+         if Neg.To_String /= "-1" then
+            Success := False
+            Fail_Message := "-1 expected ""-1"", found " & Neg.To_String
+         end
+
+         --  -0 is just 0
+         Neg := -0
+         if Success and then Neg /= Zero then
+            Success := False
+            Fail_Message := "-0 expected 0, found " & Neg.To_String
+         end
+
+         --  the most negative value cannot be written as a negation of a
+         --  positive literal, so it only works as a literal
+         Min := -2147483648
+         if Success and then Min /= Zero.Minimum then
+            Success := False
+            Fail_Message := "-2147483648 expected Minimum, found " & Min.To_String
+         end
+
+         --  a prefix minus binds tighter than a binary +, so this is
+         --  (-X) + 7 and not -(X + 7)
+         R := -X + 7
+         if Success and then R /= 2 then
+            Success := False
+            Fail_Message := "-X + 7 expected 2, found " & R.To_String
+         end
+
+         --  prefix minus on a call, through the Negate alias
+         R := -X
+         if Success and then R.To_String /= "-5" then
+            Success := False
+            Fail_Message := "-X expected ""-5"", found " & R.To_String
+         end
+
+         R := -Zero.Maximum
+         if Success and then R /= Min + 1 then
+            Success := False
+            Fail_Message := "-Maximum expected Minimum+1, found " & R.To_String
+         end
+
+         --  regression: negating a folded constant used to be off by one
+         R := -Zero.One
+         if Success and then R /= -1 then
+            Success := False
+            Fail_Message := "-One expected -1, found " & R.To_String
+         end
+
+         --  a negative literal as an operand of a later operator
+         A := -3
+         R := A * 4
+         if Success and then R /= -12 then
+            Success := False
+            Fail_Message := "-3 * 4 expected -12, found " & R.To_String
+         end
+
+         --  a negative literal as an argument; note that X * -3 is a syntax
+         --  error, since a unary sign only starts a simple_expression
+         R := X * (-3)
+         if Success and then R /= -15 then
+            Success := False
+            Fail_Message := "X * (-3) expected -15, found " & R.To_String
+         end
+      end
+
+end

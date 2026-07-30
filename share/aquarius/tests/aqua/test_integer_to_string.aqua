@@ -29,7 +29,7 @@ feature
             Fail_Message := "0.To_String expected ""0"", found " & Zero.To_String
          end
 
-         Neg := Zero - 7
+         Neg := -7
          if Success and then Neg.To_String /= "-7" then
             Success := False
             Fail_Message := "(-7).To_String expected ""-7"", found " & Neg.To_String

@@ -23,6 +23,14 @@ package body Ack.Parser.Expressions is
      (From : Aquarius.Programs.Program_Tree)
       return Node_Id;
 
+   function Signed_Integer_Constant
+     (Node     : Node_Id;
+      Negative : Boolean)
+      return Node_Id;
+   --  If Node is an integer manifest constant, return an equivalent
+   --  constant node with Negative applied to its literal text.  Otherwise
+   --  return No_Node.
+
    function Import_Actual_List
      (From : Aquarius.Programs.Program_Tree)
       return Node_Id
@@ -66,6 +74,28 @@ package body Ack.Parser.Expressions is
       Node := Import_Sub_Expression (Children (Index));
       Index := Index + 1;
 
+      if Prefix /= null then
+         --  a prefix operator binds tighter than the infix operators of the
+         --  same rule, so it applies to the first sub-expression only
+         declare
+            Operator : constant String := Prefix.Concatenate_Children;
+            Folded   : constant Node_Id :=
+                         (if Operator = "-" or else Operator = "+"
+                          then Signed_Integer_Constant
+                            (Node, Negative => Operator = "-")
+                          else No_Node);
+         begin
+            if Folded /= No_Node then
+               --  a signed integer literal; no operator call required
+               Node := Folded;
+            else
+               Node := New_Node (N_Operator, Prefix,
+                                 Field_1 => Node,
+                                 Name    => Get_Name_Id (Operator));
+            end if;
+         end;
+      end if;
+
       while Index <= Children'Last loop
          declare
             Operator : constant Program_Tree := Children (Index);
@@ -82,13 +112,6 @@ package body Ack.Parser.Expressions is
                                 Get_Name_Id (Operator.Concatenate_Children));
          end;
       end loop;
-
-      if Prefix /= null then
-         Node := New_Node (N_Operator, From,
-                           Field_1 => Node,
-                           Name    =>
-                             Get_Name_Id (Prefix.Concatenate_Children));
-      end if;
 
       return Node;
    end Generic_Import;
@@ -318,5 +341,48 @@ package body Ack.Parser.Expressions is
          return No_Node;
       end if;
    end Import_Primary;
+
+   -----------------------------
+   -- Signed_Integer_Constant --
+   -----------------------------
+
+   function Signed_Integer_Constant
+     (Node     : Node_Id;
+      Negative : Boolean)
+      return Node_Id
+   is
+   begin
+      if Kind (Node) /= N_Constant then
+         return No_Node;
+      end if;
+
+      declare
+         Value : constant Node_Id := Constant_Value (Node);
+      begin
+         if Kind (Value) /= N_Integer_Constant then
+            return No_Node;
+         end if;
+
+         declare
+            Text        : constant String := To_String (Get_Name (Value));
+            First_Digit : constant Positive :=
+                            (if Text (Text'First) in '+' | '-'
+                             then Text'First + 1
+                             else Text'First);
+            Is_Negative : constant Boolean :=
+                            (Text (Text'First) = '-') /= Negative;
+            Image       : constant String :=
+                            (if Is_Negative then "-" else "")
+                            & Text (First_Digit .. Text'Last);
+         begin
+            return New_Node
+              (N_Constant, Get_Program (Node),
+               Field_2 =>
+                 New_Node
+                   (N_Integer_Constant, Get_Program (Value),
+                    Name => Get_Name_Id (Image)));
+         end;
+      end;
+   end Signed_Integer_Constant;
 
 end Ack.Parser.Expressions;

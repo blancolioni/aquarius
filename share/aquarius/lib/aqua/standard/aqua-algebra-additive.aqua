@@ -16,7 +16,7 @@ feature
          Result := Add (Right.Negate)
       end
    
-   Negate : Additive
+   Negate alias "-": like Current
       do
          Result := Zero.Subtract (Current)
       end

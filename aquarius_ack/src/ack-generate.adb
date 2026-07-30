@@ -526,10 +526,23 @@ package body Ack.Generate is
                      end;
 
                   when N_Integer_Constant =>
-                     Unit.Push_Constant
-                       (Tagatha.Word_64'Value
-                          (To_String
-                               (Get_Name (Value))));
+                     declare
+                        use type Tagatha.Int_64;
+                        Text : constant String :=
+                                 To_String (Get_Name (Value));
+                     begin
+                        if Text (Text'First) = '-' then
+                           --  the target word is 32 bits wide, so push the
+                           --  two's complement pattern rather than a
+                           --  64 bit sign extension
+                           Unit.Push_Constant
+                             (Tagatha.Word_64
+                                (Tagatha.Int_64'Value (Text) mod 2 ** 32));
+                        else
+                           Unit.Push_Constant
+                             (Tagatha.Word_64'Value (Text));
+                        end if;
+                     end;
                   when N_Boolean_Constant =>
                      Unit.Push_Constant
                        (Tagatha.Int_32'
@@ -933,10 +946,14 @@ package body Ack.Generate is
 
                if Entity.Intrinsic then
                   declare
+                     --  a zero argument intrinsic, such as Integer.One or
+                     --  Integer.Negate, has no actual list at all
                      Arg_Count : constant Natural :=
-                                   Natural
-                                     (List_Table.Element (Actual_List)
-                                      .List.Length);
+                                   (if Actual_List = No_List
+                                    then 0
+                                    else Natural
+                                      (List_Table.Element (Actual_List)
+                                       .List.Length));
                      Args      : Array_Of_Nodes (1 .. Arg_Count);
                      Index     : Natural := 0;
 
@@ -952,10 +969,12 @@ package body Ack.Generate is
                      end Push;
 
                   begin
-                     for Arg of List_Table.Element (Actual_List).List loop
-                        Index := Index + 1;
-                        Args (Index) := Arg;
-                     end loop;
+                     if Actual_List /= No_List then
+                        for Arg of List_Table.Element (Actual_List).List loop
+                           Index := Index + 1;
+                           Args (Index) := Arg;
+                        end loop;
+                     end if;
                      pragma Assert (Index = Arg_Count);
 
                      for Item of Pending loop
