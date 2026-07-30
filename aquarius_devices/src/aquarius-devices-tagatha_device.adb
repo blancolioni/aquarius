@@ -60,6 +60,14 @@ package body Aquarius.Devices.Tagatha_Device is
    Set_Exc_End         : constant := 45;
    Exception_Handler   : constant := 46;
 
+   --  Declare the content of one argument, result or return slot.  These
+   --  accumulate on the device and are consumed (and cleared) by the next
+   --  Begin_Routine or Call, because a slot's width has to be known for every
+   --  slot in the frame, not just the ones the body touches.
+   Set_Arg_Content     : constant := 47;
+   Set_Res_Content     : constant := 48;
+   Set_Ret_Content     : constant := 49;
+
    Register_Count : constant := 1024;
    type Register_Index is range 0 .. Register_Count - 1;
 
@@ -89,6 +97,12 @@ package body Aquarius.Devices.Tagatha_Device is
          Code      : Code_Vectors.Vector;
          Exc_Start : Ada.Strings.Unbounded.Unbounded_String;
          Exc_End   : Ada.Strings.Unbounded.Unbounded_String;
+
+         --  Slot contents declared since the last Begin_Routine / Call.
+         Args      : Tagatha.Argument_Content_Array :=
+                       Tagatha.General_Arguments;
+         Results   : Tagatha.Result_Content_Array := Tagatha.General_Results;
+         Returns   : Tagatha.Return_Content_Array := Tagatha.General_Returns;
       end record;
 
    type Instance_Reference is access all Instance'Class;
@@ -269,20 +283,48 @@ package body Aquarius.Devices.Tagatha_Device is
               (Index   => Tagatha.Local_Index (This.Rs (R_Transfer)),
                Content => Content_Of (This.Rs (R_Transfer_2)));
 
+         when Set_Arg_Content =>
+            This.Args (Tagatha.Argument_Index (This.Rs (R_Transfer))) :=
+              Content_Of (This.Rs (R_Transfer_2));
+
+         when Set_Res_Content =>
+            This.Results (Tagatha.Result_Index (This.Rs (R_Transfer))) :=
+              Content_Of (This.Rs (R_Transfer_2));
+
+         when Set_Ret_Content =>
+            This.Returns (Tagatha.Return_Index (This.Rs (R_Transfer))) :=
+              Content_Of (This.Rs (R_Transfer_2));
+
          when Begin_Routine =>
             declare
                use type Aqua.Word_32;
-               Options : constant Tagatha.Code.Routine_Options'Class :=
-                           Tagatha.Code.Set_Argument_Count
-                             (Tagatha.Argument_Count (This.Rs (R_Transfer)));
+               use type Tagatha.Operand_Content;
+               Base : Tagatha.Code.Routine_Options'Class :=
+                        Tagatha.Code.Set_Argument_Count
+                          (Tagatha.Argument_Count (This.Rs (R_Transfer)));
                Is_Public : constant Boolean :=
                               (This.Rs (R_Transfer_2) and 1) = 1;
             begin
+               for I in This.Args'Range loop
+                  if This.Args (I) /= Tagatha.General_Content then
+                     Base := Base.Set_Argument_Content (I, This.Args (I));
+                  end if;
+               end loop;
+
+               for I in This.Results'Range loop
+                  if This.Results (I) /= Tagatha.General_Content then
+                     Base := Base.Set_Result_Content (I, This.Results (I));
+                  end if;
+               end loop;
+
+               This.Args := Tagatha.General_Arguments;
+               This.Results := Tagatha.General_Results;
+
                Current.Begin_Routine
                  (Name => This.Read_String,
                   Options => (if Is_Public
-                              then Options
-                              else  Options.Set_No_Linkage));
+                              then Base
+                              else Base.Set_No_Linkage));
             end;
 
          when End_Routine =>
@@ -322,12 +364,16 @@ package body Aquarius.Devices.Tagatha_Device is
             Current.Call
               (Name           => This.Read_String,
                Argument_Count => Natural (This.Rs (R_Transfer)),
-               Result_Count   => Natural (This.Rs (R_Transfer_2)));
+               Result_Count   => Natural (This.Rs (R_Transfer_2)),
+               Returns        => This.Returns);
+            This.Returns := Tagatha.General_Returns;
 
          when Indirect_Call =>
             Current.Indirect_Call
               (Argument_Count => Natural (This.Rs (R_Transfer)),
-               Result_Count   => Natural (This.Rs (R_Transfer_2)));
+               Result_Count   => Natural (This.Rs (R_Transfer_2)),
+               Returns        => This.Returns);
+            This.Returns := Tagatha.General_Returns;
 
          when Jump =>
             Current.Jump (This.Read_String);

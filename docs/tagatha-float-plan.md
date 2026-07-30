@@ -116,6 +116,36 @@ the VM reads `(%R, %R+1)`.
   the high word (`%R`) with `0x80000000`. Cheaper than materialising a zero
   double and `fsub`. Needs one scratch reg for the mask (or a `setl/seth`
   into a temp).
+- **D6 — Multi-register returns are rotated by `Exit_Routine`.** `pop n` moves
+  exactly **one** register into the caller's hole — the callee's `%(n-1)` — and
+  the other `n-1` become visible only because the register-window base shifts
+  down by one. So after `pushj %H` the caller sees
+
+  | caller | gets |
+  |---|---|
+  | `%H` | callee `%(n-1)` |
+  | `%(H+k)`, k in 1 .. n-1 | callee `%(k-1)` |
+
+  The callee's `%0 .. %(n-1)` therefore arrive **rotated left by one**. For a
+  one-register result the rotation is the identity, which is why it went
+  unnoticed for years; for a double it hands the caller the low word at `%H`
+  with the high word above — reversed, and not a usable `(R, R+1)` pair.
+
+  Fixed on the callee side, in `Exit_Routine`: word 0 goes to `%(Width - 1)`
+  and word *w* to `%(w - 1)`, so the caller sees the words in order and
+  contiguous from `%H` — which is what `Call`'s `Return_Reg` prefix sum
+  assumes. Chosen over changing the VM because `pop` is MMIX's semantics and
+  Tagatha is the layer that conforms to an ABI. Word 0 is stashed in a claimed
+  scratch first, because the shift overwrites it when the result region starts
+  at `%0` (a routine with no arguments). `Width <= 1` emits exactly the same
+  single `set` as before, so all-integer output is byte-identical.
+
+  This also depends on the callee's `rL` exceeding `Width`: `pop n` fetches the
+  hole value with `Get_R (n)`, which returns 0 for a *marginal* register when
+  `rL = n` exactly. Linkage guarantees it — `Saved_J` is claimed at or above
+  `First_Temp >= Result_Bound` — and `Exit_Routine` only emits a `pop` when
+  Linkage is set. Worth remembering before hand-writing a `pop n` in asm.
+
 - **D5 — Big-endian pair/data order everywhere.** Hi word first, at the lower
   register number and the lower memory address. Fixed once; must agree with
   the VM and `aqua_as`. This is endianness, not alignment, and is unaffected
@@ -156,21 +186,61 @@ frame. Expressions can still read/write doubles that live in memory
 
 ### Phase B — Full: calling convention and frame slots
 
-Requires cross-repo work.
+**Done 2026-07-29** (tagatha + aquarius). Option (a) throughout: per-slot
+Content travels with `Begin_Routine`.
 
-1. **Frontend passes Content/size.** `Begin_Routine` (and the operand
-   accessors) must learn which arg/local/result slots are doubles. Options:
-   (a) pass per-slot Content vectors from the aquarius Tagatha binding;
-   (b) conservatively pair every frame slot (wasteful); (c) a size table.
-   Recommended: (a).
-2. **Frame slotting.** `First_Arg/Result/Local/Temp` bounds must advance by 2
-   for each float slot; the `Index → register` maps
-   (`First_Arg + Index - 1`) become size-aware prefix sums. With D2 these are
-   *plain* prefix sums — no parity rounding and no padding slots.
-3. **Call / return.** `Call` copies a double actual into a pair; `Exit_Routine`
-   moves double results through pairs. Nothing to align: a pair is valid at
-   whatever offset the prefix sum puts it, on either side of the `pushj`
-   window shift.
+1. **Frontend declares Content.** `Tagatha.Frame_Layout` carries an
+   `Operand_Content` per argument, result and local slot;
+   `Arch.Begin_Routine` takes one. The frontend declares argument and result
+   contents through `Routine_Options`
+   (`Set_Argument_Content` / `Set_Result_Content`), and `Tagatha.Code.Update`
+   *widens* each slot from the accesses it sees, so a declaration is never
+   narrowed and an undeclared slot accessed as a double is still promoted.
+
+   Declaration is required, not merely helpful: caller and callee must agree
+   on the layout, and a float argument that the body never touches would be
+   sized as one word by inference alone while the caller passes two. Locals
+   need no declaration — they are routine-private, and `Add_Local` hands them
+   out dynamically, so inference is both sound and necessary there.
+
+   Returns are the mirror image: the register of return *N* depends on the
+   widths of returns 1 .. N−1, so `Tagatha.Code.Call` / `Indirect_Call` take a
+   `Return_Content_Array`, defaulting to all-general (correct whenever no
+   return before the last is a double).
+
+2. **Frame slotting.** `Begin_Routine` walks arguments, results and locals in
+   turn, laying each slot at the running total and advancing by
+   `Slot_Width (Content)` — 2 for a double, 1 otherwise. The index → register
+   maps (`Arg_Reg`, `Result_Reg`, `Local_Reg`) are those prefix sums;
+   `First_Arg/Arg_Bound/…/First_Temp` fall out of the same walk. All-general
+   frames come out identical to the old `First_X + Index - 1`.
+
+3. **Call / return.** `Call` advances the outgoing argument register by
+   `Slot_Width` per actual, using the actual operand's own Content, so a
+   double actual fills a pair (`Move_To_Register` already copies both halves).
+   It also builds `Return_Reg` as the prefix sum over `Returns`, based at
+   `Call_Return`.
+
+   `Exit_Routine` **does** need a change, and it is the subtle part of B —
+   see D6 below. It was initially believed to need none.
+
+4. **Device protocol.** The aquarius Tagatha binding gained commands 47/48/49
+   (`Set_Arg_Content`, `Set_Res_Content`, `Set_Ret_Content`), which accumulate
+   on the device and are consumed and cleared by the next `Begin_Routine` or
+   `Call`. Exposed to Aqua code as `Tagatha.Code.Set_Argument_Content`,
+   `Set_Result_Content` and `Set_Return_Content`.
+
+Still open after B:
+
+- **`ack` has no floating point type**, so nothing in the aquarius frontend
+  declares a float slot yet. The capability is in place on both sides of the
+  binding; the language work is separate.
+- **Storing a double to a *named* object** still raises
+  "aqua: float store to named object not implemented"
+  (`Op_Identity` with float source and a non-register destination). That is
+  Phase A gap 4 territory — a global double, not a frame slot — and wants
+  `geta` plus two `st`.
+- **`fixu` / `flotu` signedness** remains unthreaded (see D3).
 
 ## 6. Code touch-points
 
@@ -218,10 +288,38 @@ Requires cross-repo work.
   checked by hand for `fadd %255,…` in X and Y, `fsqrt`/`fix` in Z and
   `flot %255,…` in X, with `fcmp %255` / `fix %255` / `flot %5, %255`
   assembling clean.
+- **Landed (2026-07-29), Phase B.** `tagatha/tests` generates
+  `double scale (double x, int n, double y)` with a double local and a double
+  result, plus a caller `call_scale` doing `scale (1.5, 7, 2.0)`, and asserts
+  the register layout of both: `x` at `%0/%1`, the *integer* `n` displaced to
+  `%2`, `y` at `%3/%4`, result at `%5/%6`, local at `%7/%8`; on the caller
+  side the actuals at `%4/%5`, `%6`, `%7/%8` and the double return read from
+  `%3`. A third routine `pick (double unused, int n)` pins the
+  declared-but-unread case — `n` must still be `%2`. `next_3x_1` guards
+  against regression in all-general frames.
+
+  Run under the VM with either fixture in `tagatha/tests/share`
+  (`aqua_as -m -o t.o <fixture>.s float_frame.s`, then `aqua_vm t.o` from a
+  directory containing a `.aqua-config`):
+
+  - `float_frame_direct.s` — main calls `scale` **directly**. Prints `P` when
+    the returned pair is bit-exactly 4.5. **This is the one that
+    discriminates**: it is the only fixture that catches D6.
+  - `float_frame_main.s` — main calls `call_scale`, which calls `scale`. Prints
+    `P5`. Two call levels, so it passes *whether or not* D6 is fixed: two
+    rotations of a two-element sequence cancel. It was the original Phase B
+    test and gave a **false pass** until `float_frame_direct.s` was added.
+
+  Note `artl.s` ends with a bare `main` label, so a fixture is the *body* of
+  main, and must save/restore `rJ` around its own `pushj` in a register below
+  the `pushj` boundary.
+
+  Regression: the 54-test Aqua suite
+  (`bin/aquarius --start-class share/aquarius/tests/aqua/test.aqua`) still
+  passes, confirming prefix sums are a no-op for all-general frames.
 - Unit-level: assemble the emitted text and check opcode bytes (as done for
   `aqua_as`), then run under the VM and read back the result pair.
-- End-to-end: a small routine `double f(double a, double b) { return a*b + a; }`
-  once Phase B lands; for Phase A, an expression that loads two doubles from
+- End-to-end for Phase A: an expression that loads two doubles from
   memory, computes, and stores the result.
 - Reuse the aqua VM's float behaviour already validated by the throwaway spike
   (const round-trip, FLOT lossless, FCMP).

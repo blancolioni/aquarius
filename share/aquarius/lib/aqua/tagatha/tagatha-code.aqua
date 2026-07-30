@@ -42,6 +42,35 @@ feature
          Driver.Set_Command (12)
       end
 
+   -- Declare the content of an argument or result slot, before the
+   -- Begin_Routine it applies to.  A slot's content fixes its width, and the
+   -- backend maps slot index to frame offset with a running total of those
+   -- widths, so a floating point argument or result has to be declared even
+   -- when the routine body never reads it -- otherwise the caller and the
+   -- callee disagree about where the following slots live.  Cleared by
+   -- Begin_Routine.
+
+   Set_Argument_Content (Index   : Integer
+                         Content : Integer)
+      do
+         Driver.Send_Integer_2 (47, Index, Content)
+      end
+
+   Set_Result_Content (Index   : Integer
+                       Content : Integer)
+      do
+         Driver.Send_Integer_2 (48, Index, Content)
+      end
+
+   -- Declare the content of one of the next call's return values, for the
+   -- same reason.  Cleared by Call and Indirect_Call.
+
+   Set_Return_Content (Index   : Integer
+                       Content : Integer)
+      do
+         Driver.Send_Integer_2 (49, Index, Content)
+      end
+
    End_Routine
       do
          Driver.Set_Command (13)
