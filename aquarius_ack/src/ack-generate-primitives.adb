@@ -81,6 +81,15 @@ package body Ack.Generate.Primitives is
    procedure Generate_Intrinsic_Mem_Put_Word_32
      (Unit : in out Tagatha.Code.Instance'Class);
 
+   --  The same two operations for a double, which is two words: the content
+   --  travels with the dereference and the indirect store, so the backend
+   --  moves the whole pair.
+   procedure Generate_Intrinsic_Mem_Get_Real_64
+     (Unit : in out Tagatha.Code.Instance'Class);
+
+   procedure Generate_Intrinsic_Mem_Put_Real_64
+     (Unit : in out Tagatha.Code.Instance'Class);
+
    procedure Generate_Intrinsic_Zero
      (Unit : in out Tagatha.Code.Instance'Class);
 
@@ -238,6 +247,8 @@ package body Ack.Generate.Primitives is
       Add ("gt", Generate_GT'Access);
       Add ("get_word_32", Generate_Intrinsic_Mem_Get_Word_32'Access);
       Add ("put_word_32", Generate_Intrinsic_Mem_Put_Word_32'Access);
+      Add ("get_real_64", Generate_Intrinsic_Mem_Get_Real_64'Access);
+      Add ("put_real_64", Generate_Intrinsic_Mem_Put_Real_64'Access);
       Add ("offset_words", Generate_Offset_Words'Access);
 
       Add ("exit", Generate_Exit'Access);
@@ -376,6 +387,19 @@ package body Ack.Generate.Primitives is
    end Generate_Intrinsic;
 
    ----------------------------------------
+   -- Generate_Intrinsic_Mem_Get_Real_64 --
+   ----------------------------------------
+
+   procedure Generate_Intrinsic_Mem_Get_Real_64
+     (Unit : in out Tagatha.Code.Instance'Class)
+   is
+   begin
+      Unit.Dereference (Tagatha.Floating_Point_Content, 0);
+      Unit.Swap;
+      Unit.Drop;
+   end Generate_Intrinsic_Mem_Get_Real_64;
+
+   ----------------------------------------
    -- Generate_Intrinsic_Mem_Get_Word_32 --
    ----------------------------------------
 
@@ -387,6 +411,19 @@ package body Ack.Generate.Primitives is
       Unit.Swap;
       Unit.Drop;
    end Generate_Intrinsic_Mem_Get_Word_32;
+
+   ----------------------------------------
+   -- Generate_Intrinsic_Mem_Put_Real_64 --
+   ----------------------------------------
+
+   procedure Generate_Intrinsic_Mem_Put_Real_64
+     (Unit : in out Tagatha.Code.Instance'Class)
+   is
+   begin
+      Unit.Swap;
+      Unit.Pop_Indirect (Tagatha.Floating_Point_Content);
+      Unit.Drop;
+   end Generate_Intrinsic_Mem_Put_Real_64;
 
    ----------------------------------------
    -- Generate_Intrinsic_Mem_Put_Word_32 --

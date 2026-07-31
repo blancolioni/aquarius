@@ -26,6 +26,9 @@ feature
    After_Unary (Child : Wir.Generate.Unary)
       do Copy (Child.Expr) end
 
+   After_Conversion (Child : Wir.Generate.Conversion)
+      do Copy (Child.Expr) end
+
    After_Name_Value (Child : Wir.Generate.Name_Value)
       do Copy (Child.Expr) end
 

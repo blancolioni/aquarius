@@ -2,7 +2,8 @@ class
    Test_Ir_1
 
 --  End-to-end smoke test for the Ast.* imperative IR: hand-build a tree,
---  Generate it against a real Tagatha.Code, emit to tagatha.pdp11.
+--  Generate it against a real Tagatha.Code, emit to tagatha.<arch>.s
+--  (tagatha.pdp11.s unless --arch says otherwise).
 --  Run: bin/aquarius.exe --start-class test_ir_1.aqua
 --
 --  Routine demo (1 arg, 1 local):

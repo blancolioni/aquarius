@@ -20,6 +20,12 @@ package Aquarius.Options is
    function Clear_Cache return Boolean;
    --  when set, empty the temporary (cache) folder before continuing
 
+   function Arch return String;
+   --  architecture that generated code targets: "pdp11" (the default),
+   --  "aqua" or "6502", lower-cased.  Load rejects anything else.  This is
+   --  the target a language plugin generates for; it does not affect the Aqua
+   --  compiler, which always generates for the Aqua VM.
+
    function Show_Full_Path return Boolean;
    --  when reporting file names, use the full path
 

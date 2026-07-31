@@ -3,7 +3,12 @@ top_level ::= unit
 case_sensitive = false
 
 identifier      ::= !\l[\w]*!
-integer         ::= .standard ada_numeric_literal
+--  real MUST stay declared before integer.  The tokeniser takes the first
+--  declared class that matches rather than the longest, so integer would match
+--  just the "3" of "3.14" and leave ".14" stranded.  ada_numeric_literal is no
+--  use here for the same reason: it matches both forms.
+real            ::= .standard ada_real_literal
+integer         ::= .standard ada_integer_literal
 string_constant ::= .standard ada_string_literal
 delimiter       ::= .delimiters "()[]+,;&|"
 symbol          ::= .standard ada_symbol
@@ -87,12 +92,13 @@ primary ::= literal
           | result_slot
           | binary
           | unary
+          | conversion
           | name_value
           | call_expression
           | indirect_call
           | dereference
 
-literal ::= signed_integer
+literal ::= signed_integer | signed_real
 
 argument       ::= 'arg' integer
 local_variable ::= 'local' integer
@@ -101,6 +107,13 @@ result_slot    ::= 'result' integer
 binary ::= '(' expression binary_operator expression ')'
 
 unary ::= unary_operator expression
+
+--  Change the content of a value: to_float converts an integer to a double,
+--  to_word converts back.  Not an operator, because the conversion is in the
+--  content rather than the operation (Ast.Expression.Conversion).
+conversion ::= conversion_target expression
+
+conversion_target ::= 'to_float' | 'to_word'
 
 name_value ::= addr_opt extern_opt name
 addr_opt   ::= [ 'addr' ]
@@ -114,17 +127,24 @@ dereference ::= '[' expression [ '+' integer ] ']'
 
 argument_list ::= < expression / ',' >
 
-lvalue ::= argument
-         | local_variable
-         | result_slot
-         | store_name
-         | dereference
+--  The content tag matters on a target as much as on an expression: a store
+--  pops one word or two, and only the tag says which.
+lvalue ::= ( argument
+           | local_variable
+           | result_slot
+           | store_name
+           | dereference ) [ content ]
 
 store_name ::= extern_opt name
 
 signed_integer ::= [ '-' ] integer
 
+signed_real ::= [ '-' ] real
+
+--  fadd .. fdiv are the only float operators: negate, mod and the comparisons
+--  take their float form from the content of their operands instead.
 binary_operator ::= '+' | '-'  | '*'   | '/'  | 'mod'
+                  | 'fadd' | 'fsub' | 'fmul' | 'fdiv'
                   | '&' | '|'  | 'xor'
                   | '=' | '/=' | '<'   | '<=' | '>' | '>='
 

@@ -4,6 +4,7 @@ with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with Aquarius.Options;
 with Tagatha.Arch;
 with Tagatha.Code;
 
@@ -59,6 +60,8 @@ package body Aquarius.Devices.Tagatha_Device is
    Set_Exc_Start       : constant := 44;
    Set_Exc_End         : constant := 45;
    Exception_Handler   : constant := 46;
+   Push_Float_Constant : constant := 47;
+   Convert             : constant := 48;
 
    Register_Count : constant := 1024;
    type Register_Index is range 0 .. Register_Count - 1;
@@ -187,11 +190,17 @@ package body Aquarius.Devices.Tagatha_Device is
                          Positive (This.Rs (R_Current));
                Code : Code_Reference :=
                          This.Code (Index);
+               --  --arch picks the target; Aquarius.Options has already
+               --  rejected a name the loader would not recognise.
+               Arch  : constant String := Aquarius.Options.Arch;
                Gen   : Tagatha.Arch.Instance'Class :=
-                         Tagatha.Arch.Get ("pdp11");
+                         Tagatha.Arch.Get (Arch);
             begin
                Code.Generate (Gen);
-               Gen.Save ("tagatha.pdp11");
+               --  Uniform "tagatha.<arch>.s": the arch cannot be the
+               --  extension, because "tagatha.aqua" is picked up as an Aqua
+               --  source class by the next run and fails to parse.
+               Gen.Save ("tagatha." & Arch & ".s");
                This.Code (Index) := null;
                Free (Code);
                This.Rs (R_Current) := 0;
@@ -433,6 +442,27 @@ package body Aquarius.Devices.Tagatha_Device is
                End_Label     =>
                  Ada.Strings.Unbounded.To_String (This.Exc_End),
                Handler_Label => This.Read_String);
+
+         when Push_Float_Constant =>
+            --  A double needs both transfer registers for its value, leaving
+            --  no room for the content flag, which is why this is a command of
+            --  its own rather than Push_Constant with a flag set.
+            --
+            --  The halves arrive in the opposite order to Push_Constant: the
+            --  plugin writes the pattern with System.Memory.Mem.Put_Real_64,
+            --  and a double in memory is high word first (see the register
+            --  pair in Tagatha.Arch.Aqua), so R_Transfer holds the high word.
+            declare
+               use Tagatha;
+               K : constant Word_64 :=
+                     2 ** 32 * Word_64 (This.Rs (R_Transfer))
+                     + Word_64 (This.Rs (R_Transfer_2));
+            begin
+               Current.Push_Constant (K, Tagatha.Floating_Point_Content);
+            end;
+
+         when Convert =>
+            Current.Convert (Content_Of (This.Rs (R_Transfer)));
 
          when others =>
             This.Rs (R_Command) := Command;

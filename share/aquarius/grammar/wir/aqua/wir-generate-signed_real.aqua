@@ -1,0 +1,20 @@
+class
+   Wir.Generate.Signed_Real
+
+inherit
+   Wir.Generate.Node
+
+--  [ '-' ] real. Concatenated_Image glues the sign to the digits ("-1.5" /
+--  "1.5"); String.To_Real reads the whole thing, sign included, so unlike
+--  Signed_Integer there is no sign to peel off here.
+
+feature
+
+   Value : Real
+
+   After_Node
+      do
+         Value := Concatenated_Image.To_Real
+      end
+
+end

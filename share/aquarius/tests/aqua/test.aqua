@@ -98,6 +98,8 @@ feature
          Test_List.Append (T)
          create { Test_Real_Property } T
          Test_List.Append (T)
+         create { Test_Real_Memory } T
+         Test_List.Append (T)
          create { Test_Bag_Linked_List } T
          Test_List.Append (T)
          create { Test_Sequence_Linked_List } T

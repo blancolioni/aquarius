@@ -21,7 +21,15 @@ comments — is the annotated reference.
 - **Untyped words.** Every value is a word. The sole type hook is the
   `: float` content tag, which sets `Ast.Expression.Content := 1`
   (`Set_Content`); absent leaves the default word (`0`), threaded into each
-  Tagatha push/pop.
+  Tagatha push/pop. A double is two words, so the tag is what makes a load or
+  store two words wide — it belongs on an lvalue as much as on an expression.
+  A binary needs no tag: Tagatha derives the result content from the operands.
+- **Doubles.** A real literal (`1.5`, `-1.25`, `2.5e2`) builds
+  `Ast.Expression.Real_Literal`. Only the four arithmetic operators have float
+  forms (`fadd fsub fmul fdiv`); `neg`, `mod` and the comparisons take their
+  float behaviour from operand content, so the backend emits the sign flip,
+  `frem` and `fcmp` without being told. `to_float` and `to_word` convert
+  between the two contents.
 - **No precedence.** Binary operations are fully parenthesised — the IR spells
   every operation out, one `Ast.Expression.Binary` per `( … )`.
 - **Boolean flags are keywords:** `public`, `rw` (read/write), `extern`,
@@ -57,11 +65,13 @@ unit ::= { routine } { data_item }
 | `Statement.Evaluate` | `eval e;` | evaluate for effect, `Drop` the value |
 | `Statement.Retry_Routine` | `retry;` | restart routine from the top |
 | `Expression.Literal` | `[-] int` | `Integer` value |
+| `Expression.Real_Literal` | `[-] real` | binary64 value; sets its own float content |
 | `Expression.Argument` | `arg I` | 1-based argument index |
 | `Expression.Local_Variable` | `local I` | 1-based local index |
 | `Expression.Result_Value` | `result I` | 1-based; **lvalue only** — write-only slot |
 | `Expression.Binary` | `( e op e )` | `op` → `Ast.Operator` ordinal |
 | `Expression.Unary` | `unop e` | `+` / `neg` / `not` / `test` |
+| `Expression.Conversion` | `to_float e` / `to_word e` | changes content, not value: `flot` / `fix` |
 | `Expression.Name` | `[extern] N` | value at the name (`Push_Name`) |
 | `Expression.Name` (address) | `addr [extern] N` | `Make_Address`, `Is_Address` |
 | `Expression.Call` | `N ( args )` | direct call as value, result count 1 |
@@ -88,23 +98,34 @@ Tokens map to the `Ast.Operator` ordinals in
 | `-` | Subtract | 5 | | `/=` | Compare_Not_Equal | 19 |
 | `*` | Multiply | 6 | | `<` | Less | 20 |
 | `/` | Divide | 7 | | `<=` | Less_Equal | 21 |
-| | | | | `>` | Greater | 22 |
-| | | | | `>=` | Greater_Equal | 23 |
+| `fadd` | Float_Add | 9 | | `>` | Greater | 22 |
+| `fsub` | Float_Subtract | 10 | | `>=` | Greater_Equal | 23 |
+| `fmul` | Float_Multiply | 11 | | | | |
+| `fdiv` | Float_Divide | 12 | | | | |
 
 `Bit_Xor` is the keyword `xor`, not `^`: `^` risks a token-class clash with
 `ada_symbol`, whereas `&` and `|` are declared as delimiter symbols and are
-safe. Operator codes 9..12 (float ops) are omitted from the IR; codes
-16 `Dereference` / 17 `Store` are expressed at the node level (`[ … ]` and
-`:=`), not as infix operators.
+safe. Codes 16 `Dereference` / 17 `Store` are expressed at the node level
+(`[ … ]` and `:=`), not as infix operators.
+
+There are only four float operators because the rest need none: `neg`, `mod`
+and the six comparisons take their float form from the content of their
+operands, so the backend emits the sign flip, `frem`, `fcmp` and `feql`
+without a distinct opcode in the IR.
 
 ## lvalues
 
 Only the `Set_Value`-capable expressions may sit left of `:=`:
 
 ```
-lvalue ::= argument | local_variable | result_slot | store_name | dereference
+lvalue ::= ( argument | local_variable | result_slot | store_name
+           | dereference ) [ ': float' ]
 store_name ::= [ 'extern' ] name
 ```
+
+The content tag is as necessary here as in an expression: `Set_Value` pops by
+`Content`, so `local 1 := 1.5` would store one word of a double. Write
+`local 1 : float := 1.5`.
 
 Every other expression form raises on assignment. In particular `addr N`
 (an address) is rvalue-only — it is excluded from `store_name` — and
@@ -117,11 +138,17 @@ slot is write-only").
 | Class | Definition |
 |---|---|
 | `identifier` | `!\l[\w]*!` — letter then word chars |
-| `integer` | `standard ada_numeric_literal` |
+| `real` | `standard ada_real_literal` — **must be declared before `integer`** |
+| `integer` | `standard ada_integer_literal` |
 | `string_constant` | `standard ada_string_literal` |
 | delimiters | `()[]+,;&\|` |
 | symbols | `standard ada_symbol` (covers `-` `*` `/` `:` `:=` `=` `/=` `<` `<=` `>` `>=`) |
 | line comment | `--` |
+
+`real` before `integer` is not cosmetic. The tokeniser takes the first declared
+class that matches rather than the longest, so with `integer` first, `3.14`
+lexes as `3` and leaves `.14` stranded. For the same reason neither class can be
+`ada_numeric_literal`, which matches both forms.
 
 Case-insensitive.
 
@@ -167,5 +194,7 @@ framework it uses is documented in
 bin/aquarius --code-trigger <path>.wir
 ```
 
-which emits PDP-11 assembly to `tagatha.pdp11`. (Plain `bin/aquarius --check
-<path>` parses and validates only, without generating code.)
+which emits PDP-11 assembly to `tagatha.pdp11.s`. Add `--arch` to retarget —
+`pdp11` (the default), `aqua` or `6502` — and the output file is named to
+match: `tagatha.<arch>.s`. (Plain `bin/aquarius --check <path>` parses and
+validates only, without generating code.)

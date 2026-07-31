@@ -1,0 +1,36 @@
+class
+   Wir.Generate.Conversion
+
+inherit
+   Wir.Generate.Expr_Node
+
+--  conversion_target expression (Ast.Expression.Conversion).
+
+feature
+
+   After_Conversion_Target (Child : Wir.Generate.Conversion_Target)
+      do
+         Content := Child.Content
+      end
+
+   After_Expression (Child : Wir.Generate.Expression)
+      do
+         Operand := Child.Expr
+      end
+
+   After_Node
+      local
+         C : Ast.Expression.Conversion
+      do
+         if attached Operand as E then
+            create C.Make (Void, Current, Content, E)
+            Set_Expr (C)
+         end
+      end
+
+feature { None }
+
+   Content : Integer
+   Operand : detachable Ast.Expression
+
+end

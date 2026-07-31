@@ -8,6 +8,12 @@ feature
    
    Put_Address (Addr : System.Address; Value : System.Address) external "intrinsic" alias "put_word_32"
    Get_Address (Addr : System.Address) : System.Address external "intrinsic" alias "get_word_32"
+
+   --  A Real is two words.  The binary64 high word lives at Addr and the low
+   --  word at Addr + 4, matching the (R, R + 1) register pair the backend uses
+   --  for a double.
+   Put_Real_64 (Addr : System.Address; Value : Real) external "intrinsic"
+   Get_Real_64 (Addr : System.Address) : Real external "intrinsic"
    
    Allocate (Count : System.Word_32) : System.Address external "intrinsic" alias "mm_allocate"
    

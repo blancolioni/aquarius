@@ -68,6 +68,13 @@ feature { None }
          Set_Command (Command)
       end
 
+   Send_Real (Command : System.Word_32
+              Value   : Real)
+      do
+         Set_Real (Value)
+         Set_Command (Command)
+      end
+
    Send_Integer_2 (Command : System.Word_32
                    Value_1 : Integer
                    Value_2 : Integer)
@@ -104,6 +111,16 @@ feature { None }
       do
          W.Convert_From (Value)
          Mem.Put_Word_32 (Argument_2_Address, W)
+      end
+
+   Set_Real (Value   : Real)
+      local
+         Mem : System.Memory.Mem
+      do
+         --  A double is two words, so this fills both argument slots at once:
+         --  the high word at Argument_Address, the low word at
+         --  Argument_2_Address.  The device reads the pair in that order.
+         Mem.Put_Real_64 (Argument_Address, Value)
       end
 
    Set_String (Text    : String)

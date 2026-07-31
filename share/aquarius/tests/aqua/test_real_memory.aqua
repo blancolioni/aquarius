@@ -1,0 +1,109 @@
+class
+   Test_Real_Memory
+
+inherit
+   Unit_Test
+
+--  System.Memory.Mem.Put_Real_64 / Get_Real_64.  A Real is two words, so this
+--  pins three things: the round trip, the word order (the binary64 high word at
+--  the lower address, matching the (R, R + 1) register pair the backend uses),
+--  and that a store writes exactly two words and no more.
+--
+--  The word order matters beyond this class: the Tagatha device reassembles a
+--  real constant from the two words a plugin leaves in its transfer window
+--  (issue #98), so it has to agree with what Put_Real_64 writes.
+
+feature
+
+   Name : String
+      do
+         Result := "test-real-memory"
+      end
+
+   Execute
+      local
+         Mem      : System.Memory.Mem
+         Block    : System.Memory.Block_32
+         Addr     : System.Address
+         Second   : System.Address
+         Low      : System.Address
+         Second_Low : System.Address
+         V        : Real
+         R        : Real
+         Seven    : Real
+         Word     : System.Word_32
+         Sentinel : System.Word_32
+      do
+         Success := True
+
+         create Block.Allocate_Count (4)
+         Addr := Block.Base
+         Low := Addr.Offset_Words (1)
+         Second := Addr.Offset_Words (2)
+         Second_Low := Addr.Offset_Words (3)
+
+         --  a sentinel past the double, to catch a store that writes too much
+         Sentinel.Convert_From (12345)
+         Mem.Put_Word_32 (Second, Sentinel)
+
+         V := 1.5
+         Mem.Put_Real_64 (Addr, V)
+
+         R := Mem.Get_Real_64 (Addr)
+         Verify ("round trip", R.To_String, "1.5")
+
+         --  1.5 is 16#3FF8_0000_0000_0000#.  Word_32.To_String is eight hex
+         --  digits, so these are the two halves of that pattern.
+         Word := Mem.Get_Word_32 (Addr)
+         Verify ("high word at Addr", Word.To_String, "3FF80000")
+
+         Word := Mem.Get_Word_32 (Low)
+         Verify ("low word at Addr + 4", Word.To_String, "00000000")
+
+         Word := Mem.Get_Word_32 (Second)
+         Verify ("word past the double untouched", Word.To_String, "00003039")
+
+         --  A second double, at a word offset, chosen so that its low word is
+         --  not zero: a seventh is a repeating binary fraction, so all 52
+         --  mantissa bits are in play and a half-written store cannot pass.
+         --  Compared with Equal rather than To_String, because it has no exact
+         --  decimal image -- feql still settles whether all 64 bits survived.
+         Seven := 7.0
+         V := V / Seven
+         Mem.Put_Real_64 (Second, V)
+         R := Mem.Get_Real_64 (Second)
+         Verify_Real ("round trip at an offset, low word set", R, V)
+
+         Word := Mem.Get_Word_32 (Second_Low)
+         if Success and then Word.To_String = "00000000" then
+            Success := False
+            Fail_Message := "second store left the low word empty"
+         end
+
+         --  the first double survives the second store
+         R := Mem.Get_Real_64 (Addr)
+         Verify ("first double after the second store", R.To_String, "1.5")
+      end
+
+feature { None }
+
+   Verify (Description : String; Found : String; Expected : String)
+      do
+         if Success and then Found /= Expected then
+            Success := False
+            Fail_Message :=
+               Description & " expected " & Expected & ", found " & Found
+         end
+      end
+
+   Verify_Real (Description : String; Found : Real; Expected : Real)
+      do
+         if Success and then not Found.Equal (Expected) then
+            Success := False
+            Fail_Message :=
+               Description & " expected " & Expected.To_String
+               & ", found " & Found.To_String
+         end
+      end
+
+end

@@ -1,3 +1,4 @@
+with Ada.Characters.Handling;
 with Ada.Command_Line;
 with Ada.Containers.Vectors;
 with Ada.Containers.Indefinite_Ordered_Maps;
@@ -43,7 +44,16 @@ package body Aquarius.Options is
    Test_File_Option    : constant String := "test file";
    Self_Test_Option    : constant String := "self test";
    Clear_Cache_Option  : constant String := "clear cache";
+   Arch_Option         : constant String := "arch";
    Help_Option         : constant String := "help";
+
+   Default_Arch : constant String := "pdp11";
+
+   function Is_Known_Arch (Name : String) return Boolean
+   is (Name in "aqua" | "6502" | "pdp11");
+   --  Kept in step with the registry in Tagatha.Arch.Loader, which this crate
+   --  cannot see.  Worth the duplication: it turns a typo into a message at
+   --  startup rather than a Constraint_Error part-way through code generation.
 
    Show_Full_Path_Option : constant String := "show full path";
    Report_Files_Option   : constant String := "report files";
@@ -87,6 +97,20 @@ package body Aquarius.Options is
             Str_Values.Insert (Name, "");
       end case;
    end Add_Option;
+
+   ----------
+   -- Arch --
+   ----------
+
+   function Arch return String is
+      Value : constant String := Str_Values (Arch_Option);
+   begin
+      if Value = "" then
+         return Default_Arch;
+      else
+         return Ada.Characters.Handling.To_Lower (Value);
+      end if;
+   end Arch;
 
    ----------------
    -- Aqua_Trace --
@@ -187,6 +211,10 @@ package body Aquarius.Options is
                   "Run unit tests", Bool_Kind);
       Add_Option (Clear_Cache_Option, "clear-cache",
                   "Empty the temporary folder before continuing", Bool_Kind);
+      Add_Option (Arch_Option, "arch",
+                  "Architecture that generated code targets: "
+                  & "pdp11 (default), aqua or 6502",
+                  Str_Kind);
       Add_Option (Help_Option, "help",
                   "Show help", Bool_Kind);
       Add_Option (Show_Full_Path_Option, "show-full-path",
@@ -261,6 +289,12 @@ package body Aquarius.Options is
       if Bool_Values (Help_Option) then
          Show_Usage;
          return False;
+      end if;
+
+      if not Is_Known_Arch (Arch) then
+         return Fail
+           ("unknown architecture: " & Str_Values (Arch_Option)
+            & " (expected aqua, 6502 or pdp11)");
       end if;
 
       return True;

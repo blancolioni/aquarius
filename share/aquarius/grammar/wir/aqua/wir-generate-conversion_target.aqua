@@ -1,0 +1,28 @@
+class
+   Wir.Generate.Conversion_Target
+
+inherit
+   Wir.Generate.Node
+
+--  'to_word' | 'to_float', mapped to an Ast.Expression content: 0 = general
+--  word, 1 = floating point.
+
+feature
+
+   Content : Integer
+
+   After_Node
+      local
+         S : String
+      do
+         S := Concatenated_Image
+         if S = "to_word" then
+            Content := 0
+         elsif S = "to_float" then
+            Content := 1
+         else
+            Error ("unknown conversion target: " & S)
+         end
+      end
+
+end

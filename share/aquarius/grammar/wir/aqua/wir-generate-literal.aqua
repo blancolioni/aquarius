@@ -4,7 +4,8 @@ class
 inherit
    Wir.Generate.Expr_Node
 
---  A signed integer literal (Ast.Expression.Literal).
+--  A signed integer literal (Ast.Expression.Literal) or a signed real one
+--  (Ast.Expression.Real_Literal, which sets its own float content).
 
 feature
 
@@ -13,16 +14,30 @@ feature
          Value := Child.Value
       end
 
+   After_Signed_Real (Child : Wir.Generate.Signed_Real)
+      do
+         Real_Value := Child.Value
+         Is_Real := True
+      end
+
    After_Node
       local
          L : Ast.Expression.Literal
+         R : Ast.Expression.Real_Literal
       do
-         create L.Make_Integer (Void, Current, Value)
-         Set_Expr (L)
+         if Is_Real then
+            create R.Make_Real (Void, Current, Real_Value)
+            Set_Expr (R)
+         else
+            create L.Make_Integer (Void, Current, Value)
+            Set_Expr (L)
+         end
       end
 
 feature { None }
 
-   Value : Integer
+   Value      : Integer
+   Real_Value : Real
+   Is_Real    : Boolean
 
 end

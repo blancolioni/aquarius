@@ -5,7 +5,9 @@ inherit
    Wir.Generate.Expr_Node
 
 --  Dispatch node for the assignable expressions. The chosen alternative's
---  expression is consumed by Assign via Set_Value.
+--  expression is consumed by Assign via Set_Value. An optional ': float' tag
+--  follows, as on an expression: Set_Value pops by Content, so without it a
+--  store to a double would write one word.
 
 feature
 
@@ -24,7 +26,25 @@ feature
    After_Dereference (Child : Wir.Generate.Dereference)
       do Copy (Child.Expr) end
 
+   After_Content (Child : Wir.Generate.Content)
+      do
+         Is_Float := True
+      end
+
+   After_Node
+      do
+         if Is_Float then
+            --  'attached X as Y' has to stand alone; it cannot be the right
+            --  operand of and then, hence the nested if.
+            if attached Expr as E then
+               E.Set_Content (1)
+            end
+         end
+      end
+
 feature { None }
+
+   Is_Float : Boolean
 
    Copy (E : detachable Ast.Expression)
       do

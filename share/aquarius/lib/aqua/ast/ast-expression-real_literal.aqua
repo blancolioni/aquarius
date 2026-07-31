@@ -1,0 +1,39 @@
+class
+   Ast.Expression.Real_Literal
+
+inherit
+   Ast.Expression
+
+create
+   Make_Real
+
+--  A binary64 literal. Separate from Ast.Expression.Literal rather than a
+--  second creator on it: Real is an expanded class, so a Real field would cost
+--  two words in every integer literal too, one of them always dead.
+
+feature
+
+   Make_Real
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      V   : Real)
+      do
+         Parent := P
+         Source := Src
+         Value := V
+         Set_Content (1)
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Code.Push_Real_Constant (Value)
+      end
+
+   Set_Value (Code : Tagatha.Code)
+      do
+         Error ("Cannot set value of a literal")
+      end
+
+   Value : Real
+
+end

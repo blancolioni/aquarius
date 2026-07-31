@@ -22,6 +22,14 @@ feature
          Driver.Send_Integer (7, Value)
       end
 
+   Push_Real_Constant (Value : Real)
+      do
+         --  A command of its own, not Push_Constant with a content flag: the
+         --  bit pattern needs both argument slots, leaving nowhere to put the
+         --  flag.
+         Driver.Send_Real (47, Value)
+      end
+
    Pop_Local (Index   : Integer
               Content : Integer)
       do
@@ -116,6 +124,17 @@ feature
    Operate (Op : Integer)
       do
          Driver.Send_Integer (18, Op)
+      end
+
+   Convert_To (Content : Integer)
+      do
+         --  Convert the value on top of the stack to Content (0 = general
+         --  word, 1 = floating point).  Converting to the content it already
+         --  has costs nothing: the peephole pass drops the move.
+         --
+         --  Named Convert_To, not Convert as on the Ada side: 'convert' is an
+         --  Aqua keyword (it ends a feature_alias), so a feature cannot use it.
+         Driver.Send_Integer (48, Content)
       end
 
    Branch (Condition : Integer

@@ -26,6 +26,14 @@ feature
             Op := O.Divide
          elsif S = "mod" then
             Op := O.Modulo
+         elsif S = "fadd" then
+            Op := O.Float_Add
+         elsif S = "fsub" then
+            Op := O.Float_Subtract
+         elsif S = "fmul" then
+            Op := O.Float_Multiply
+         elsif S = "fdiv" then
+            Op := O.Float_Divide
          elsif S = "&" then
             Op := O.Bit_And
          elsif S = "|" then
