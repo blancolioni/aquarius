@@ -25,9 +25,14 @@ feature
       local
          L : Ast.Expression.Local_Variable
          A : Ast.Expression.Argument
+         K : Ast.Expression.Literal
       do
          if attached Checks as C then
-            if C.By_Reference then
+            if C.Is_Constant then
+               --  A constant has no storage: emit its value (issue #103)
+               create K.Make_Integer (Void, Current, C.Value)
+               Set_Expr (K)
+            elsif C.By_Reference then
                --  A 'var' parameter holds an address: reading it needs a
                --  dereference and writing it an indirect store, and neither
                --  Ast.Expression.Argument nor Tagatha's Push_Argument /

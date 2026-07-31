@@ -89,6 +89,16 @@ feature  --  declaring
          Bindings.Append (B)
       end
 
+   Declare_Constant (Name : String; Value : Integer)
+      --  Bind Name in THIS scope to a value (issue #103). Nothing is allocated:
+      --  a constant is not storage, so it takes no slot in either index space.
+      local
+         B : Pascal.Checks.Binding
+      do
+         create B.Make_Constant (Name, Value)
+         Bindings.Append (B)
+      end
+
    Add_Declaration (Declaration : Aquarius.Entities.Declaration)
       do
          Declarations.Append (Declaration)

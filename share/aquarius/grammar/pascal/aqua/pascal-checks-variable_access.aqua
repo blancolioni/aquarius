@@ -21,6 +21,12 @@ feature
    By_Reference : Boolean
       --  A 'var' parameter: the argument holds an address, not a value
 
+   Is_Constant : Boolean
+
+   Value : Integer
+      --  The constant's value, when Is_Constant: the code stage emits it as a
+      --  literal, since a constant has no storage to load from (issue #103)
+
    Is_Target : Boolean
 
    Set_Target
@@ -43,6 +49,11 @@ feature
                Offset := Bound.Offset
                Is_Argument := Bound.Is_Argument
                By_Reference := Bound.By_Reference
+               Is_Constant := Bound.Is_Constant
+               Value := Bound.Value
+               if Is_Constant and then Is_Target then
+                  Error ("cannot assign to a constant: " & N)
+               end
                --  Record a cross reference to the declared variable: a write
                --  when this access is an assignment target (flagged by the
                --  enclosing assignment_statement), otherwise a read.
