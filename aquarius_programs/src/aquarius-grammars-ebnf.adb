@@ -26,6 +26,9 @@ package body Aquarius.Grammars.EBNF is
                         New_Repeat (Grammar.Frame, Internal, True, null),
                         Grammar.Reference_Name (Internal, "definition"));
 
+      Grammar.Line_Comment :=
+        Aquarius.Names.To_Aquarius_Name ("--");
+
       Create_Terminals (Grammar);
       Create_Non_Terminals (Grammar);
 
