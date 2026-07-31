@@ -1,3 +1,9 @@
+--  Syntax for Aqua language, which is used to create language plugins.
+--  Dialect of Eiffel, with the follow (non-exhaustive) changes:
+--    * class library is hierarchical
+--    * elsif instead of elseif
+--    * iterator in across loop names container values, not cursor
+
 top_level ::= class_declaration
 case_sensitive = false
 
