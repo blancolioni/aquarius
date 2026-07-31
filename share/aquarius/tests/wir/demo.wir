@@ -1,5 +1,6 @@
 --  Wir demo: exercises every Ast node kind, lowered to PDP-11 via
---     bin/aquarius --code-trigger demo.wir   (output: tagatha.pdp11)
+--     bin/aquarius --code-trigger demo.wir   (output: tagatha.pdp11.s)
+--  Pass --arch aqua or --arch 6502 to retarget; the output is named to match.
 --  Indices are 1-based. See ../../grammar/wir/wir.md.
 
 routine public add

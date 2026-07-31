@@ -167,5 +167,7 @@ framework it uses is documented in
 bin/aquarius --code-trigger <path>.wir
 ```
 
-which emits PDP-11 assembly to `tagatha.pdp11`. (Plain `bin/aquarius --check
-<path>` parses and validates only, without generating code.)
+which emits PDP-11 assembly to `tagatha.pdp11.s`. Add `--arch` to retarget —
+`pdp11` (the default), `aqua` or `6502` — and the output file is named to
+match: `tagatha.<arch>.s`. (Plain `bin/aquarius --check <path>` parses and
+validates only, without generating code.)
