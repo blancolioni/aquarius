@@ -69,8 +69,16 @@ delimiter  ::= .delimiters "{},=:"           -- each char is its own token
 Three token-body forms:
 
 - **`.standard <name>`** — a built-in lexer. Available:
-  `ada_identifier`, `ada_numeric_literal`, `ada_character_literal`,
-  `ada_string_literal`, `ada_symbol`, `ada_comment`.
+  `ada_identifier`, `ada_numeric_literal`, `ada_integer_literal`,
+  `ada_real_literal`, `ada_character_literal`, `ada_string_literal`,
+  `ada_symbol`, `ada_comment`.
+
+  `ada_numeric_literal` covers both integers and reals, so a grammar with a
+  *separate* real token must use `ada_integer_literal` (no decimal point;
+  based literals like `16#ff#` are integers) and `ada_real_literal`
+  (`digits . digits` with an optional exponent) instead — otherwise both
+  token classes match `3.14` with the same length and the tie is resolved by
+  whichever the parse context happens to accept.
 - **`.delimiters "<chars>"`** — declares each character in the string as a
   single-character delimiter token.
 - **regex** (`!...!`) — see below.

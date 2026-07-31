@@ -526,6 +526,9 @@ package body Ack.Semantic.Analysis.Classes is
                              Integer'Value (To_String (Get_Name (Value)));
                         end if;
 
+                     when N_Real_Constant =>
+                        Add_Note_Text (To_String (Get_Name (Value)));
+
                      when N_Boolean_Constant =>
                         Add_Note_Text (if Boolean_Value (Value)
                                        then "True" else "False");

@@ -8,6 +8,8 @@ private package Ack.Semantic.Types is
 
    function Type_Integer return Ack.Types.Type_Entity;
 
+   function Type_Real return Ack.Types.Type_Entity;
+
    function Type_String return Ack.Types.Type_Entity;
 
    function Type_Character return Ack.Types.Type_Entity;

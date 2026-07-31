@@ -17,6 +17,12 @@ package Ack.Variables is
      (Variable : in out Variable_Entity_Record'Class;
       Offset   : Positive);
 
+   function Offset
+     (Variable : Variable_Entity_Record'Class)
+      return Positive;
+   --  The variable's frame slot index: an argument index for an argument, a
+   --  local index for a local
+
    type Variable_Entity is access all Variable_Entity_Record'Class;
 
    function New_Argument_Entity
@@ -102,5 +108,10 @@ private
      (Entity : not null access Root_Entity_Type'Class)
       return Boolean
    is (Entity.all in Variable_Entity_Record'Class);
+
+   function Offset
+     (Variable : Variable_Entity_Record'Class)
+      return Positive
+   is (Variable.Offset);
 
 end Ack.Variables;

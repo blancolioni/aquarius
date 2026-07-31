@@ -126,13 +126,22 @@ package body Ack.Semantic.Analysis.Expressions is
                                      Types.Type_Character,
                                   when N_Integer_Constant =>
                                      Types.Type_Integral (Value),
+                                  when N_Real_Constant =>
+                                     Types.Type_Real,
                                   when N_Boolean_Constant =>
                                      Types.Type_Boolean);
             begin
                if Kind (Value) = N_Integer_Constant then
                   Set_Type (Expression, Expression_Type);
                   Set_Entity (Expression, Expression_Type);
-                  if not Expression_Type.Conforms_To (Value_Type) then
+                  --  An integer literal takes the type of its context, which
+                  --  has to be an integral type -- or REAL, in which case the
+                  --  literal is a real literal written without a fraction.
+                  --  Anything wider than a literal needs an explicit
+                  --  conversion; there is no integer to real promotion.
+                  if not Expression_Type.Conforms_To (Value_Type)
+                    and then not Is_Floating_Point (Expression_Type)
+                  then
                      Error (Expression, E_Type_Error, Value_Type);
                   end if;
                else
@@ -180,9 +189,13 @@ package body Ack.Semantic.Analysis.Expressions is
          if Value = No_Node
            or else Kind (Value) /= N_Integer_Constant
          then
-            --  string, character and boolean constants type themselves, and
-            --  any other expression carries its own type, so ANY is enough
+            --  string, character, real and boolean constants type themselves,
+            --  and any other expression carries its own type, so ANY is enough
             return Types.Type_Any;
+         elsif Is_Floating_Point (Expression_Type) then
+            --  an integer literal in a real context is a real literal, so the
+            --  operator has to be resolved on REAL
+            return Types.Type_Real;
          elsif Expression_Type /= null
            and then Expression_Type.Conforms_To (Types.Type_Integral (Left))
            and then not Expression_Type.Deferred

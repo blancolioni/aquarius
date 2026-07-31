@@ -10,6 +10,22 @@ with Ack.Semantic.Work;
 
 package body Ack.Features is
 
+   function Call_Result_Content
+     (Feature : Feature_Entity_Record'Class;
+      Current : Ack.Classes.Constant_Class_Entity)
+      return Tagatha.Operand_Content;
+   --  The content of result slot 1.  A routine with a value returns that
+   --  value; a routine of an expanded class with no value still returns one
+   --  result, the updated Current.
+
+   function Local_Content
+     (Feature : Feature_Entity_Record'Class;
+      Index   : Positive)
+      return Tagatha.Operand_Content;
+   --  The content of local slot Index.  Local 1 is Result when the feature has
+   --  one; declared locals follow.  Shelves and the implicit locals introduced
+   --  by attachment tests are always one word.
+
    ------------------
    -- Add_Argument --
    ------------------
@@ -163,6 +179,26 @@ package body Ack.Features is
 
       Feature.Local_Count := Next_Local - 1;
    end Bind;
+
+   -------------------------
+   -- Call_Result_Content --
+   -------------------------
+
+   function Call_Result_Content
+     (Feature : Feature_Entity_Record'Class;
+      Current : Ack.Classes.Constant_Class_Entity)
+      return Tagatha.Operand_Content
+   is
+      use type Ack.Classes.Constant_Class_Entity;
+   begin
+      if Feature.Value_Type /= null then
+         return Value_Content (Feature.Value_Type);
+      elsif Current /= null and then Current.Expanded then
+         return Value_Content (Constant_Entity_Type (Current));
+      else
+         return Tagatha.General_Content;
+      end if;
+   end Call_Result_Content;
 
    ------------------------
    -- Check_Precondition --
@@ -334,6 +370,53 @@ package body Ack.Features is
                            Positive
                              (Get_Program
                                 (Feature.Declaration_Node).Column);
+
+      Current_Content : constant Tagatha.Operand_Content :=
+                          Value_Content (Constant_Entity_Type (Class));
+      --  Argument 1 is Current.  For an expanded class it holds the value
+      --  itself, so for REAL it is a double.
+
+      Result_Content  : constant Tagatha.Operand_Content :=
+                          Call_Result_Content
+                            (Feature.all,
+                             Ack.Classes.Constant_Class_Entity (Class));
+
+      function Frame_Options return Tagatha.Code.Routine_Options'Class;
+
+      -------------------
+      -- Frame_Options --
+      -------------------
+
+      function Frame_Options return Tagatha.Code.Routine_Options'Class is
+         use Tagatha;
+         Result : Tagatha.Code.Routine_Options'Class :=
+                    Tagatha.Code.Default_Options;
+      begin
+         --  Declare every double argument and result, whether or not the
+         --  body reads it: a slot's content fixes its width, and caller and
+         --  callee lay the frame out by a prefix sum over those widths, so
+         --  they have to agree about all of them.
+         if Current_Content = Floating_Point_Content then
+            Result := Result.Set_Argument_Content (1, Floating_Point_Content);
+         end if;
+
+         for Argument of Feature.Arguments loop
+            if Value_Content (Argument.Get_Type) = Floating_Point_Content then
+               Result :=
+                 Result.Set_Argument_Content
+                   (Argument_Index (Argument.Offset), Floating_Point_Content);
+            end if;
+         end loop;
+
+         if Result_Count > 0
+           and then Result_Content = Floating_Point_Content
+         then
+            Result := Result.Set_Result_Content (1, Floating_Point_Content);
+         end if;
+
+         return Result;
+      end Frame_Options;
+
    begin
 
       Unit.Source_Location (Line, Column);
@@ -342,12 +425,12 @@ package body Ack.Features is
          --  Generate a property routine, in case it redefines
          --  an actual routine
 
-         Unit.Begin_Routine (Feature.Link_Name);
+         Unit.Begin_Routine (Feature.Link_Name, Frame_Options);
 
          Unit.Push_Argument (1);
-         Unit.Dereference (Tagatha.General_Content,
+         Unit.Dereference (Value_Content (Feature.Value_Type),
                            Tagatha.Int_32 (Feature.Property_Offset));
-         Unit.Pop_Result (1);
+         Unit.Pop_Result (1, Result_Content);
 
          Unit.Exit_Routine;
          Unit.End_Routine;
@@ -359,7 +442,8 @@ package body Ack.Features is
             --  via a virtual table entry
 
             Unit.Begin_Routine
-              (Name           => Feature.Link_Name);
+              (Name           => Feature.Link_Name,
+               Options        => Frame_Options);
 
             declare
                procedure Push (Index : Positive);
@@ -369,19 +453,25 @@ package body Ack.Features is
                ----------
 
                procedure Push (Index : Positive) is
+                  Content : constant Tagatha.Operand_Content :=
+                              (if Index <= Feature.Arguments.Last_Index
+                               then Value_Content
+                                 (Feature.Arguments.Element (Index).Get_Type)
+                               else Tagatha.General_Content);
                begin
-                  Unit.Push_Argument (Tagatha.Argument_Index (Index + 1));
+                  Unit.Push_Argument
+                    (Tagatha.Argument_Index (Index + 1), Content);
                end Push;
 
             begin
-               Unit.Push_Argument (1);
+               Unit.Push_Argument (1, Current_Content);
                Ack.Generate.Intrinsics.Generate_Intrinsic
                  (Unit, To_Standard_String (Feature.External_Label),
                   Arg_Count, Push'Access);
             end;
 
             if Result_Count > 0 then
-               Unit.Pop_Result (1);
+               Unit.Pop_Result (1, Result_Content);
             end if;
             Unit.Exit_Routine;
             Unit.End_Routine;
@@ -390,7 +480,8 @@ package body Ack.Features is
       elsif Feature.Routine then
 
          Unit.Begin_Routine
-           (Name           => Feature.Link_Name);
+           (Name           => Feature.Link_Name,
+            Options        => Frame_Options);
 
          --  restore Current to our needs
 
@@ -406,8 +497,18 @@ package body Ack.Features is
 --           end if;
 
          for I in 1 .. Feature.Local_Count loop
-            Unit.Push_Constant (Tagatha.Int_32'(0));
-            Unit.Pop_Local (Tagatha.Local_Index (I));
+            declare
+               use type Tagatha.Operand_Content;
+               Content : constant Tagatha.Operand_Content :=
+                           Local_Content (Feature.all, I);
+            begin
+               if Content = Tagatha.Floating_Point_Content then
+                  Unit.Push_Constant (Tagatha.Floating_Point_Constant'(0.0));
+               else
+                  Unit.Push_Constant (Tagatha.Int_32'(0));
+               end if;
+               Unit.Pop_Local (Tagatha.Local_Index (I), Content);
+            end;
          end loop;
 
          if Feature.Declaration_Context.Monitor_Preconditions then
@@ -440,8 +541,9 @@ package body Ack.Features is
                Unit.Push_Name (Once_Flag_Label, Extern => True);
                Unit.Branch (Tagatha.Z, Continue_Once);
                if Feature.Has_Result then
-                  Unit.Push_Name (Once_Value_Label, Extern => True);
-                  Unit.Pop_Result (1);
+                  Unit.Push_Name (Once_Value_Label, Extern => True,
+                                  Content => Result_Content);
+                  Unit.Pop_Result (1, Result_Content);
                end if;
                Unit.Exit_Routine;
                Unit.Set_Label (Continue_Once);
@@ -488,12 +590,13 @@ package body Ack.Features is
             if Feature.Once then
                Unit.Push_Constant (Tagatha.Int_32'(1));
                Unit.Pop_Name (Once_Flag_Label, Extern => True);
-               Unit.Push_Local (1);
-               Unit.Pop_Name (Once_Value_Label, Extern => True);
+               Unit.Push_Local (1, Result_Content);
+               Unit.Pop_Name (Once_Value_Label, Extern => True,
+                              Content => Result_Content);
             end if;
 
-            Unit.Push_Local (1);
-            Unit.Pop_Result (1);
+            Unit.Push_Local (1, Result_Content);
+            Unit.Pop_Result (1, Result_Content);
          end if;
 
          Unit.Exit_Routine;
@@ -561,6 +664,29 @@ package body Ack.Features is
 
    end Instantiate;
 
+   -------------------
+   -- Local_Content --
+   -------------------
+
+   function Local_Content
+     (Feature : Feature_Entity_Record'Class;
+      Index   : Positive)
+      return Tagatha.Operand_Content
+   is
+   begin
+      if Feature.Has_Result and then Index = 1 then
+         return Value_Content (Feature.Value_Type);
+      end if;
+
+      for Local of Feature.Locals loop
+         if Local.Offset = Index then
+            return Value_Content (Local.Get_Type);
+         end if;
+      end loop;
+
+      return Tagatha.General_Content;
+   end Local_Content;
+
    --------------------------
    -- Is_Property_Of_Class --
    --------------------------
@@ -627,7 +753,8 @@ package body Ack.Features is
 --           & (if Feature.Active_Class.Expanded then "yes" else "no"));
 
       if Feature.Active_Class.Expanded then
-         Unit.Pop_Argument (1);
+         Unit.Pop_Argument
+           (1, Value_Content (Constant_Entity_Type (Feature.Active_Class)));
       else
          if Feature.Get_Type.Proper_Ancestor_Of (Value_Type) then
             Unit.Duplicate;
@@ -670,7 +797,7 @@ package body Ack.Features is
             Unit.Operate (Tagatha.Op_Add);
          end if;
 
-         Unit.Pop_Indirect (Tagatha.General_Content,
+         Unit.Pop_Indirect (Value_Content (Feature.Value_Type),
                             Tagatha.Int_32 (Feature.Property_Offset));
       end if;
    end Pop_Entity;
@@ -712,6 +839,11 @@ package body Ack.Features is
    is
       Current        : constant Ack.Classes.Constant_Class_Entity :=
                          Ack.Classes.Constant_Class_Entity (Context);
+      Result_Content : constant Tagatha.Operand_Content :=
+                         Call_Result_Content (Feature, Current);
+      Returns        : constant Tagatha.Return_Content_Array :=
+                         [1 => Result_Content,
+                          others => Tagatha.General_Content];
    begin
 
       if Feature.Standard_Name = "void" then
@@ -735,8 +867,17 @@ package body Ack.Features is
                     (Tagatha.Int_32'
                        (Character'Pos (Text (Text'First))));
                when N_Integer_Constant =>
+                  if Is_Floating_Point (Feature.Value_Type) then
+                     --  an integer literal declared as a REAL value
+                     Unit.Push_Constant
+                       (Tagatha.Floating_Point_Constant'Value (Text));
+                  else
+                     Unit.Push_Constant
+                       (Tagatha.Int_32'Value (Text));
+                  end if;
+               when N_Real_Constant =>
                   Unit.Push_Constant
-                    (Tagatha.Int_32'Value (Text));
+                    (Tagatha.Floating_Point_Constant'Value (Text));
                when N_Boolean_Constant =>
                   Unit.Push_Constant
                     (Tagatha.Int_32'
@@ -748,7 +889,8 @@ package body Ack.Features is
       end if;
 
       if not Have_Current then
-         Unit.Push_Argument (1);
+         Unit.Push_Argument
+           (1, Value_Content (Constant_Entity_Type (Current)));
       end if;
 
 --        if Feature.Definition_Class /= Current
@@ -788,13 +930,14 @@ package body Ack.Features is
             end if;
             Push_Offset (Unit, Feature.Property_Offset);
             Unit.Operate (Tagatha.Op_Add);
-            Unit.Dereference;
+            Unit.Dereference (Value_Content (Feature.Value_Type), 0);
          end if;
       else
          if Current.Expanded then
             Unit.Call (Feature.Link_Name,
                        Feature.Argument_Count + 1,
-                       1);
+                       1,
+                       Returns => Returns);
          else
             --  push feature address from virtual table
 
@@ -834,7 +977,8 @@ package body Ack.Features is
             begin
                Unit.Set_Label (L);
                Unit.Indirect_Call
-                 (Feature.Argument_Count + 1, 1);
+                 (Feature.Argument_Count + 1, 1,
+                  Returns => Returns);
             end;
          end if;
 
@@ -860,7 +1004,7 @@ package body Ack.Features is
             --
             --  push result
             if Feature.Has_Result then
-               Unit.Push_Return (1);
+               Unit.Push_Return (1, Result_Content);
             end if;
          end if;
       end if;
@@ -888,7 +1032,8 @@ package body Ack.Features is
       end if;
 
       if not Have_Current then
-         Unit.Push_Argument (1);
+         Unit.Push_Argument
+           (1, Value_Content (Constant_Entity_Type (Current)));
       end if;
 
       if Feature.Intrinsic then

@@ -8,6 +8,8 @@ package body Aquarius.Grammars.Builtin is
 
    Ada_Identifiers        : Lexer;
    Ada_Numeric_Literals   : Lexer;
+   Ada_Integer_Literals   : Lexer;
+   Ada_Real_Literals      : Lexer;
    Ada_Character_Literals : Lexer;
    Ada_String_Literals    : Lexer;
    Ada_Comments           : Lexer;
@@ -48,6 +50,19 @@ package body Aquarius.Grammars.Builtin is
         Numeral & Literal ('#') & Based_Numeral &
         Optional (Literal ('.') & Based_Numeral) &
         Literal ('#') & Optional (Exponent);
+      --  A grammar that has a separate real token cannot use
+      --  ada_numeric_literal for its integers: both would match "3.14", and
+      --  the tokeniser hands an equal-length tie to the parser to resolve,
+      --  which silently picks whichever the context allows first.  These two
+      --  split the same syntax on the decimal point instead.  A based
+      --  literal is always an integer here; a based real (16#F.8#) is not
+      --  accepted by either.
+      Integer_Only_Literal : constant Lexer :=
+        (Numeral & Literal ('#') & Based_Numeral & Literal ('#')
+         & Optional (Exponent))
+        or (Numeral & Optional (Exponent));
+      Real_Only_Literal : constant Lexer :=
+        Numeral & Literal ('.') & Numeral & Optional (Exponent);
       String_Element : constant Lexer :=
         (Literal ('"') & Literal ('"')) or (not Literal ('"'));
       Backslash_Escaped_String_Element : constant Lexer :=
@@ -69,6 +84,8 @@ package body Aquarius.Grammars.Builtin is
         Optional (Repeat (Identifier_Start or Identifier_Extend));
       Ada_Numeric_Literals :=
         Based_Literal or Decimal_Literal;
+      Ada_Integer_Literals := Integer_Only_Literal;
+      Ada_Real_Literals    := Real_Only_Literal;
 
       Ada_Character_Literals :=
         Literal (''') & Graphic & Literal (''');
@@ -129,6 +146,10 @@ package body Aquarius.Grammars.Builtin is
          return Ada_Character_Literals;
       elsif Name = "ada_numeric_literal" then
          return Ada_Numeric_Literals;
+      elsif Name = "ada_integer_literal" then
+         return Ada_Integer_Literals;
+      elsif Name = "ada_real_literal" then
+         return Ada_Real_Literals;
       elsif Name = "ada_delimiters" then
          return Ada_Delimiters;
       elsif Name = "ada_symbol" then

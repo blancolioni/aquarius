@@ -23,11 +23,11 @@ package body Ack.Parser.Expressions is
      (From : Aquarius.Programs.Program_Tree)
       return Node_Id;
 
-   function Signed_Integer_Constant
+   function Signed_Numeric_Constant
      (Node     : Node_Id;
       Negative : Boolean)
       return Node_Id;
-   --  If Node is an integer manifest constant, return an equivalent
+   --  If Node is an integer or real manifest constant, return an equivalent
    --  constant node with Negative applied to its literal text.  Otherwise
    --  return No_Node.
 
@@ -81,12 +81,12 @@ package body Ack.Parser.Expressions is
             Operator : constant String := Prefix.Concatenate_Children;
             Folded   : constant Node_Id :=
                          (if Operator = "-" or else Operator = "+"
-                          then Signed_Integer_Constant
+                          then Signed_Numeric_Constant
                             (Node, Negative => Operator = "-")
                           else No_Node);
          begin
             if Folded /= No_Node then
-               --  a signed integer literal; no operator call required
+               --  a signed numeric literal; no operator call required
                Node := Folded;
             else
                Node := New_Node (N_Operator, Prefix,
@@ -238,6 +238,9 @@ package body Ack.Parser.Expressions is
       elsif Choice.Name = "integer_constant" then
          Kind := N_Integer_Constant;
          Name := Get_Name_Id (Choice.Concatenate_Children);
+      elsif Choice.Name = "real_constant" then
+         Kind := N_Real_Constant;
+         Name := Get_Name_Id (Choice.Concatenate_Children);
       elsif Choice.Name = "boolean_constant" then
          Kind := N_Boolean_Constant;
          Name := Get_Name_Id (Choice.Concatenate_Children);
@@ -343,10 +346,10 @@ package body Ack.Parser.Expressions is
    end Import_Primary;
 
    -----------------------------
-   -- Signed_Integer_Constant --
+   -- Signed_Numeric_Constant --
    -----------------------------
 
-   function Signed_Integer_Constant
+   function Signed_Numeric_Constant
      (Node     : Node_Id;
       Negative : Boolean)
       return Node_Id
@@ -359,7 +362,7 @@ package body Ack.Parser.Expressions is
       declare
          Value : constant Node_Id := Constant_Value (Node);
       begin
-         if Kind (Value) /= N_Integer_Constant then
+         if Kind (Value) not in N_Integer_Constant | N_Real_Constant then
             return No_Node;
          end if;
 
@@ -379,10 +382,10 @@ package body Ack.Parser.Expressions is
               (N_Constant, Get_Program (Node),
                Field_2 =>
                  New_Node
-                   (N_Integer_Constant, Get_Program (Value),
+                   (Kind (Value), Get_Program (Value),
                     Name => Get_Name_Id (Image)));
          end;
       end;
-   end Signed_Integer_Constant;
+   end Signed_Numeric_Constant;
 
 end Ack.Parser.Expressions;

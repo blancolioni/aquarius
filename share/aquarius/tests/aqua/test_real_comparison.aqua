@@ -1,0 +1,73 @@
+class
+   Test_Real_Comparison
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-real-comparison"
+      end
+
+   Execute
+      local
+         A, B, C : Real
+      do
+         Success := True
+
+         A := 1.25
+         B := 2.5
+         C := 1.25
+
+         Verify ("1.25 < 2.5", A < B)
+         Verify ("not 2.5 < 1.25", not (B < A))
+         Verify ("1.25 <= 2.5", A <= B)
+         Verify ("1.25 <= 1.25", A <= C)
+         Verify ("2.5 > 1.25", B > A)
+         Verify ("not 1.25 > 1.25", not (A > C))
+         Verify ("2.5 >= 1.25", B >= A)
+         Verify ("1.25 >= 1.25", A >= C)
+         Verify ("1.25 = 1.25", A = C)
+         Verify ("not 1.25 = 2.5", not (A = B))
+         Verify ("1.25 /= 2.5", A /= B)
+         Verify ("not 1.25 /= 1.25", not (A /= C))
+
+         --  a fraction that is not representable in an integer must not
+         --  compare equal to its truncation
+         A := 0.5
+         B := 0.0
+         Verify ("0.5 /= 0.0", A /= B)
+         Verify ("0.5 > 0.0", A > B)
+
+         --  negative values, where the sign bit rather than the magnitude
+         --  decides the order
+         A := -1.0
+         B := 1.0
+         Verify ("-1.0 < 1.0", A < B)
+         Verify ("not -1.0 > 1.0", not (A > B))
+
+         A := -2.0
+         B := -1.0
+         Verify ("-2.0 < -1.0", A < B)
+         Verify ("-1.0 > -2.0", B > A)
+
+         --  zero compares equal to itself whichever way it was produced
+         A := 0.0
+         B := 1.0
+         C := B - B
+         Verify ("0.0 = 1.0 - 1.0", A = C)
+      end
+
+feature { None }
+
+   Verify (Description : String; Condition : Boolean)
+      do
+         if Success and then not Condition then
+            Success := False
+            Fail_Message := Description & " was false"
+         end
+      end
+
+end

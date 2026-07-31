@@ -122,9 +122,11 @@ package body Ack.Variables is
 
       case Variable.Kind is
          when Local =>
-            Unit.Pop_Local (Tagatha.Local_Index (Variable.Offset));
+            Unit.Pop_Local (Tagatha.Local_Index (Variable.Offset),
+                            Value_Content (Variable.Get_Type));
          when Argument =>
-            Unit.Pop_Argument (Tagatha.Argument_Index (Variable.Offset));
+            Unit.Pop_Argument (Tagatha.Argument_Index (Variable.Offset),
+                               Value_Content (Variable.Get_Type));
       end case;
    end Pop_Entity;
 
@@ -143,15 +145,29 @@ package body Ack.Variables is
    begin
       case Variable.Kind is
          when Local =>
-            Unit.Push_Local (Tagatha.Local_Index (Variable.Offset));
+            --  An iteration variable's type is the element type, but its slot
+            --  holds the cursor -- always a reference -- and the element
+            --  comes from the call below.  Reading the slot as the element
+            --  type would read a second word that was never written.
+            Unit.Push_Local
+              (Tagatha.Local_Index (Variable.Offset),
+               (if Variable.Iterator
+                then Tagatha.General_Content
+                else Value_Content (Variable.Get_Type)));
 
             if Variable.Iterator then
                declare
+                  Cursor_Type : constant Ack.Types.Type_Entity :=
+                                  Ack.Types.Type_Entity (Variable.Iteration);
                   Class : constant Ack.Classes.Class_Entity :=
-                            Ack.Types.Type_Entity
-                              (Variable.Iteration).Class;
+                            Cursor_Type.Class;
+                  --  Look the feature up on the type, not the class: only the
+                  --  type carries the generic bindings, so only it yields an
+                  --  Element whose result type is the actual element type.
+                  --  The class's version still returns the formal, which is
+                  --  one word wide whatever the actual turns out to be.
                   Feature : constant Ack.Features.Feature_Entity :=
-                              Class.Feature
+                              Cursor_Type.Feature
                                 (Get_Name_Id ("element"));
                begin
                   Feature.Push_Entity
@@ -162,7 +178,8 @@ package body Ack.Variables is
             end if;
 
          when Argument =>
-            Unit.Push_Argument (Tagatha.Argument_Index (Variable.Offset));
+            Unit.Push_Argument (Tagatha.Argument_Index (Variable.Offset),
+                                Value_Content (Variable.Get_Type));
       end case;
    end Push_Entity;
 

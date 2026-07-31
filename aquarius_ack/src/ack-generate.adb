@@ -531,7 +531,12 @@ package body Ack.Generate is
                         Text : constant String :=
                                  To_String (Get_Name (Value));
                      begin
-                        if Text (Text'First) = '-' then
+                        if Is_Floating_Point (Get_Type (Expression)) then
+                           --  an integer literal in a real context is a real
+                           --  literal written without a fraction
+                           Unit.Push_Constant
+                             (Tagatha.Floating_Point_Constant'Value (Text));
+                        elsif Text (Text'First) = '-' then
                            --  the target word is 32 bits wide, so push the
                            --  two's complement pattern rather than a
                            --  64 bit sign extension
@@ -543,6 +548,10 @@ package body Ack.Generate is
                              (Tagatha.Word_64'Value (Text));
                         end if;
                      end;
+                  when N_Real_Constant =>
+                     Unit.Push_Constant
+                       (Tagatha.Floating_Point_Constant'Value
+                          (To_String (Get_Name (Value))));
                   when N_Boolean_Constant =>
                      Unit.Push_Constant
                        (Tagatha.Int_32'
