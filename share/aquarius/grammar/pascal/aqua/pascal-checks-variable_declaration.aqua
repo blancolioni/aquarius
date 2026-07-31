@@ -5,8 +5,12 @@ inherit
    Pascal.Checks.Node
 
 --  variable_declaration ::= identifier_list ':' type_denoter ';'. Allocates a
---  frame-local offset per name in the shared Scope; a name already declared in
---  scope is a semantic error.
+--  frame slot per name in the scope being declared (issue #81).
+--
+--  The duplicate check asks THIS scope only, so redeclaring a name in one block
+--  is an error while shadowing an outer declaration is not -- an inner x is a
+--  new variable with its own slot, and a use of x inside that block resolves to
+--  it rather than to the outer one.
 
 feature
 
@@ -23,15 +27,15 @@ feature
             It.After
          loop
             Name := It.Element
-            if Scope.Is_Declared (Name) then
+            if Current_Frame_Scope.Is_Declared_Here (Name) then
                Error ("duplicate declaration: " & Name)
             else
-               Ignore := Scope.Declare (Name)
+               Ignore := Current_Frame_Scope.Declare (Name)
                --  Record the variable in the standard entity model, keyed
                --  in the scope so a later access can resolve and refer to it.
                create Decl.Make (Name, Name, "variable", Current)
                Environment.Add_Declaration (Decl)
-               Scope.Add_Declaration (Decl)
+               Current_Frame_Scope.Add_Declaration (Decl)
                --  Also record in the current entity scope (issue #74): the
                --  program scope, or a procedure/function's own child scope.
                Current_Scope.Add_Declaration (Decl)

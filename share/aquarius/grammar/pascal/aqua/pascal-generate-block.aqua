@@ -5,8 +5,9 @@ inherit
    Pascal.Generate.Stmt_Node
 
 --  block ::= ... variable_declaration_part ... statement_part. The variable
---  declarations (earlier siblings) have already populated the shared Scope by
---  the time this reduces; the block's value is the statement part's sequence.
+--  declarations (earlier siblings) have already been bound to frame slots by the
+--  semantic stage by the time this reduces; the block's value is the statement
+--  part's sequence.
 
 feature
 

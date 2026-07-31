@@ -29,15 +29,15 @@ feature
    After_Node
       do
          if attached Nm as N then
-            if Scope.Is_Declared (N) then
-               Offset := Scope.Offset (N)
+            if Current_Frame_Scope.Is_Declared (N) then
+               Offset := Current_Frame_Scope.Offset (N)
                --  Record a cross reference to the declared variable: a write
                --  when this access is an assignment target (flagged by the
                --  enclosing assignment_statement), otherwise a read.
                if Is_Target then
-                  Refer (Current, "write", Scope.Find_Declaration (N))
+                  Refer (Current, "write", Current_Frame_Scope.Lookup_Declaration (N))
                else
-                  Refer (Current, "read", Scope.Find_Declaration (N))
+                  Refer (Current, "read", Current_Frame_Scope.Lookup_Declaration (N))
                end
             else
                Error ("undeclared variable: " & N)

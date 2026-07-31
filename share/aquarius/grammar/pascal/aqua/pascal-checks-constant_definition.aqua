@@ -6,8 +6,9 @@ inherit
 
 --  constant_definition ::= identifier '=' constant. Records the constant's name
 --  in the current entity scope (issue #74). The constant's value is not checked
---  and the name is not entered into the flat offset Scope, so a reference to it
---  in an expression is not yet resolved (minimal semantic pass).
+--  and the name gets no frame slot in Pascal.Checks.Scope -- a constant is not a
+--  variable -- so a reference to it in an expression is not yet resolved
+--  (minimal semantic pass).
 
 feature
 

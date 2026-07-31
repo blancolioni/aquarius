@@ -1,0 +1,24 @@
+class
+   Pascal.Checks.Binding
+
+create
+   Make
+
+--  One name bound to one frame slot, held by Pascal.Checks.Scope (issue #81).
+--  Name is stored lower-cased, because Pascal is case-insensitive; compare it
+--  with String.Equal rather than '=', which is reference equality inside a
+--  generic in the Aqua VM (issue #60).
+
+feature
+
+   Make (Bound_Name : String; Frame_Offset : Integer)
+      do
+         Name := Bound_Name.To_Lower
+         Offset := Frame_Offset
+      end
+
+   Name : String
+
+   Offset : Integer
+
+end

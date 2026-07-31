@@ -12,9 +12,10 @@ inherit
 --  so declarations and cross references are recorded in the standard entity
 --  model (readable by the test stage and, eventually, the UI).
 --
---  Scope is the single shared symbol table for the compilation, a once value
---  so every visitor sees the same instance. Declarations populate it (they
---  reduce before the statement part), accesses read it.
+--  Scope is the ROOT of the frame-slot scope tree, a once value so every visitor
+--  sees the same instance. It owns the slot counter for the whole program;
+--  Current_Frame_Scope is the scope declarations and accesses actually use
+--  (issue #81).
 
 feature
 
@@ -23,13 +24,25 @@ feature
          create Result.Make
       end
 
-   --  Entity-model scope tree (issue #74). Separate from the flat offset Scope
-   --  above: this records const/type/var/procedure/function/parameter
-   --  declarations in nested Aquarius.Entities.Scope objects (a child scope per
-   --  procedure/function body), while the flat Scope keeps driving offset
-   --  allocation and variable_access resolution for the code stage. Global_Scope
-   --  is the outermost scope, holding the pre-declared built-in types and
-   --  procedures; the program pushes its own scope beneath it.
+   Current_Frame_Scope : Pascal.Checks.Scope
+      --  Innermost frame scope: the one a declaration lands in and a use
+      --  resolves from. Falls back to the root before the program opens its own.
+      do
+         if attached Context.Active_Frame_Scope as F then
+            Result := F
+         else
+            Result := Scope
+         end
+      end
+
+   --  Entity-model scope tree (issue #74), the second of the two trees. It
+   --  records const/type/var/procedure/function/parameter declarations for the
+   --  test stage and the UI, while the Pascal.Checks.Scope tree above binds
+   --  variable names to frame slots for the code stage. Both nest a child scope
+   --  per procedure/function body, and Enter_Scope / Leave_Scope move them in
+   --  step (issue #81). Global_Scope is the outermost scope, holding the
+   --  pre-declared built-in types and procedures; the program pushes its own
+   --  scope beneath it.
 
    Global_Scope : Aquarius.Entities.Scope
       once
@@ -51,9 +64,17 @@ feature
       end
 
    Enter_Scope (Scope : Aquarius.Entities.Scope)
+      --  Push both trees at once: the entity scope handed in, and a fresh frame
+      --  scope beneath the current one. Both parents are read before either
+      --  pointer moves.
+      local
+         Frame : Pascal.Checks.Scope
       do
          Scope.Set_Parent (Current_Scope)
+         create Frame.Make
+         Frame.Set_Parent (Current_Frame_Scope)
          Context.Set_Current (Scope)
+         Context.Set_Current_Frame_Scope (Frame)
       end
 
    Leave_Scope
@@ -61,6 +82,11 @@ feature
          if attached Context.Active_Scope as C then
             if attached C.Parent as P then
                Context.Set_Current (P)
+            end
+         end
+         if attached Context.Active_Frame_Scope as F then
+            if attached F.Parent as Enclosing then
+               Context.Set_Current_Frame_Scope (Enclosing)
             end
          end
       end

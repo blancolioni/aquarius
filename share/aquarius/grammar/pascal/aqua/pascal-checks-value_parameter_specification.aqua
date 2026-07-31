@@ -7,8 +7,10 @@ inherit
 --  value_parameter_specification ::= identifier_list ':' type_identifier.
 --  Records each formal value parameter in the current entity scope, which is
 --  the enclosing procedure/function's own child scope (opened by its heading,
---  issue #74). Parameters are not entered into the flat offset Scope, so a
---  reference to one in the body is not yet resolved (minimal semantic pass).
+--  issue #74). Parameters are not given frame slots in Pascal.Checks.Scope, so
+--  a reference to one in the body still fails to resolve -- issue #82. The
+--  heading opens the scope before the parameters reduce, so declaring them here
+--  will put them in the right scope with no further plumbing.
 
 feature
 
