@@ -1,0 +1,42 @@
+--  Wir float coverage: real literals, the four float operators, and a
+--  conversion in each direction, lowered with
+--     bin/aquarius --code-trigger --arch aqua real.wir  (output: tagatha.aqua.s)
+--  Target aqua rather than the default pdp11: the pdp11 backend drops a
+--  content-changing Op_Identity, so a conversion there emits a plain move.
+--
+--  Locals 1 and 2 hold doubles, so every read and every store of them carries
+--  a ': float' tag -- that tag is the only thing that makes a load or store
+--  two words wide. A binary needs no tag: Tagatha derives the result content
+--  from the operands.
+
+routine public float_demo
+   args 2
+   locals 3
+is
+   --  a real literal, then each float operator once
+   local 1 : float := (1.5 fadd 2.25);
+   local 1 : float := (local 1 : float fsub 0.5);
+   local 1 : float := (local 1 : float fmul 3.0);
+   local 1 : float := (local 1 : float fdiv 7.0);
+
+   --  a negative literal, and one with an exponent
+   local 2 : float := (-1.25 fadd 2.5e2);
+
+   --  fadd between two locals: the constant pair above folds away, so this is
+   --  the only place the instruction itself has to be emitted
+   local 1 : float := (local 1 : float fadd local 2 : float);
+
+   --  integer to double and back again
+   local 2 : float := to_float arg 1;
+   local 3 := to_word local 2 : float;
+
+   --  no float operator for these three: the backend takes frem, the sign
+   --  flip and fcmp from the content of the operands
+   local 2 : float := (local 1 : float mod 2.0);
+   local 2 : float := neg local 1 : float;
+   if (local 1 : float > 0.0) then
+      return local 3;
+   end if;
+
+   return local 3;
+end

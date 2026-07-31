@@ -3,8 +3,11 @@ expanded class
 
 --  Op codes for Tagatha.Code.Operate, mirroring the ordinals of
 --  Tagatha.Operator (tagatha/src/tagatha.ads). Single source of truth
---  so IR nodes never carry magic integers. Floating ops (9..12) omitted
---  from the minimal set; add when Aqua gains a float type.
+--  so IR nodes never carry magic integers.
+--
+--  The float ops are the arithmetic four only. Negate, Modulo and the six
+--  comparisons need no float variant: the backend picks the sign flip, frem,
+--  fcmp and feql from the content of their operands.
 
 feature
 
@@ -18,6 +21,11 @@ feature
    Multiply      : Integer do Result := 6  end
    Divide        : Integer do Result := 7  end
    Modulo        : Integer do Result := 8  end
+
+   Float_Add      : Integer do Result := 9  end
+   Float_Subtract : Integer do Result := 10 end
+   Float_Multiply : Integer do Result := 11 end
+   Float_Divide   : Integer do Result := 12 end
 
    Bit_And       : Integer do Result := 13 end
    Bit_Or        : Integer do Result := 14 end

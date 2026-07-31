@@ -1,0 +1,49 @@
+class
+   Ast.Expression.Conversion
+
+inherit
+   Ast.Expression
+
+create
+   Make
+
+--  Evaluate an operand and convert it to a different content: 0 = general
+--  word, 1 = floating point (Ast.Expression.Content). This is how an untyped
+--  IR asks for an integer/double conversion -- there is no operator for it,
+--  because the conversion is in the content, not the operation.
+--
+--  Converting to the content a value already has costs nothing: Tagatha emits
+--  a move that the peephole pass then removes.
+--
+--  Named Conversion, not Convert: 'convert' is an Aqua keyword (it ends a
+--  feature_alias), and a class whose name uses it cannot be parsed at all,
+--  neither here nor at any reference to it.
+
+feature
+
+   Make
+     (P   : Ast
+      Src : Aquarius.Trees.Program_Tree
+      C   : Integer
+      E   : Ast.Expression)
+      do
+         Parent := P
+         Source := Src
+         Operand := E
+         Set_Content (C)
+      end
+
+   Generate (Code : Tagatha.Code)
+      do
+         Operand.Generate (Code)
+         Code.Convert_To (Content)
+      end
+
+   Set_Value (Code : Tagatha.Code)
+      do
+         Error ("cannot assign to a conversion")
+      end
+
+   Operand : Ast.Expression
+
+end
