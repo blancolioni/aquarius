@@ -1,0 +1,70 @@
+class
+   Test_Real_In_Container
+
+inherit
+   Unit_Test
+
+--  A Real as a generic actual.  Containers hold their elements in ordinary
+--  properties, so this only works if a real property really is two words
+--  wide everywhere -- in the object record, in the allocator, and on both
+--  sides of every accessor call.
+
+feature
+
+   Name : String
+      do
+         Result := "test-real-in-container"
+      end
+
+   Execute
+      local
+         L     : Aqua.Containers.Linked_List [Real]
+         R     : Real
+         Total : Real
+      do
+         Success := True
+
+         create L
+         R := 1.5
+         L.Append (R)
+         R := 0.25
+         L.Append (R)
+         R := -2.0
+         L.Append (R)
+
+         if L.Is_Empty then
+            Success := False
+            Fail_Message := "expected a non-empty list"
+         end
+
+         if Success then
+            R := L.First_Element
+            if R.To_String /= "1.5" then
+               Success := False
+               Fail_Message := "first element found " & R.To_String
+            end
+         end
+
+         if Success then
+            R := L.Last_Element
+            if R.To_String /= "-2.0" then
+               Success := False
+               Fail_Message := "last element found " & R.To_String
+            end
+         end
+
+         --  An iteration variable reads its element through the cursor's
+         --  Element feature, which has to be the instantiated version -- the
+         --  generic class's version still returns the one-word formal
+         if Success then
+            across L as Element loop
+               Total := Total + Element
+            end
+            if Total.To_String /= "-0.25" then
+               Success := False
+               Fail_Message := "sum of elements found " & Total.To_String
+            end
+         end
+      end
+
+end

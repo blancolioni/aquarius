@@ -1,0 +1,140 @@
+class
+   Test_Real_Conversion
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-real-conversion"
+      end
+
+   Execute
+      local
+         R : Real
+         S : String
+         N : Integer
+      do
+         Success := True
+
+         --  integer to real
+         R.Convert_From (7)
+         Verify_Real ("Convert_From (7)", R, "7.0")
+
+         R.Convert_From (-12)
+         Verify_Real ("Convert_From (-12)", R, "-12.0")
+
+         --  real to integer, rounding to nearest
+         R := 2.4
+         N := R.Rounded
+         Verify_Integer ("2.4 rounded", N, 2)
+
+         R := 2.6
+         N := R.Rounded
+         Verify_Integer ("2.6 rounded", N, 3)
+
+         R := -2.6
+         N := R.Rounded
+         Verify_Integer ("-2.6 rounded", N, -3)
+
+         --  Floor, Ceiling and Truncated, all built on Rounded
+         R := 2.9
+         N := R.Floor
+         Verify_Integer ("2.9 floor", N, 2)
+
+         N := R.Ceiling
+         Verify_Integer ("2.9 ceiling", N, 3)
+
+         N := R.Truncated
+         Verify_Integer ("2.9 truncated", N, 2)
+
+         R := -2.9
+         N := R.Floor
+         Verify_Integer ("-2.9 floor", N, -3)
+
+         N := R.Ceiling
+         Verify_Integer ("-2.9 ceiling", N, -2)
+
+         --  truncation is towards zero, so it disagrees with Floor here
+         N := R.Truncated
+         Verify_Integer ("-2.9 truncated", N, -2)
+
+         R := 4.0
+         N := R.Floor
+         Verify_Integer ("4.0 floor", N, 4)
+
+         N := R.Ceiling
+         Verify_Integer ("4.0 ceiling", N, 4)
+
+         --  String to real
+         S := "3.25"
+         R := S.To_Real
+         Verify_Real ("""3.25"" to real", R, "3.25")
+
+         S := "-0.5"
+         R := S.To_Real
+         Verify_Real ("""-0.5"" to real", R, "-0.5")
+
+         S := "12"
+         R := S.To_Real
+         Verify_Real ("""12"" to real", R, "12.0")
+
+         S := "1.5e2"
+         R := S.To_Real
+         Verify_Real ("""1.5e2"" to real", R, "150.0")
+
+         S := "1.5e-2"
+         R := S.To_Real
+         Verify_Real ("""1.5e-2"" to real", R, "0.015")
+
+         --  round trip through To_String
+         R := 6.125
+         S := R.To_String
+         R := S.To_Real
+         Verify_Real ("6.125 round trip", R, "6.125")
+
+         --  magnitudes the fixed form cannot show fall back to an exponent,
+         --  which To_Real reads back
+         R := 2.5e12
+         Verify_Real ("2.5e12", R, "2.5e12")
+
+         S := R.To_String
+         R := S.To_Real
+         Verify_Real ("2.5e12 round trip", R, "2.5e12")
+
+         R := 1.0e-6
+         Verify_Real ("1.0e-6", R, "1.0e-6")
+
+         R := -3.0e10
+         Verify_Real ("-3.0e10", R, "-3.0e10")
+
+         --  a whole part just inside the fixed range stays in fixed form
+         R := 1.0e8
+         Verify_Real ("1.0e8", R, "100000000.0")
+      end
+
+feature { None }
+
+   Verify_Real (Description : String; Value : Real; Expected : String)
+      do
+         if Success and then Value.To_String /= Expected then
+            Success := False
+            Fail_Message :=
+               Description & " expected " & Expected
+               & ", found " & Value.To_String
+         end
+      end
+
+   Verify_Integer (Description : String; Value, Expected : Integer)
+      do
+         if Success and then Value /= Expected then
+            Success := False
+            Fail_Message :=
+               Description & " expected " & Expected.To_String
+               & ", found " & Value.To_String
+         end
+      end
+
+end

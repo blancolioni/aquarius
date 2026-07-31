@@ -1,0 +1,92 @@
+class
+   Test_Real_Arithmetic
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-real-arithmetic"
+      end
+
+   Execute
+      local
+         A, B, R, Zero_Value, One_Value : Real
+      do
+         Success := True
+
+         A := 1.5
+         B := 0.75
+
+         R := A + B
+         Verify ("1.5 + 0.75", R, "2.25")
+
+         R := A - B
+         Verify ("1.5 - 0.75", R, "0.75")
+
+         R := A * B
+         Verify ("1.5 * 0.75", R, "1.125")
+
+         R := A / B
+         Verify ("1.5 / 0.75", R, "2.0")
+
+         --  mod is the IEEE remainder, which rounds the quotient to nearest
+         --  rather than towards zero, so 5.0 mod 3.0 is -1.0 and not 2.0
+         A := 5.0
+         B := 3.0
+         R := A mod B
+         Verify ("5.0 mod 3.0", R, "-1.0")
+
+         A := 2.5
+         R := -A
+         Verify ("-2.5", R, "-2.5")
+
+         R := A.Absolute_Value
+         Verify ("2.5 absolute value", R, "2.5")
+
+         A := -2.5
+         R := A.Absolute_Value
+         Verify ("-2.5 absolute value", R, "2.5")
+
+         --  Zero and One come from the algebra contracts
+         R := Zero_Value.Zero
+         Verify ("Zero", R, "0.0")
+
+         R := One_Value.One
+         Verify ("One", R, "1.0")
+
+         A := 1.0
+         B := 4.0
+         R := A / B
+         Verify ("1.0 / 4.0", R, "0.25")
+
+         --  repeated addition, so that a double survives several round trips
+         --  through locals
+         A := 0.5
+         R := A
+         R := R + A
+         R := R + A
+         R := R + A
+         Verify ("0.5 added four times", R, "2.0")
+
+         --  a value too large for an integer word
+         A := 1.0e10
+         R := A + A
+         Verify ("1.0e10 doubled", R, "2.0e10")
+      end
+
+feature { None }
+
+   Verify (Description : String; Value : Real; Expected : String)
+      do
+         if Success and then Value.To_String /= Expected then
+            Success := False
+            Fail_Message :=
+               Description & " expected " & Expected
+               & ", found " & Value.To_String
+         end
+      end
+
+end

@@ -89,6 +89,7 @@ package Ack is
       N_String_Constant,
       N_Character_Constant,
       N_Integer_Constant,
+      N_Real_Constant,
       N_Boolean_Constant,
       N_Variable,
       N_Precursor_Element,
@@ -327,6 +328,38 @@ package Ack is
      (Entity : not null access Root_Entity_Type)
       return Entity_Type
    is (Entity_Type (Entity));
+
+   Real_Class_Link_Name : constant String := "real";
+   --  The one class whose values are IEEE-754 binary64.  There is no
+   --  descendant to worry about: REAL is expanded, so it cannot be inherited
+   --  from, and a nested class of the same name has a qualified link name.
+
+   function Is_Floating_Point
+     (Entity : access constant Root_Entity_Type'Class)
+      return Boolean
+   is (Entity /= null
+       and then Entity.Class_Context /= null
+       and then Entity.Class_Context.Link_Name = Real_Class_Link_Name);
+   --  True for REAL itself and for any type whose class is REAL.  Anything
+   --  typed by this needs a two-word frame slot and floating point opcodes.
+
+   function Value_Content
+     (Entity : access constant Root_Entity_Type'Class)
+      return Tagatha.Operand_Content
+   is (if Is_Floating_Point (Entity)
+       then Tagatha.Floating_Point_Content
+       else Tagatha.General_Content);
+   --  The Tagatha content of a value of this type.  Every push, pop and
+   --  dereference of a value has to carry it: the content fixes the operand
+   --  width, so a double read or written as General_Content silently loses
+   --  its low word.
+
+   function Value_Words
+     (Entity : access constant Root_Entity_Type'Class)
+      return Word_Offset
+   is (if Is_Floating_Point (Entity) then 2 else 1);
+   --  How many machine words a value of this type occupies in an object
+   --  record.
 
    function Expanded
      (Entity : Root_Entity_Type)
@@ -572,7 +605,7 @@ package Ack is
 
    function Has_Name (N : Node_Id) return Boolean
    is (Kind (N) in N_Identifier | N_Feature_Name | N_Feature_Alias
-         | N_Variable | N_Integer_Constant
+         | N_Variable | N_Integer_Constant | N_Real_Constant
          | N_Boolean_Constant | N_Character_Constant
          | N_Effective_Routine | N_Precursor_Element
          | N_Explicit_Creation_Call

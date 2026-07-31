@@ -1,0 +1,59 @@
+class
+   Test_Real_Property
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-real-property"
+      end
+
+   Execute
+      local
+         P, Q : Real_Point
+         R    : Real
+      do
+         Success := True
+
+         create P.make (1.5, 2.25)
+
+         Verify_Real ("X after create", P.X, "1.5")
+         Verify_Real ("Y after create", P.Y, "2.25")
+
+         --  a real returned from a routine of a reference class
+         R := P.Sum
+         Verify_Real ("Sum", R, "3.75")
+
+         --  a real passed as an argument and stored in an attribute
+         P.Set_X (0.5)
+         Verify_Real ("X after Set_X", P.X, "0.5")
+         Verify_Real ("Y unchanged by Set_X", P.Y, "2.25")
+
+         R := P.Sum
+         Verify_Real ("Sum after Set_X", R, "2.75")
+
+         --  a real argument alongside a reference result
+         Q := P.Scaled (2.0)
+         Verify_Real ("scaled X", Q.X, "1.0")
+         Verify_Real ("scaled Y", Q.Y, "4.5")
+
+         --  the original is untouched
+         Verify_Real ("original X after scaling", P.X, "0.5")
+      end
+
+feature { None }
+
+   Verify_Real (Description : String; Value : Real; Expected : String)
+      do
+         if Success and then Value.To_String /= Expected then
+            Success := False
+            Fail_Message :=
+               Description & " expected " & Expected
+               & ", found " & Value.To_String
+         end
+      end
+
+end

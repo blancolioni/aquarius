@@ -1,0 +1,37 @@
+class
+   Real_Point
+
+--  A reference class with two REAL attributes, so that a Real has to survive
+--  a two-word object record slot as well as real arguments and results across
+--  a real call.
+
+create
+   make
+
+feature
+
+   make (Initial_X, Initial_Y : Real)
+      do
+         X := Initial_X
+         Y := Initial_Y
+      end
+
+   X : Real
+   Y : Real
+
+   Set_X (New_X : Real)
+      do
+         X := New_X
+      end
+
+   Sum : Real
+      do
+         Result := X + Y
+      end
+
+   Scaled (Factor : Real) : Real_Point
+      do
+         create Result.make (X * Factor, Y * Factor)
+      end
+
+end

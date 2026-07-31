@@ -1,0 +1,223 @@
+expanded class
+   Real
+
+inherit
+   Aqua.Algebra.Additive redefine Subtract, Negate, Equal end
+   Aqua.Algebra.Multiplicative redefine Equal end
+   Aqua.Comparable redefine Equal end
+
+feature
+
+   --  IEEE-754 binary64.  A Real occupies two machine words, and the compiler
+   --  marks every push, pop and frame slot that holds one, so the class needs
+   --  no storage of its own beyond the single frame slot declared above.
+
+   Add      (Right : Real) : Real external "intrinsic" alias "fadd"
+   Subtract (Right : Real) : Real external "intrinsic" alias "fsubtract"
+   Multiply (Right : Real) : Real external "intrinsic" alias "fmultiply"
+   Divide   (Right : Real) : Real external "intrinsic" alias "fdivide"
+
+   --  IEEE remainder, from the VM's frem opcode
+   Modulus  (Right : Real) : Real external "intrinsic"
+
+   Negate : Real external "intrinsic"
+
+   Zero : Real external "intrinsic" alias "real_zero"
+   One  : Real external "intrinsic" alias "real_one"
+
+   --  Comparison is ordered-only: the VM's fcmp reports an unordered pair as
+   --  equal, so <, <=, > and >= are meaningless if either operand is NaN.
+   --  Equality uses feql, which does report NaN /= NaN correctly.
+   Equal (Right : Real) : Boolean external "intrinsic"
+
+   GE (Right : Real) : Boolean external "intrinsic"
+   LE (Right : Real) : Boolean external "intrinsic"
+   GT (Right : Real) : Boolean external "intrinsic"
+   LT (Right : Real) : Boolean external "intrinsic"
+
+feature  --  conversions
+
+   Convert_From (Other : Integer) external "intrinsic" alias "to_real"
+      --  Replace Current with Other converted to a double
+
+   Rounded : Integer external "intrinsic" alias "to_integer"
+      --  Nearest integer; the VM's fix has no other rounding mode
+
+   Floor : Integer
+         --  Largest integer that is not greater than Current, built from
+         --  Rounded because there is no floor opcode
+      local
+         N : Integer
+         R : Real
+      do
+         N := Rounded
+         R.Convert_From (N)
+         if R > Current then
+            N := N - 1
+         end
+         Result := N
+      end
+
+   Ceiling : Integer
+      local
+         N : Integer
+         R : Real
+      do
+         N := Rounded
+         R.Convert_From (N)
+         if R < Current then
+            N := N + 1
+         end
+         Result := N
+      end
+
+   Truncated : Integer
+         --  Towards zero, which is neither of the two roundings the VM has
+      local
+         Zero_Value : Real
+      do
+         if Current < Zero_Value then
+            Result := Ceiling
+         else
+            Result := Floor
+         end
+      end
+
+   Absolute_Value : Real
+      local
+         Value      : Real
+         Zero_Value : Real
+      do
+         Value := Current
+         if Value < Zero_Value then
+            Result := -Value
+         else
+            Result := Value
+         end
+      end
+
+feature  --  output
+
+   To_String : String
+         --  Up to six decimal places, with trailing zeros dropped but always
+         --  at least one digit after the point.  A magnitude the fixed form
+         --  cannot show -- one whose whole part would not fit in an Integer,
+         --  or one so small that six places would all be zero -- is
+         --  normalised to a mantissa in [1, 10) and an exponent, which
+         --  String.To_Real reads back.
+      local
+         Value      : Real
+         Ten        : Real
+         One_Value  : Real
+         Upper      : Real
+         Lower      : Real
+         Zero_Value : Real
+         Exponent   : Integer
+         Negative   : Boolean
+      do
+         Value := Current
+         Negative := false
+         if Value < Zero_Value then
+            Value := -Value
+            Negative := true
+         end
+
+         Ten.Convert_From (10)
+         One_Value.Convert_From (1)
+         Upper.Convert_From (1000000000)
+         Exponent := 0
+
+         --  1.0e-4 is the smallest magnitude the fixed form still shows to
+         --  four significant places
+         Lower.Convert_From (10000)
+         Lower := One_Value / Lower
+
+         if Value > Zero_Value
+           and then (Value >= Upper or else Value < Lower)
+         then
+            from
+               Exponent := 0
+            until
+               Value < Ten
+            loop
+               Value := Value / Ten
+               Exponent := Exponent + 1
+            end
+
+            from
+               Exponent := Exponent
+            until
+               Value >= One_Value
+            loop
+               Value := Value * Ten
+               Exponent := Exponent - 1
+            end
+         end
+
+         Result := Fixed_Image (Value)
+
+         if Exponent /= 0 then
+            Result := Result & "e" & Exponent.To_String
+         end
+
+         if Negative then
+            Result := "-" & Result
+         end
+      end
+
+feature { None }
+
+   Fixed_Image (Value : Real) : String
+         --  Value must not be negative and its whole part must fit in an
+         --  Integer; To_String normalises anything else first
+      local
+         Fraction   : Real
+         Scaled     : Real
+         Scale      : Real
+         Whole_Real : Real
+         Whole      : Integer
+         Places     : Integer
+         Index      : Integer
+         Fraction_Image : String
+      do
+         Whole := Value.Truncated
+         Whole_Real.Convert_From (Whole)
+         Fraction := Value - Whole_Real
+
+         Scale.Convert_From (1000000)
+         Scaled := Fraction * Scale
+         Places := Scaled.Rounded
+
+         --  rounding the sixth place can carry into the whole part
+         if Places >= 1000000 then
+            Places := Places - 1000000
+            Whole := Whole + 1
+         end
+
+         Fraction_Image := Places.To_String
+
+         from
+            Index := Fraction_Image.Length
+         until
+            Index >= 6
+         loop
+            Fraction_Image := "0" & Fraction_Image
+            Index := Index + 1
+         end
+
+         from
+            Index := 6
+         until
+            Index = 1 or else Fraction_Image.Element (Index) /= '0'
+         loop
+            Index := Index - 1
+         end
+
+         Fraction_Image := Fraction_Image.Slice (1, Index)
+
+         Result := Whole.To_String & "." & Fraction_Image
+      end
+
+   Internal : System.Internal_Frame_Word
+
+end

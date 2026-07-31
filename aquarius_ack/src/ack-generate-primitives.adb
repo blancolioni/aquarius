@@ -49,6 +49,23 @@ package body Ack.Generate.Primitives is
    procedure Generate_Mod (Unit : in out Tagatha.Code.Instance'Class);
    procedure Generate_Join (Unit : in out Tagatha.Code.Instance'Class);
 
+   --  Floating point arithmetic has its own operators in the Tagatha IR, so
+   --  REAL cannot share the integer intrinsics; it names these instead.  The
+   --  comparisons and Op_Mod are not duplicated, because the Aqua backend
+   --  already picks fcmp/feql/frem from the operand content.
+   procedure Generate_Fadd (Unit : in out Tagatha.Code.Instance'Class);
+   procedure Generate_Fsub (Unit : in out Tagatha.Code.Instance'Class);
+   procedure Generate_Fmul (Unit : in out Tagatha.Code.Instance'Class);
+   procedure Generate_Fdiv (Unit : in out Tagatha.Code.Instance'Class);
+
+   procedure Generate_Intrinsic_Real_Zero
+     (Unit : in out Tagatha.Code.Instance'Class);
+   procedure Generate_Intrinsic_Real_One
+     (Unit : in out Tagatha.Code.Instance'Class);
+
+   procedure Generate_To_Real (Unit : in out Tagatha.Code.Instance'Class);
+   procedure Generate_To_Integer (Unit : in out Tagatha.Code.Instance'Class);
+
    procedure Generate_Offset_Words (Unit : in out Tagatha.Code.Instance'Class);
 
    procedure Generate_Intrinsic_Nop
@@ -197,6 +214,16 @@ package body Ack.Generate.Primitives is
 
       Add ("zero", Generate_Intrinsic_Zero'Access);
       Add ("one", Generate_Intrinsic_One'Access);
+
+      Add ("real_zero", Generate_Intrinsic_Real_Zero'Access);
+      Add ("real_one", Generate_Intrinsic_Real_One'Access);
+      Add ("fadd", Generate_Fadd'Access);
+      Add ("fsubtract", Generate_Fsub'Access);
+      Add ("fmultiply", Generate_Fmul'Access);
+      Add ("fdivide", Generate_Fdiv'Access);
+      Add ("to_real", Generate_To_Real'Access);
+      Add ("to_integer", Generate_To_Integer'Access);
+
       Add ("add", Generate_Add'Access);
       Add ("subtract", Generate_Subtract'Access);
       Add ("negate", Generate_Negate'Access);
@@ -245,6 +272,42 @@ package body Ack.Generate.Primitives is
    begin
       Unit.Operate (Tagatha.Op_Divide);
    end Generate_Divide;
+
+   -------------------
+   -- Generate_Fadd --
+   -------------------
+
+   procedure Generate_Fadd (Unit : in out Tagatha.Code.Instance'Class) is
+   begin
+      Unit.Operate (Tagatha.Op_Fadd);
+   end Generate_Fadd;
+
+   -------------------
+   -- Generate_Fdiv --
+   -------------------
+
+   procedure Generate_Fdiv (Unit : in out Tagatha.Code.Instance'Class) is
+   begin
+      Unit.Operate (Tagatha.Op_Fdiv);
+   end Generate_Fdiv;
+
+   -------------------
+   -- Generate_Fmul --
+   -------------------
+
+   procedure Generate_Fmul (Unit : in out Tagatha.Code.Instance'Class) is
+   begin
+      Unit.Operate (Tagatha.Op_Fmul);
+   end Generate_Fmul;
+
+   -------------------
+   -- Generate_Fsub --
+   -------------------
+
+   procedure Generate_Fsub (Unit : in out Tagatha.Code.Instance'Class) is
+   begin
+      Unit.Operate (Tagatha.Op_Fsub);
+   end Generate_Fsub;
 
    --------------------
    -- Generate_Equal --
@@ -361,6 +424,30 @@ package body Ack.Generate.Primitives is
       Unit.Swap;
       Unit.Pop;
    end Generate_Intrinsic_Replace_Current;
+
+   ----------------------------------
+   -- Generate_Intrinsic_Real_One --
+   ----------------------------------
+
+   procedure Generate_Intrinsic_Real_One
+     (Unit : in out Tagatha.Code.Instance'Class)
+   is
+   begin
+      Unit.Drop;
+      Unit.Push_Constant (Tagatha.Floating_Point_Constant'(1.0));
+   end Generate_Intrinsic_Real_One;
+
+   ----------------------------------
+   -- Generate_Intrinsic_Real_Zero --
+   ----------------------------------
+
+   procedure Generate_Intrinsic_Real_Zero
+     (Unit : in out Tagatha.Code.Instance'Class)
+   is
+   begin
+      Unit.Drop;
+      Unit.Push_Constant (Tagatha.Floating_Point_Constant'(0.0));
+   end Generate_Intrinsic_Real_Zero;
 
    -----------------------------
    -- Generate_Intrinsic_Zero --
@@ -508,6 +595,36 @@ package body Ack.Generate.Primitives is
    begin
       Unit.Operate (Tagatha.Op_Subtract);
    end Generate_Subtract;
+
+   -------------------------
+   -- Generate_To_Integer --
+   -------------------------
+
+   procedure Generate_To_Integer
+     (Unit : in out Tagatha.Code.Instance'Class)
+   is
+   begin
+      --  Current is the only operand, and it is the double to convert.
+      --  Rounds to nearest: the VM's fix has no other rounding mode, so
+      --  truncation towards zero is synthesised in REAL itself.
+      Unit.Convert (Tagatha.General_Content);
+   end Generate_To_Integer;
+
+   ----------------------
+   -- Generate_To_Real --
+   ----------------------
+
+   procedure Generate_To_Real
+     (Unit : in out Tagatha.Code.Instance'Class)
+   is
+   begin
+      --  Stack is Current then the integer argument.  Convert the argument
+      --  into a double of its own before the move, so that this does not
+      --  depend on Current being an operand the backend can flot into.
+      Unit.Convert (Tagatha.Floating_Point_Content);
+      Unit.Swap;
+      Unit.Pop;
+   end Generate_To_Real;
 
    ------------------
    -- Generate_Xor --

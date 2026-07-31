@@ -128,6 +128,90 @@ feature
          end         
       end
 
+   To_Real : Real
+         --  Reads [sign] digits [. digits] [e [sign] digits].  Underscores
+         --  are ignored, as in an Aqua literal.  A malformed string is not
+         --  diagnosed: characters that are not part of the grammar above are
+         --  read as digits, so the result is meaningless rather than an error.
+      local
+         Index        : Integer
+         Ch           : Character
+         Code         : Integer
+         Digit_Value  : Integer
+         Digit        : Real
+         Ten          : Real
+         Scale        : Real
+         Exponent     : Integer
+         Negative     : Boolean
+         Exp_Negative : Boolean
+         In_Fraction  : Boolean
+         In_Exponent  : Boolean
+      do
+         Ten.Convert_From (10)
+         Scale.Convert_From (1)
+         Exponent := 0
+         Negative := false
+         Exp_Negative := false
+         In_Fraction := false
+         In_Exponent := false
+
+         from
+            Index := 1
+         until
+            Index > Length
+         loop
+            Ch := Current.Element (Index)
+            if Ch = '-' then
+               if In_Exponent then
+                  Exp_Negative := true
+               else
+                  Negative := true
+               end
+            elsif Ch = '+' then
+               --  ignore
+            elsif Ch = '_' then
+               --  ignore
+            elsif Ch = '.' then
+               In_Fraction := true
+            elsif Ch = 'e' or else Ch = 'E' then
+               In_Exponent := true
+            else
+               Code.Convert_From (Ch.UTF_32_Code)
+               Digit_Value := Code - 48
+               if In_Exponent then
+                  Exponent := Exponent * 10 + Digit_Value
+               elsif In_Fraction then
+                  Scale := Scale / Ten
+                  Digit.Convert_From (Digit_Value)
+                  Digit := Digit * Scale
+                  Result := Result + Digit
+               else
+                  Digit.Convert_From (Digit_Value)
+                  Result := Result * Ten
+                  Result := Result + Digit
+               end
+            end
+            Index := Index + 1
+         end
+
+         from
+            Index := 0
+         until
+            Index >= Exponent
+         loop
+            if Exp_Negative then
+               Result := Result / Ten
+            else
+               Result := Result * Ten
+            end
+            Index := Index + 1
+         end
+
+         if Negative then
+            Result := -Result
+         end
+      end
+
    Index_Of (Ch : Character; Start_Index : Integer) : Integer
       require
          Start_Large_Enough : Start_Index >= 1

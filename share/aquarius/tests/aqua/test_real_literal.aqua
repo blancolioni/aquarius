@@ -1,0 +1,61 @@
+class
+   Test_Real_Literal
+
+inherit
+   Unit_Test
+
+feature
+
+   Name : String
+      do
+         Result := "test-real-literal"
+      end
+
+   Execute
+      local
+         X, Y, Half, Three : Real
+      do
+         Success := True
+
+         X := 3.5
+         if X.To_String /= "3.5" then
+            Success := False
+            Fail_Message := "3.5 expected ""3.5"", found " & X.To_String
+         end
+
+         --  an integer literal in a real context is a real literal
+         Y := 2
+         if Success and then Y.To_String /= "2.0" then
+            Success := False
+            Fail_Message := "2 as a real expected ""2.0"", found " & Y.To_String
+         end
+
+         --  a negative literal, folded into the literal at parse time
+         X := -0.25
+         if Success and then X.To_String /= "-0.25" then
+            Success := False
+            Fail_Message := "-0.25 expected ""-0.25"", found " & X.To_String
+         end
+
+         --  an exponent
+         X := 1.5e3
+         if Success and then X.To_String /= "1500.0" then
+            Success := False
+            Fail_Message := "1.5e3 expected ""1500.0"", found " & X.To_String
+         end
+
+         --  literals are distinct values, not truncated to integers
+         Half := 0.5
+         Three := 3.0
+         if Success and then Half = Three then
+            Success := False
+            Fail_Message := "0.5 and 3.0 compared equal"
+         end
+
+         if Success and then not (Half < Three) then
+            Success := False
+            Fail_Message := "expected 0.5 < 3.0"
+         end
+      end
+
+end

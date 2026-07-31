@@ -504,13 +504,22 @@ package body Ack.Classes is
          for Feature of Layout.Class.Class_Features loop
             if Feature.Is_Property_Of_Class (Layout.Class) then
                Feature.Set_Property_Offset (Offset - Start);
-               Object_Layout.Append
-                 (Layout_Entry'
-                    (No_Name, No_Name, 0, null, null));
-               Put_Log
-                 (Object_Log, Offset,
-                  "prop " & Feature.Declared_Name);
-               Offset := Offset + 1;
+
+               --  One layout entry per machine word: the allocator walks the
+               --  layout initialising a word at a time, so a REAL property
+               --  needs two of them.
+               for Word in 1 .. Value_Words (Feature.Get_Type) loop
+                  Object_Layout.Append
+                    (Layout_Entry'
+                       (No_Name, No_Name, 0, null, null));
+                  Put_Log
+                    (Object_Log, Offset,
+                     "prop " & Feature.Declared_Name
+                     & (if Value_Words (Feature.Get_Type) = 1 then ""
+                        elsif Word = 1 then " (high word)"
+                        else " (low word)"));
+                  Offset := Offset + 1;
+               end loop;
             end if;
          end loop;
 
@@ -876,6 +885,8 @@ package body Ack.Classes is
       procedure Create_Call_Thunk
         (To_Class  : Constant_Class_Entity;
          Link_Name : String;
+         Feature   : not null access constant
+           Ack.Features.Feature_Entity_Record'Class;
          Arg_Count : Tagatha.Argument_Count);
 
       -----------------------
@@ -885,12 +896,45 @@ package body Ack.Classes is
       procedure Create_Call_Thunk
         (To_Class  : Constant_Class_Entity;
          Link_Name : String;
+         Feature   : not null access constant
+           Ack.Features.Feature_Entity_Record'Class;
          Arg_Count : Tagatha.Argument_Count)
       is
          Thunk_Name : constant String :=
                         Class.Link_Name
                         & "$" & Link_Name
                         & "$call_thunk";
+
+         function Thunk_Options return Tagatha.Code.Routine_Options'Class;
+
+         -------------------
+         -- Thunk_Options --
+         -------------------
+
+         function Thunk_Options return Tagatha.Code.Routine_Options'Class is
+            use type Tagatha.Operand_Content;
+            Result : Tagatha.Code.Routine_Options'Class :=
+                       Tagatha.Code.Set_Argument_Count (Arg_Count)
+                         .Set_No_Linkage;
+         begin
+            --  A thunk passes its arguments straight through, but it needs a
+            --  temporary of its own to adjust the object pointer.  The backend
+            --  places that after the declared arguments, so it has to know
+            --  which of them are doubles -- otherwise the temporary lands on
+            --  the second word of a double and destroys a later argument.
+            for Index in 1 .. Feature.Argument_Count loop
+               if Value_Content (Feature.Argument (Index).Get_Type)
+                 = Tagatha.Floating_Point_Content
+               then
+                  Result :=
+                    Result.Set_Argument_Content
+                      (Tagatha.Argument_Index (Index + 1),
+                       Tagatha.Floating_Point_Content);
+               end if;
+            end loop;
+            return Result;
+         end Thunk_Options;
+
       begin
 
          if Thunks.Contains (Thunk_Name) then
@@ -900,10 +944,8 @@ package body Ack.Classes is
          Thunks.Include (Thunk_Name);
 
          Unit.Begin_Routine
-           (Name => Thunk_Name,
-            Options =>
-              Tagatha.Code.Set_Argument_Count (Arg_Count)
-            .Set_No_Linkage);
+           (Name    => Thunk_Name,
+            Options => Thunk_Options);
          Unit.Push_Argument (1);
          Unit.Duplicate;
          Unit.Dereference;
@@ -944,6 +986,7 @@ package body Ack.Classes is
             Create_Call_Thunk
               (Item.Class,
                To_Standard_String (Item.Reference),
+               Item.Feature,
                Tagatha.Argument_Count (Item.Feature.Argument_Count + 1));
          else
             Unit.Data
