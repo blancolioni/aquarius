@@ -30,7 +30,7 @@ feature
             if Current_Frame_Scope.Is_Declared_Here (Name) then
                Error ("duplicate declaration: " & Name)
             else
-               Ignore := Current_Frame_Scope.Declare (Name)
+               Ignore := Current_Frame_Scope.Declare_Local (Name)
                --  Record the variable in the standard entity model, keyed
                --  in the scope so a later access can resolve and refer to it.
                create Decl.Make (Name, Name, "variable", Current)

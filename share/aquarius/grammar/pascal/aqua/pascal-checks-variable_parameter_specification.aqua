@@ -6,23 +6,20 @@ inherit
 
 --  variable_parameter_specification ::= 'var' identifier_list ':'
 --  type_identifier. As value_parameter_specification, but the parameter is
---  passed by reference; recorded with the "var-parameter" category (issue #74).
+--  passed by reference, so its binding is marked By_Reference and it is recorded
+--  with the "var-parameter" category (issue #74).
+--
+--  Resolving one is no different from resolving a value parameter; generating
+--  one is, and cannot be done yet -- reading through the reference needs a
+--  dereference and writing it an indirect store, and neither
+--  Ast.Expression.Argument nor Tagatha's Push_Argument / Pop_Argument carries a
+--  reference flag the way Push_Local does.
 
 feature
 
    After_Identifier_List (Child : Pascal.Checks.Identifier_List)
-      local
-         It     : Aqua.Containers.Linked_List_Iterator [String]
-         Ignore : Aquarius.Entities.Declaration
       do
-         from
-            It := Child.Names.New_Cursor
-         until
-            It.After
-         loop
-            Ignore := Record_Declaration (Current, It.Element, "var-parameter")
-            It.Next
-         end
+         Declare_Parameters (Child, True, "var-parameter")
       end
 
 end

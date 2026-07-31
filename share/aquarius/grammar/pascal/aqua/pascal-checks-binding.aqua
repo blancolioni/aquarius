@@ -2,23 +2,47 @@ class
    Pascal.Checks.Binding
 
 create
-   Make
+   Make_Local, Make_Argument
 
---  One name bound to one frame slot, held by Pascal.Checks.Scope (issue #81).
+--  One name bound to one slot of the enclosing routine's frame, held by
+--  Pascal.Checks.Scope (issue #81).
+--
+--  Tagatha keeps arguments and locals in separate index spaces -- Push_Argument
+--  and Push_Local take their own 1-based index -- so a binding has to say which
+--  space its Offset belongs to (issue #82). By_Reference marks a Pascal 'var'
+--  parameter, which is passed by address: it resolves like any other name, but
+--  reading it needs a dereference and writing it an indirect store, neither of
+--  which Ast.Expression.Argument can express yet.
+--
 --  Name is stored lower-cased, because Pascal is case-insensitive; compare it
 --  with String.Equal rather than '=', which is reference equality inside a
 --  generic in the Aqua VM (issue #60).
 
 feature
 
-   Make (Bound_Name : String; Frame_Offset : Integer)
+   Make_Local (Bound_Name : String; Frame_Slot : Integer)
       do
          Name := Bound_Name.To_Lower
-         Offset := Frame_Offset
+         Offset := Frame_Slot
+      end
+
+   Make_Argument (Bound_Name           : String
+                  Argument_Index       : Integer
+                  Passed_By_Reference  : Boolean)
+      do
+         Name := Bound_Name.To_Lower
+         Offset := Argument_Index
+         Is_Argument := True
+         By_Reference := Passed_By_Reference
       end
 
    Name : String
 
    Offset : Integer
+      --  Frame slot for a local, argument index for an argument; both 1-based
+
+   Is_Argument : Boolean
+
+   By_Reference : Boolean
 
 end

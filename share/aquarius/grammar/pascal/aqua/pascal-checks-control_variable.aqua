@@ -5,20 +5,29 @@ inherit
    Pascal.Checks.Node
 
 --  control_variable ::= variable_identifier (the for-loop variable). Resolves
---  its frame-local offset and exposes it as Offset; the code stage reads it via
---  type-injection (#66). Undeclared name is a semantic error.
+--  its binding and exposes the offset plus whether it is an argument rather than
+--  a local (issue #82); the code stage reads them via type-injection (#66).
+--  Undeclared name is a semantic error.
 
 feature
 
    Offset : Integer
 
+   Is_Argument : Boolean
+
+   By_Reference : Boolean
+
    After_Node
       local
          N : String
+         B : detachable Pascal.Checks.Binding
       do
          N := Concatenated_Image
-         if Current_Frame_Scope.Is_Declared (N) then
-            Offset := Current_Frame_Scope.Offset (N)
+         B := Current_Frame_Scope.Lookup (N)
+         if attached B as Bound then
+            Offset := Bound.Offset
+            Is_Argument := Bound.Is_Argument
+            By_Reference := Bound.By_Reference
             --  The for-loop control variable is written by the loop.
             Refer (Current, "write", Current_Frame_Scope.Lookup_Declaration (N))
          else

@@ -20,6 +20,7 @@ feature
    After_Control_Variable (Child : Pascal.Generate.Control_Variable)
       do
          Off_Value := Child.Offset
+         CV_Is_Argument := Child.Is_Argument
          Have_CV := True
       end
 
@@ -70,11 +71,11 @@ feature
                         Cond_Op := O.Less_Equal
                         Incr_Op := O.Add
                      end
-                     create Init_Assign.Make (Void, Current, New_Local (Off), I0)
-                     create Cond_Expr.Make (Void, Current, Cond_Op, New_Local (Off), F0)
+                     create Init_Assign.Make (Void, Current, New_Target (Off), I0)
+                     create Cond_Expr.Make (Void, Current, Cond_Op, New_Target (Off), F0)
                      create One.Make_Integer (Void, Current, 1)
-                     create Incr_Expr.Make (Void, Current, Incr_Op, New_Local (Off), One)
-                     create Incr_Assign.Make (Void, Current, New_Local (Off), Incr_Expr)
+                     create Incr_Expr.Make (Void, Current, Incr_Op, New_Target (Off), One)
+                     create Incr_Assign.Make (Void, Current, New_Target (Off), Incr_Expr)
                      create Loop_Body.Make (Void, Current)
                      Loop_Body.Append (B0)
                      Loop_Body.Append (Incr_Assign)
@@ -91,16 +92,30 @@ feature
 
 feature { None }
 
-   Off_Value : Integer
-   Have_CV   : Boolean
-   Init      : detachable Ast.Expression
-   Final     : detachable Ast.Expression
-   Body      : detachable Ast.Statement
-   Down      : Boolean
+   Off_Value      : Integer
+   CV_Is_Argument : Boolean
+   Have_CV        : Boolean
+   Init           : detachable Ast.Expression
+   Final          : detachable Ast.Expression
+   Body           : detachable Ast.Statement
+   Down           : Boolean
 
-   New_Local (Off : Integer) : Ast.Expression.Local_Variable
+   New_Target (Off : Integer) : Ast.Expression
+      --  A fresh node for the control variable, one per use: the loop reads and
+      --  writes it four times, and an Ast node belongs to one position in the
+      --  tree. Argument or local according to what the semantic stage resolved
+      --  (issue #82).
+      local
+         A : Ast.Expression.Argument
+         L : Ast.Expression.Local_Variable
       do
-         create Result.Make (Void, Current, Off)
+         if CV_Is_Argument then
+            create A.Make (Void, Current, Off)
+            Result := A
+         else
+            create L.Make (Void, Current, Off)
+            Result := L
+         end
       end
 
 end

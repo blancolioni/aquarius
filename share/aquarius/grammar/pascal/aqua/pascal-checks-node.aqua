@@ -102,6 +102,41 @@ feature
          Current_Scope.Add_Declaration (Result)
       end
 
+   Declare_Parameters (List         : Pascal.Checks.Identifier_List
+                       By_Reference : Boolean
+                       Category     : String)
+      --  Bind each name in List as an argument of the routine whose scope is
+      --  current (issue #82). Shared by the value and var parameter
+      --  specifications, which differ only in By_Reference and Category.
+      --
+      --  The redeclaration check is Is_Declared_Here, so repeating a name within
+      --  one parameter list, or between the parameters and the body's locals, is
+      --  an error -- they share the routine's scope -- while shadowing a name
+      --  from an enclosing scope is not.
+      local
+         It     : Aqua.Containers.Linked_List_Iterator [String]
+         Name   : String
+         Ignore : Integer
+         Decl   : Aquarius.Entities.Declaration
+      do
+         from
+            It := List.Names.New_Cursor
+         until
+            It.After
+         loop
+            Name := It.Element
+            if Current_Frame_Scope.Is_Declared_Here (Name) then
+               Error ("duplicate declaration: " & Name)
+            else
+               Ignore :=
+                  Current_Frame_Scope.Declare_Argument (Name, By_Reference)
+               Decl := Record_Declaration (Current, Name, Category)
+               Current_Frame_Scope.Add_Declaration (Decl)
+            end
+            It.Next
+         end
+      end
+
    Ensure_Builtins
       --  Pre-declare Pascal's required built-in types and I/O procedures once,
       --  in Global_Scope. Guarded on emptiness because the plugin reuses one VM

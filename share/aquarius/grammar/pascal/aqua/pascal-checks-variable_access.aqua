@@ -5,14 +5,21 @@ inherit
    Pascal.Checks.Node
 
 --  variable_access ::= variable_identifier { variable_suffix }. Resolves the
---  name to its frame-local offset and exposes it as the public Offset field.
---  The code-stage Pascal.Generate.Variable_Access for the same node receives
---  this object by type-injection (issue #66) and reads Offset directly. An
---  undeclared name is a semantic error. Scalars only.
+--  name to its binding and exposes what the code stage needs: the offset, and
+--  whether that offset indexes the routine's arguments or its locals -- separate
+--  spaces in Tagatha, so the code stage has to know which (issue #82).
+--  Pascal.Generate.Variable_Access for the same node receives this object by
+--  type-injection (issue #66) and reads the fields directly. An undeclared name
+--  is a semantic error. Scalars only.
 
 feature
 
    Offset : Integer
+
+   Is_Argument : Boolean
+
+   By_Reference : Boolean
+      --  A 'var' parameter: the argument holds an address, not a value
 
    Is_Target : Boolean
 
@@ -27,10 +34,15 @@ feature
       end
 
    After_Node
+      local
+         B : detachable Pascal.Checks.Binding
       do
          if attached Nm as N then
-            if Current_Frame_Scope.Is_Declared (N) then
-               Offset := Current_Frame_Scope.Offset (N)
+            B := Current_Frame_Scope.Lookup (N)
+            if attached B as Bound then
+               Offset := Bound.Offset
+               Is_Argument := Bound.Is_Argument
+               By_Reference := Bound.By_Reference
                --  Record a cross reference to the declared variable: a write
                --  when this access is an assignment target (flagged by the
                --  enclosing assignment_statement), otherwise a read.
