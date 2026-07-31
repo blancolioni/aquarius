@@ -13,12 +13,20 @@ create
 --  shadowing is legal), Lookup walks outward (which is what resolving a use
 --  needs).
 --
---  Frame slots are allocated from a single counter held by the ROOT scope, not
---  per scope: Pascal.Generate.Program still emits one routine for the whole
---  program, so every variable in the program shares one frame and needs its own
---  slot -- an inner x and an outer x resolve differently but cannot occupy the
---  same offset. When procedures become routines in their own right, allocation
---  becomes per-routine and restarts at 1.
+--  Locals and arguments are allocated differently, and the asymmetry is
+--  deliberate (issue #82).
+--
+--  Local slots come from a single counter held by the ROOT scope, because
+--  Pascal.Generate.Program still emits one routine for the whole program: every
+--  variable shares one frame and needs its own slot, so an inner x and an outer
+--  x resolve differently but cannot occupy the same offset.
+--
+--  Argument indices count from 1 in EACH routine scope, with no delegation --
+--  that is what a routine's own signature means, and it makes a nested
+--  procedure's parameters independent of its parent's for free.
+--
+--  When procedure bodies become routines in their own right, locals will stop
+--  delegating too and both will be per-routine.
 --
 --  Names are stored lower-cased (Pascal is case-insensitive) and compared with
 --  String.Equal (value equality), NOT the '=' operator, which is reference
@@ -31,6 +39,7 @@ feature
          create Bindings
          create Declarations
          Allocated := 0
+         Allocated_Arguments := 0
       end
 
    Parent : detachable Pascal.Checks.Scope
@@ -48,12 +57,13 @@ feature
          create Bindings
          create Declarations
          Allocated := 0
+         Allocated_Arguments := 0
          Parent := Void
       end
 
 feature  --  declaring
 
-   Declare (Name : String) : Integer
+   Declare_Local (Name : String) : Integer
       --  Bind Name in THIS scope to a freshly allocated frame slot, and return
       --  the slot. The caller is expected to have checked Find first: declaring
       --  the same name twice in one scope leaves both bindings, and Find will
@@ -62,7 +72,20 @@ feature  --  declaring
          B : Pascal.Checks.Binding
       do
          Result := Allocate
-         create B.Make (Name, Result)
+         create B.Make_Local (Name, Result)
+         Bindings.Append (B)
+      end
+
+   Declare_Argument (Name : String; By_Reference : Boolean) : Integer
+      --  Bind Name in THIS scope to the next argument index of the routine this
+      --  scope belongs to, and return the index. Same caller contract as
+      --  Declare_Local: check Find first.
+      local
+         B : Pascal.Checks.Binding
+      do
+         Allocated_Arguments := Allocated_Arguments + 1
+         Result := Allocated_Arguments
+         create B.Make_Argument (Name, Result, By_Reference)
          Bindings.Append (B)
       end
 
@@ -182,10 +205,17 @@ feature  --  resolving
 feature  --  frame
 
    Count : Integer
-      --  Slots allocated across the whole program, which is what the single
-      --  generated routine needs to reserve.
+      --  Local slots allocated across the whole program, which is what the
+      --  single generated routine needs to reserve.
       do
          Result := Allocated_Count
+      end
+
+   Argument_Count : Integer
+      --  Arguments declared in THIS scope: the signature of the routine it
+      --  belongs to, for when procedure bodies become routines.
+      do
+         Result := Allocated_Arguments
       end
 
    Allocated_Count : Integer
@@ -217,5 +247,9 @@ feature { None }
    Declarations : Aqua.Containers.Linked_List [Aquarius.Entities.Declaration]
 
    Allocated : Integer
+      --  Local slots; only the root's copy is used
+
+   Allocated_Arguments : Integer
+      --  Arguments of this scope's own routine
 
 end

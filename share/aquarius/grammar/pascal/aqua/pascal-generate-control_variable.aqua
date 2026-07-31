@@ -6,7 +6,8 @@ inherit
 
 --  Leaf: control_variable ::= variable_identifier. The semantic-stage
 --  Pascal.Checks.Control_Variable for this node is injected by type (#66); the
---  enclosing for_statement reads the resolved offset via Offset.
+--  enclosing for_statement reads the resolved offset via Offset, and whether it
+--  indexes arguments rather than locals via Is_Argument (issue #82).
 
 feature
 
@@ -14,10 +15,18 @@ feature
 
    Offset : Integer
 
+   Is_Argument : Boolean
+
    After_Node
       do
          if attached Checks as C then
             Offset := C.Offset
+            Is_Argument := C.Is_Argument
+            if C.By_Reference then
+               --  See Pascal.Generate.Variable_Access: a var parameter holds an
+               --  address, which the IR cannot express for an argument yet.
+               Error ("not implemented: a var parameter as a loop variable")
+            end
          end
       end
 

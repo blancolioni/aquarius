@@ -8,8 +8,14 @@ inherit
 --  stage's Pascal.Checks.Variable_Access for the SAME node is injected here by
 --  type (issue #66): the framework populates Checks with that node's
 --  earlier-stage object, so the resolved offset is read as a typed field
---  (Checks.Offset) -- no property-bag marshalling. Yields an
---  Ast.Expression.Local_Variable (rvalue and assignment target).
+--  (Checks.Offset) -- no property-bag marshalling.
+--
+--  Yields an Ast.Expression.Argument for a parameter and an
+--  Ast.Expression.Local_Variable otherwise (issue #82); both serve as rvalue and
+--  assignment target. Note that no program reaches the argument branch yet: it
+--  needs a reference to a parameter, which can only appear in a procedure or
+--  function body, and those are not lowered at all -- the program routine takes
+--  no arguments.
 
 feature
 
@@ -18,10 +24,23 @@ feature
    After_Node
       local
          L : Ast.Expression.Local_Variable
+         A : Ast.Expression.Argument
       do
          if attached Checks as C then
-            create L.Make (Void, Current, C.Offset)
-            Set_Expr (L)
+            if C.By_Reference then
+               --  A 'var' parameter holds an address: reading it needs a
+               --  dereference and writing it an indirect store, and neither
+               --  Ast.Expression.Argument nor Tagatha's Push_Argument /
+               --  Pop_Argument carries a reference flag the way Push_Local does.
+               --  Refuse rather than silently emit code that copies the address.
+               Error ("not implemented: code for a var parameter")
+            elsif C.Is_Argument then
+               create A.Make (Void, Current, C.Offset)
+               Set_Expr (A)
+            else
+               create L.Make (Void, Current, C.Offset)
+               Set_Expr (L)
+            end
          else
             Error ("internal: variable_access not resolved by semantic stage")
          end

@@ -5,28 +5,20 @@ inherit
    Pascal.Checks.Node
 
 --  value_parameter_specification ::= identifier_list ':' type_identifier.
---  Records each formal value parameter in the current entity scope, which is
---  the enclosing procedure/function's own child scope (opened by its heading,
---  issue #74). Parameters are not given frame slots in Pascal.Checks.Scope, so
---  a reference to one in the body still fails to resolve -- issue #82. The
---  heading opens the scope before the parameters reduce, so declaring them here
---  will put them in the right scope with no further plumbing.
+--  Binds each formal value parameter to an argument index of the enclosing
+--  routine (issue #82), in the scope its heading opened -- which is also the
+--  scope the body's locals land in, so a local that repeats a parameter's name
+--  is caught as a redeclaration for free.
+--
+--  Also recorded in the entity model as a "parameter" (issue #74), and in the
+--  frame scope's declarations so a reference to the parameter can resolve to it
+--  and record a cross reference.
 
 feature
 
    After_Identifier_List (Child : Pascal.Checks.Identifier_List)
-      local
-         It     : Aqua.Containers.Linked_List_Iterator [String]
-         Ignore : Aquarius.Entities.Declaration
       do
-         from
-            It := Child.Names.New_Cursor
-         until
-            It.After
-         loop
-            Ignore := Record_Declaration (Current, It.Element, "parameter")
-            It.Next
-         end
+         Declare_Parameters (Child, False, "parameter")
       end
 
 end
