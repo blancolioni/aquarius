@@ -1,0 +1,154 @@
+class
+   Pascal.Checks.Constant
+
+inherit
+   Pascal.Checks.Node
+
+--  constant ::= [ sign ] ( numeric_literal | constant_identifier )
+--            | string_literal
+--
+--  Evaluates the constant to an integer (issue #103), which
+--  Pascal.Checks.Constant_Definition then binds to the name being defined.
+--  Is_Known says whether that succeeded; when it did not, the definition is
+--  recorded without a value rather than reported as an error here.
+--
+--  Handled: a signed or unsigned integer literal, a character literal (its code
+--  point -- Pascal programs use these as symbols, 'K' for a klingon and so on),
+--  and a reference to an earlier constant, with or without a sign.
+--
+--  NOT handled, deliberately: a real literal, which needs Ast.Expression's real
+--  literal and a place to keep a Real (#87, #88), and a string literal of more
+--  than one character, which needs somewhere to put the text. Both leave
+--  Is_Known False. The real case has to be tested for explicitly: "3.14" would
+--  otherwise be fed to String.To_Integer, which reads what it can and returns a
+--  quietly wrong answer.
+--
+--  The production is read from Concatenated_Image rather than through child
+--  visitors, because its alternatives are token classes and a rule that is just
+--  an identifier: the image is the sign glued to the digits or to the name
+--  ("-7", "maxpgm"). String.To_Integer does not accept a sign (issue #40), so
+--  the sign is peeled off here, as Wir.Generate.Signed_Integer does.
+
+feature
+
+   Value : Integer
+
+   Is_Known : Boolean
+
+   After_Node
+      local
+         Image      : String
+         Rest       : String
+         Negative   : Boolean
+         First      : Character
+         Referenced : detachable Pascal.Checks.Binding
+      do
+         Image := Concatenated_Image
+         if Image.Length > 0 then
+            First := Image.Element (1)
+            if First = '-' then
+               Negative := True
+               Rest := Image.Slice (2, Image.Length)
+            elsif First = '+' then
+               Rest := Image.Slice (2, Image.Length)
+            else
+               Rest := Image
+            end
+
+            if Rest.Length > 0 then
+               if Is_Digit (Rest.Element (1)) then
+                  if not Looks_Real (Rest) then
+                     Value := Rest.To_Integer
+                     Is_Known := True
+                  end
+               elsif Is_Quote (Rest.Element (1)) then
+                  Read_Character_Literal (Rest)
+               else
+                  --  A constant defined in terms of an earlier one, which the
+                  --  declaration order guarantees is already in scope.
+                  Referenced := Current_Frame_Scope.Lookup (Rest)
+                  if attached Referenced as B then
+                     if B.Is_Constant then
+                        Value := B.Value
+                        Is_Known := True
+                     end
+                  end
+               end
+            end
+
+            if Is_Known then
+               if Negative then
+                  Value := 0 - Value
+               end
+            end
+         end
+      end
+
+feature { None }
+
+   Is_Digit (Ch : Character) : Boolean
+      --  Character has no Is_Digit, so compare code points: '0' is 48, '9' is 57
+      local
+         Code : Integer
+      do
+         Code.Convert_From (Ch.UTF_32_Code)
+         Result := Code >= 48 and then Code <= 57
+      end
+
+   Looks_Real (Text : String) : Boolean
+      --  A decimal point or an exponent makes it a real literal
+      local
+         Index : Integer
+         Ch    : Character
+      do
+         from
+            Index := 1
+         until
+            Index > Text.Length or else Result
+         loop
+            Ch := Text.Element (Index)
+            if Ch = '.' or else Ch = 'e' or else Ch = 'E' then
+               Result := True
+            end
+            Index := Index + 1
+         end
+      end
+
+   Is_Quote (Ch : Character) : Boolean
+      --  The apostrophe is written ''' -- character_constant is !\'[.]\'!, so
+      --  the middle character may itself be a quote. The double quote is
+      --  accepted too, because this Pascal lexer takes either around a string.
+      do
+         Result := Ch = ''' or else Ch = '"'
+      end
+
+   Read_Character_Literal (Text : String)
+      --  A single-character literal is its code point. Pascal doubles the quote
+      --  to include one, so four quotes denote the quote character itself.
+      --  Anything longer is a string, which has no integer value.
+      local
+         Inner : String
+         Code  : Integer
+      do
+         if Text.Length >= 2 then
+            Inner := Text.Slice (2, Text.Length - 1)
+            --  Convert into a LOCAL and assign: Convert_From is the
+            --  replace-current intrinsic, and calling it on an attribute leaves
+            --  the attribute untouched -- the char came out as 0.
+            if Inner.Length = 1 then
+               Code.Convert_From (Inner.Element (1).UTF_32_Code)
+               Value := Code
+               Is_Known := True
+            elsif Inner.Length = 2 then
+               if Is_Quote (Inner.Element (1))
+                 and then Is_Quote (Inner.Element (2))
+               then
+                  Code.Convert_From (Inner.Element (1).UTF_32_Code)
+                  Value := Code
+                  Is_Known := True
+               end
+            end
+         end
+      end
+
+end

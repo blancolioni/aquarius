@@ -2,7 +2,7 @@ class
    Pascal.Checks.Binding
 
 create
-   Make_Local, Make_Argument
+   Make_Local, Make_Argument, Make_Constant
 
 --  One name bound to one slot of the enclosing routine's frame, held by
 --  Pascal.Checks.Scope (issue #81).
@@ -13,6 +13,11 @@ create
 --  parameter, which is passed by address: it resolves like any other name, but
 --  reading it needs a dereference and writing it an indirect store, neither of
 --  which Ast.Expression.Argument can express yet.
+--
+--  A constant binds to a value rather than to storage (issue #103): it has no
+--  offset in either space, and a use of it generates the literal instead of a
+--  load. That is also why a constant works where a value is needed before the
+--  program runs, as in array [1 .. maxpgm].
 --
 --  Name is stored lower-cased, because Pascal is case-insensitive; compare it
 --  with String.Equal rather than '=', which is reference equality inside a
@@ -36,12 +41,25 @@ feature
          By_Reference := Passed_By_Reference
       end
 
+   Make_Constant (Bound_Name : String; Constant_Value : Integer)
+      do
+         Name := Bound_Name.To_Lower
+         Value := Constant_Value
+         Is_Constant := True
+      end
+
    Name : String
 
    Offset : Integer
-      --  Frame slot for a local, argument index for an argument; both 1-based
+      --  Frame slot for a local, argument index for an argument; both 1-based.
+      --  Meaningless for a constant, which occupies no storage.
+
+   Value : Integer
+      --  The value of a constant; meaningless for anything else
 
    Is_Argument : Boolean
+
+   Is_Constant : Boolean
 
    By_Reference : Boolean
 

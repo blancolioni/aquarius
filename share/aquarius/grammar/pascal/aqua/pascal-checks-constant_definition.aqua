@@ -4,19 +4,53 @@ class
 inherit
    Pascal.Checks.Node
 
---  constant_definition ::= identifier '=' constant. Records the constant's name
---  in the current entity scope (issue #74). The constant's value is not checked
---  and the name gets no frame slot in Pascal.Checks.Scope -- a constant is not a
---  variable -- so a reference to it in an expression is not yet resolved
---  (minimal semantic pass).
+--  constant_definition ::= identifier '=' constant. Binds the name to the
+--  constant's value in the current scope (issue #103), so a use of it in an
+--  expression resolves and generates a literal rather than a load. Nothing is
+--  allocated: a constant is not storage.
+--
+--  Also recorded in the entity model as a "constant" (issue #74), and in the
+--  frame scope's declarations so a use can record a cross reference.
+--
+--  A constant whose value could not be evaluated -- a string, for now -- is
+--  still declared, so that a use of it reports nothing worse than the missing
+--  value it actually has. Redeclaring a name already bound in this scope is an
+--  error, as for a variable.
 
 feature
 
    After_Identifier (Name : String)
-      local
-         Ignore : Aquarius.Entities.Declaration
       do
-         Ignore := Record_Declaration (Current, Name, "constant")
+         Nm := Name
       end
+
+   After_Constant (Child : Pascal.Checks.Constant)
+      do
+         Value := Child.Value
+         Have_Value := Child.Is_Known
+      end
+
+   After_Node
+      local
+         Decl : Aquarius.Entities.Declaration
+      do
+         if attached Nm as N then
+            if Current_Frame_Scope.Is_Declared_Here (N) then
+               Error ("duplicate declaration: " & N)
+            else
+               if Have_Value then
+                  Current_Frame_Scope.Declare_Constant (N, Value)
+               end
+               Decl := Record_Declaration (Current, N, "constant")
+               Current_Frame_Scope.Add_Declaration (Decl)
+            end
+         end
+      end
+
+feature { None }
+
+   Nm         : detachable String
+   Value      : Integer
+   Have_Value : Boolean
 
 end

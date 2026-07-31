@@ -28,6 +28,10 @@ feature
             Offset := Bound.Offset
             Is_Argument := Bound.Is_Argument
             By_Reference := Bound.By_Reference
+            if Bound.Is_Constant then
+               --  The loop assigns to its control variable
+               Error ("cannot use a constant as a loop variable: " & N)
+            end
             --  The for-loop control variable is written by the loop.
             Refer (Current, "write", Current_Frame_Scope.Lookup_Declaration (N))
          else
