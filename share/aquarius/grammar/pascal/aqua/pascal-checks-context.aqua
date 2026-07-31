@@ -4,12 +4,17 @@ class
 create
    Make
 
---  Mutable holder for the current entity scope during the semantic walk. Held
---  as a system-wide once by Pascal.Checks.Node, so every visitor shares one
---  current-scope pointer. Procedure and function declarations push a child
---  scope on entry and pop it on exit, giving nested entity scopes without
---  touching the flat offset table (Pascal.Checks.Scope) that the code stage
---  uses. A once feature cannot be reassigned, hence this mutable wrapper.
+--  Mutable holder for the current scopes during the semantic walk. Held as a
+--  system-wide once by Pascal.Checks.Node, so every visitor shares one pointer
+--  into each tree. Procedure and function declarations push a child scope on
+--  entry and pop it on exit. A once feature cannot be reassigned, hence this
+--  mutable wrapper.
+--
+--  Two trees are tracked in step: the entity scopes that record declarations for
+--  the test stage and the UI (issue #74), and the Pascal.Checks.Scope tree that
+--  binds names to frame slots for the code stage (issue #81). They are pushed
+--  and popped together by Node.Enter_Scope / Node.Leave_Scope, which is the only
+--  place either pointer moves -- so the two cannot drift apart.
 
 feature
 
@@ -18,6 +23,13 @@ feature
    Set_Current (Scope : Aquarius.Entities.Scope)
       do
          Active_Scope := Scope
+      end
+
+   Active_Frame_Scope : detachable Pascal.Checks.Scope
+
+   Set_Current_Frame_Scope (Frame : Pascal.Checks.Scope)
+      do
+         Active_Frame_Scope := Frame
       end
 
    Make

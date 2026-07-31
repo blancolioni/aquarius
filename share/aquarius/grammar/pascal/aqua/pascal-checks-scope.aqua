@@ -4,11 +4,21 @@ class
 create
    Make
 
---  Semantic-stage symbol table: maps a variable name to its 1-based frame-local
---  offset, in declaration order. Owns name resolution and offset allocation;
---  the code stage no longer keeps a symbol table (offsets are handed off via
---  node properties). Single flat main-routine scope for now (procedure-scope
---  isolation deferred, issue #63).
+--  Semantic-stage symbol table: one instance per lexical scope (issue #81),
+--  linked to its enclosing scope by Parent, so a name resolves innermost-first
+--  and an inner declaration shadows an outer one of the same name.
+--
+--  Two kinds of lookup, following Aquarius.Entities.Scope: Find looks in this
+--  scope alone (which is what a duplicate-declaration check needs, so that
+--  shadowing is legal), Lookup walks outward (which is what resolving a use
+--  needs).
+--
+--  Frame slots are allocated from a single counter held by the ROOT scope, not
+--  per scope: Pascal.Generate.Program still emits one routine for the whole
+--  program, so every variable in the program shares one frame and needs its own
+--  slot -- an inner x and an outer x resolve differently but cannot occupy the
+--  same offset. When procedures become routines in their own right, allocation
+--  becomes per-routine and restarts at 1.
 --
 --  Names are stored lower-cased (Pascal is case-insensitive) and compared with
 --  String.Equal (value equality), NOT the '=' operator, which is reference
@@ -18,57 +28,42 @@ feature
 
    Make
       do
-         create Names
+         create Bindings
          create Declarations
-         Count := 0
+         Allocated := 0
       end
 
-   Count : Integer
+   Parent : detachable Pascal.Checks.Scope
 
-   Is_Declared (Name : String) : Boolean
-      local
-         It  : Aqua.Containers.Linked_List_Iterator [String]
-         Key : String
+   Set_Parent (Enclosing : Pascal.Checks.Scope)
       do
-         Key := Name.To_Lower
-         from
-            It := Names.New_Cursor
-         until
-            It.After or else Result
-         loop
-            if It.Element.Equal (Key) then
-               Result := True
-            end
-            It.Next
-         end
+         Parent := Enclosing
       end
+
+   Reset
+      --  Return the scope to its initial state. The shared root scope is a once
+      --  value and the plugin reuses one VM across files, so the root has to be
+      --  emptied at the start of each program or offsets accumulate.
+      do
+         create Bindings
+         create Declarations
+         Allocated := 0
+         Parent := Void
+      end
+
+feature  --  declaring
 
    Declare (Name : String) : Integer
-      do
-         Names.Append (Name.To_Lower)
-         Count := Count + 1
-         Result := Count
-      end
-
-   Offset (Name : String) : Integer
+      --  Bind Name in THIS scope to a freshly allocated frame slot, and return
+      --  the slot. The caller is expected to have checked Find first: declaring
+      --  the same name twice in one scope leaves both bindings, and Find will
+      --  answer with the first.
       local
-         It  : Aqua.Containers.Linked_List_Iterator [String]
-         Key : String
-         I   : Integer
+         B : Pascal.Checks.Binding
       do
-         Key := Name.To_Lower
-         from
-            It := Names.New_Cursor
-            I := 0
-         until
-            It.After
-         loop
-            I := I + 1
-            if It.Element.Equal (Key) then
-               Result := I
-            end
-            It.Next
-         end
+         Result := Allocate
+         create B.Make (Name, Result)
+         Bindings.Append (B)
       end
 
    Add_Declaration (Declaration : Aquarius.Entities.Declaration)
@@ -76,8 +71,45 @@ feature
          Declarations.Append (Declaration)
       end
 
+feature  --  resolving
+
+   Find (Name : String) : detachable Pascal.Checks.Binding
+      --  This scope only
+      local
+         It    : Aqua.Containers.Linked_List_Iterator [Pascal.Checks.Binding]
+         Key   : String
+         Found : Boolean
+      do
+         Key := Name.To_Lower
+         from
+            It := Bindings.New_Cursor
+         until
+            It.After or else Found
+         loop
+            if It.Element.Name.Equal (Key) then
+               Result := It.Element
+               Found := True
+            end
+            It.Next
+         end
+      end
+
+   Lookup (Name : String) : detachable Pascal.Checks.Binding
+      --  This scope, then outward
+      local
+         Own : detachable Pascal.Checks.Binding
+      do
+         Own := Find (Name)
+         if attached Own as B then
+            Result := B
+         elsif attached Parent as P then
+            Result := P.Lookup (Name)
+         end
+      end
+
    Find_Declaration (Name : String)
       : detachable Aquarius.Entities.Declaration
+      --  This scope only
       local
          It    : Aqua.Containers.Linked_List_Iterator
                     [Aquarius.Entities.Declaration]
@@ -100,10 +132,90 @@ feature
          end
       end
 
+   Lookup_Declaration (Name : String)
+      : detachable Aquarius.Entities.Declaration
+      --  This scope, then outward
+      local
+         Own : detachable Aquarius.Entities.Declaration
+      do
+         Own := Find_Declaration (Name)
+         if attached Own as D then
+            Result := D
+         elsif attached Parent as P then
+            Result := P.Lookup_Declaration (Name)
+         end
+      end
+
+   Is_Declared (Name : String) : Boolean
+      --  Visible here or in any enclosing scope
+      local
+         B : detachable Pascal.Checks.Binding
+      do
+         B := Lookup (Name)
+         if attached B as Found then
+            Result := True
+         end
+      end
+
+   Is_Declared_Here (Name : String) : Boolean
+      --  Declared in THIS scope: a redeclaration, as opposed to shadowing
+      local
+         B : detachable Pascal.Checks.Binding
+      do
+         B := Find (Name)
+         if attached B as Found then
+            Result := True
+         end
+      end
+
+   Offset (Name : String) : Integer
+      --  Frame slot of the innermost Name, or 0 if there is none
+      local
+         B : detachable Pascal.Checks.Binding
+      do
+         B := Lookup (Name)
+         if attached B as Found then
+            Result := Found.Offset
+         end
+      end
+
+feature  --  frame
+
+   Count : Integer
+      --  Slots allocated across the whole program, which is what the single
+      --  generated routine needs to reserve.
+      do
+         Result := Allocated_Count
+      end
+
+   Allocated_Count : Integer
+      do
+         if attached Parent as P then
+            Result := P.Allocated_Count
+         else
+            Result := Allocated
+         end
+      end
+
+feature { Pascal.Checks.Scope }
+
+   Allocate : Integer
+      --  Next free slot, always from the root: one frame for the program.
+      do
+         if attached Parent as P then
+            Result := P.Allocate
+         else
+            Allocated := Allocated + 1
+            Result := Allocated
+         end
+      end
+
 feature { None }
 
-   Names : Aqua.Containers.Linked_List [String]
+   Bindings : Aqua.Containers.Linked_List [Pascal.Checks.Binding]
 
    Declarations : Aqua.Containers.Linked_List [Aquarius.Entities.Declaration]
+
+   Allocated : Integer
 
 end
