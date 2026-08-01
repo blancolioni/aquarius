@@ -9,6 +9,14 @@ inherit
 --  cross reference it records is classified as a write rather than a read. The
 --  Before hook fires before the child subtree (and its After_Node, where the
 --  reference is recorded) runs.
+--
+--  That is the one piece of information in this plugin that flows DOWNWARD.
+--  Everything else flows up, which is why the type check waits for After_Node
+--  (issue #88): the target's type arrives when the variable_access reduces and
+--  the source's when the expression does, and only then are both in hand.
+--
+--  Both are copied out as Integer codes rather than the child visitors being
+--  kept, which is what #107 warns about and is unnecessary here.
 
 feature
 
@@ -16,5 +24,36 @@ feature
       do
          Child.Set_Target
       end
+
+   After_Variable_Access (Child : Pascal.Checks.Variable_Access)
+      do
+         Target_Type := Child.Ty
+      end
+
+   After_Expression (Child : Pascal.Checks.Expression)
+      do
+         Source_Type := Child.Ty
+      end
+
+   After_Node
+      local
+         T      : Pascal.Checks.Types
+         Target : Integer
+         Source : Integer
+      do
+         Target := Check_Known (Target_Type, "an assignment target")
+         Source := Check_Known (Source_Type, "an assigned value")
+         if not T.Assignable (Target, Source) then
+            --  Integer to real is Pascal's one implicit widening; the other
+            --  direction is what round and trunc are for.
+            Error ("cannot assign " & T.Name (Source) & " to "
+                   & T.Name (Target))
+         end
+      end
+
+feature { None }
+
+   Target_Type : Integer
+   Source_Type : Integer
 
 end

@@ -16,12 +16,15 @@ inherit
 --  point -- Pascal programs use these as symbols, 'K' for a klingon and so on),
 --  and a reference to an earlier constant, with or without a sign.
 --
---  NOT handled, deliberately: a real literal, which needs Ast.Expression's real
---  literal and a place to keep a Real (#87, #88), and a string literal of more
---  than one character, which needs somewhere to put the text. Both leave
---  Is_Known False. The real case has to be tested for explicitly: "3.14" would
---  otherwise be fed to String.To_Integer, which reads what it can and returns a
---  quietly wrong answer.
+--  NOT handled, deliberately: a real literal, which needs a place to keep a Real
+--  (#87), and a string literal of more than one character, which needs somewhere
+--  to put the text. Both leave Is_Known False. The real case has to be tested
+--  for explicitly: "3.14" would otherwise be fed to String.To_Integer, which
+--  reads what it can and returns a quietly wrong answer.
+--
+--  Ty is the constant's type (issue #88), and is known in cases where the VALUE
+--  is not: a real constant types as real even though nothing here can hold its
+--  value yet.
 --
 --  The production is read from Concatenated_Image rather than through child
 --  visitors, because its alternatives are token classes and a rule that is just
@@ -35,6 +38,8 @@ feature
 
    Is_Known : Boolean
 
+   Ty : Integer
+
    After_Node
       local
          Image      : String
@@ -42,6 +47,7 @@ feature
          Negative   : Boolean
          First      : Character
          Referenced : detachable Pascal.Checks.Binding
+         T          : Pascal.Checks.Types
       do
          Image := Concatenated_Image
          if Image.Length > 0 then
@@ -56,12 +62,13 @@ feature
             end
 
             if Rest.Length > 0 then
-               if Is_Digit (Rest.Element (1)) then
-                  if not Looks_Real (Rest) then
+               Ty := T.Literal_Type (Rest)
+               if T.Is_Digit (Rest.Element (1)) then
+                  if not T.Looks_Real (Rest) then
                      Value := Rest.To_Integer
                      Is_Known := True
                   end
-               elsif Is_Quote (Rest.Element (1)) then
+               elsif T.Is_Quote (Rest.Element (1)) then
                   Read_Character_Literal (Rest)
                else
                   --  A constant defined in terms of an earlier one, which the
@@ -70,6 +77,7 @@ feature
                   if attached Referenced as B then
                      if B.Is_Constant then
                         Value := B.Value
+                        Ty := B.Ty
                         Is_Known := True
                      end
                   end
@@ -86,42 +94,6 @@ feature
 
 feature { None }
 
-   Is_Digit (Ch : Character) : Boolean
-      --  Character has no Is_Digit, so compare code points: '0' is 48, '9' is 57
-      local
-         Code : Integer
-      do
-         Code.Convert_From (Ch.UTF_32_Code)
-         Result := Code >= 48 and then Code <= 57
-      end
-
-   Looks_Real (Text : String) : Boolean
-      --  A decimal point or an exponent makes it a real literal
-      local
-         Index : Integer
-         Ch    : Character
-      do
-         from
-            Index := 1
-         until
-            Index > Text.Length or else Result
-         loop
-            Ch := Text.Element (Index)
-            if Ch = '.' or else Ch = 'e' or else Ch = 'E' then
-               Result := True
-            end
-            Index := Index + 1
-         end
-      end
-
-   Is_Quote (Ch : Character) : Boolean
-      --  The apostrophe is written ''' -- character_constant is !\'[.]\'!, so
-      --  the middle character may itself be a quote. The double quote is
-      --  accepted too, because this Pascal lexer takes either around a string.
-      do
-         Result := Ch = ''' or else Ch = '"'
-      end
-
    Read_Character_Literal (Text : String)
       --  A single-character literal is its code point. Pascal doubles the quote
       --  to include one, so four quotes denote the quote character itself.
@@ -129,6 +101,7 @@ feature { None }
       local
          Inner : String
          Code  : Integer
+         T     : Pascal.Checks.Types
       do
          if Text.Length >= 2 then
             Inner := Text.Slice (2, Text.Length - 1)
@@ -140,8 +113,8 @@ feature { None }
                Value := Code
                Is_Known := True
             elsif Inner.Length = 2 then
-               if Is_Quote (Inner.Element (1))
-                 and then Is_Quote (Inner.Element (2))
+               if T.Is_Quote (Inner.Element (1))
+                 and then T.Is_Quote (Inner.Element (2))
                then
                   Code.Convert_From (Inner.Element (1).UTF_32_Code)
                   Value := Code

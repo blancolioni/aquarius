@@ -28,6 +28,7 @@ feature
       do
          Value := Child.Value
          Have_Value := Child.Is_Known
+         Ty := Child.Ty
       end
 
    After_Node
@@ -39,7 +40,7 @@ feature
                Error ("duplicate declaration: " & N)
             else
                if Have_Value then
-                  Current_Frame_Scope.Declare_Constant (N, Value)
+                  Current_Frame_Scope.Declare_Constant (N, Value, Ty)
                end
                Decl := Record_Declaration (Current, N, "constant")
                Current_Frame_Scope.Add_Declaration (Decl)
@@ -52,5 +53,6 @@ feature { None }
    Nm         : detachable String
    Value      : Integer
    Have_Value : Boolean
+   Ty         : Integer
 
 end

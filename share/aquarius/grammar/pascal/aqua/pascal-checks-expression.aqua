@@ -8,23 +8,39 @@ inherit
 --  that carries "this expression is a bare variable" up to actual_parameter
 --  (issue #105). A comparison is not a variable, so more than one
 --  simple_expression settles it.
+--
+--  Also the top of the type chain (issue #88): a comparison yields boolean from
+--  two operands that must be compatible, which is where mixing a number with a
+--  boolean or a char is caught.
+--
+--  Every relational operator types the same way, so this rung does not need to
+--  know which one was written -- which is as well, since a visitor bound to the
+--  relational_operator rule crashes the plugin VM (issue #117). 'in' is the one
+--  token that differs, and its right operand is a set_constructor, which is
+--  never typed, so the fold stays quiet about it rather than wrong.
 
 feature
 
    Is_Variable : Boolean
 
+   Ty : Integer
+
    After_Simple_Expression (Child : Pascal.Checks.Simple_Expression)
+      local
+         T : Pascal.Checks.Types
       do
          if Parts = 0 then
             Is_Variable := Child.Is_Variable
+            Ty := Child.Ty
          else
             Is_Variable := False
+            Ty := Combine_Types (T.Compare_Op, Ty, Child.Ty)
          end
          Parts := Parts + 1
       end
 
 feature { None }
 
-   Parts : Integer
+   Parts   : Integer
 
 end

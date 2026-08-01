@@ -18,10 +18,16 @@ feature
 
    Is_Variable : Boolean
 
+   Ty : Integer
+      --  The argument's type (issue #88), taken from the same first expression
+      --  as Is_Variable: the field widths after it describe how to print the
+      --  argument, not what it is.
+
    After_Expression (Child : Pascal.Checks.Expression)
       do
          if Expressions = 0 then
             Is_Variable := Child.Is_Variable
+            Ty := Child.Ty
          end
          Expressions := Expressions + 1
       end

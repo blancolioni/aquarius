@@ -2,7 +2,7 @@ class
    Pascal.Checks.Binding
 
 create
-   Make_Local, Make_Argument, Make_Constant, Make_Routine
+   Make_Local, Make_Argument, Make_Constant, Make_Routine, Make_Type
 
 --  One name bound to one slot of the enclosing routine's frame, held by
 --  Pascal.Checks.Scope (issue #81).
@@ -22,30 +22,42 @@ create
 --  Name is stored lower-cased, because Pascal is case-insensitive; compare it
 --  with String.Equal rather than '=', which is reference equality inside a
 --  generic in the Aqua VM (issue #60).
+--
+--  A type binding is the fifth kind (issue #88). The four built-in type names
+--  live in the same scope tree as the variables, so that resolving 'integer' in
+--  a type_denoter is the same lookup as resolving a variable name, and so that
+--  a user-defined alias can shadow one in an inner block. Its Ty is the type it
+--  NAMES; every other kind's Ty is the type it HAS.
 
 feature
 
-   Make_Local (Bound_Name : String; Frame_Slot : Integer)
+   Make_Local (Bound_Name : String; Frame_Slot : Integer; Type_Code : Integer)
       do
          Name := Bound_Name.To_Lower
          Offset := Frame_Slot
+         Ty := Type_Code
       end
 
    Make_Argument (Bound_Name           : String
                   Argument_Index       : Integer
-                  Passed_By_Reference  : Boolean)
+                  Passed_By_Reference  : Boolean
+                  Type_Code            : Integer)
       do
          Name := Bound_Name.To_Lower
          Offset := Argument_Index
          Is_Argument := True
          By_Reference := Passed_By_Reference
+         Ty := Type_Code
       end
 
-   Make_Constant (Bound_Name : String; Constant_Value : Integer)
+   Make_Constant (Bound_Name : String
+                  Constant_Value : Integer
+                  Type_Code : Integer)
       do
          Name := Bound_Name.To_Lower
          Value := Constant_Value
          Is_Constant := True
+         Ty := Type_Code
       end
 
    Make_Routine (Bound_Name : String; Routine : Pascal.Checks.Signature)
@@ -53,6 +65,13 @@ feature
          Name := Bound_Name.To_Lower
          Signature := Routine
          Is_Routine := True
+      end
+
+   Make_Type (Bound_Name : String; Type_Code : Integer)
+      do
+         Name := Bound_Name.To_Lower
+         Ty := Type_Code
+         Is_Type := True
       end
 
    Name : String
@@ -64,6 +83,11 @@ feature
    Value : Integer
       --  The value of a constant; meaningless for anything else
 
+   Ty : Integer
+      --  The Pascal.Checks.Types code of the variable, argument or constant;
+      --  for a type binding, the type the name stands for. A routine's result
+      --  type is on its Signature instead, since only a call has one.
+
    Signature : detachable Pascal.Checks.Signature
       --  What the routine takes, when Is_Routine; Void otherwise
 
@@ -72,6 +96,8 @@ feature
    Is_Constant : Boolean
 
    Is_Routine : Boolean
+
+   Is_Type : Boolean
 
    By_Reference : Boolean
 

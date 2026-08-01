@@ -16,6 +16,15 @@ inherit
 --  sees the same instance. It owns the slot counter for the whole program;
 --  Current_Frame_Scope is the scope declarations and accesses actually use
 --  (issue #81).
+--
+--  KEEP THIS CLASS SMALL. Every checks visitor inherits it, and it does not
+--  take growth well: adding an attribute here corrupted generated code once
+--  already (issue #107), and adding a handful of FEATURES here made a visitor
+--  bound to adding_operator fault the VM while resolving an unrelated node
+--  (issue #117 -- reproduced, bisected, and fixed by moving five of them off).
+--  Anything that does not need the tree -- no Error, no Current, no scope --
+--  belongs on Pascal.Checks.Types, which nothing inherits. What is left here is
+--  the code that must report through Error or reach the current scope.
 
 feature
 
@@ -120,12 +129,17 @@ feature
          Result := Current_Frame_Scope.Declare_Routine (Name, Sig)
       end
 
-   Declare_Parameters (List         : Pascal.Checks.Identifier_List
+   Declare_Parameters (Names        : Aqua.Containers.Linked_List [String]
                        By_Reference : Boolean
-                       Category     : String)
-      --  Bind each name in List as an argument of the routine whose scope is
-      --  current (issue #82). Shared by the value and var parameter
-      --  specifications, which differ only in By_Reference and Category.
+                       Category     : String
+                       Type_Code    : Integer)
+      --  Bind each name as an argument of the routine whose scope is current
+      --  (issue #82). Shared by the value and var parameter specifications,
+      --  which differ only in By_Reference and Category.
+      --
+      --  Takes the name list rather than the identifier_list visitor that owns
+      --  it: the caller has to hold it until its type has been seen, and a list
+      --  of strings is a library object rather than another plugin visitor.
       --
       --  The redeclaration check is Is_Declared_Here, so repeating a name within
       --  one parameter list, or between the parameters and the body's locals, is
@@ -138,7 +152,7 @@ feature
          Decl   : Aquarius.Entities.Declaration
       do
          from
-            It := List.Names.New_Cursor
+            It := Names.New_Cursor
          until
             It.After
          loop
@@ -147,11 +161,15 @@ feature
                Error ("duplicate declaration: " & Name)
             else
                Ignore :=
-                  Current_Frame_Scope.Declare_Argument (Name, By_Reference)
+                  Current_Frame_Scope.Declare_Argument
+                     (Name, By_Reference, Type_Code)
                --  Record it in the routine's signature too, so a call can be
-               --  checked against it (issue #105)
+               --  checked against it (issue #105), including its type (#88):
+               --  a parameter slot's content has to be declared for the caller
+               --  and the callee to agree on the frame, which is the one place
+               --  a type is not inferable from the accesses alone.
                if attached Current_Frame_Scope.Routine as Sig then
-                  Sig.Add_Parameter (By_Reference)
+                  Sig.Add_Parameter (By_Reference, Type_Code)
                end
                Decl := Record_Declaration (Current, Name, Category)
                Current_Frame_Scope.Add_Declaration (Decl)
@@ -247,6 +265,121 @@ feature
          Decl.Set_Top_Level
          Environment.Add_Declaration (Decl)
          Global_Scope.Add_Declaration (Decl)
+      end
+
+   Declare_Builtin_Types
+      --  Bind the four modelled type names in the ROOT frame scope (issue #88),
+      --  so that resolving a type_denoter is the same lookup as resolving a
+      --  variable. Like Declare_Builtin_Routines, and for the same reason, this
+      --  runs for each program rather than once: Program.Before_Node resets the
+      --  root scope, and Ensure_Builtins handles the entity-model side.
+      --
+      --  'text' is deliberately absent. It is a file type, which this system
+      --  does not model, and leaving it unbound makes a variable declared with
+      --  it resolve to Unknown, which is what it is.
+      local
+         T : Pascal.Checks.Types
+      do
+         Scope.Declare_Type ("integer", T.Integer_Type)
+         Scope.Declare_Type ("real",    T.Real_Type)
+         Scope.Declare_Type ("boolean", T.Boolean_Type)
+         Scope.Declare_Type ("char",    T.Char_Type)
+      end
+
+   Resolve_Type_Name (Text : String) : Integer
+      --  The type a type_denoter or type_identifier stands for. Anything that
+      --  is not one of the four modelled names -- a record, an array, a pointer,
+      --  a subrange, a user type that is not an alias of a built-in -- comes
+      --  back as Unknown, which is reported where it is used rather than here.
+      local
+         T : Pascal.Checks.Types
+      do
+         Result := Current_Frame_Scope.Lookup_Type (Text)
+         if Result = T.No_Type then
+            Result := T.Unknown_Type
+         end
+      end
+
+   Combine_Types (Op : Integer; Left : Integer; Right : Integer) : Integer
+      --  The type of "Left op Right", reporting the operand types if the
+      --  operator cannot take them (issue #88). Shared by all three operator
+      --  levels, which differ only in which tokens map to which rule.
+      --
+      --  The rules themselves are on Pascal.Checks.Types; all that is here is
+      --  the reporting, which needs the tree. See the note on this class about
+      --  keeping it small.
+      local
+         T   : Pascal.Checks.Types
+         Msg : String
+      do
+         Msg := T.Combine_Message (Op, Left, Right)
+         if Msg.Length > 0 then
+            Error (Msg)
+         end
+         Result := T.Combine (Op, Left, Right)
+      end
+
+   Check_Argument_Types (Name        : String
+                         Sig         : Pascal.Checks.Signature
+                         Given       : Integer
+                         Actual_Mask : Integer)
+      --  Check each actual against the parameter it is passed to (issue #88),
+      --  extending the arity and var-parameter checks of issue #105. Shared by
+      --  a call in an expression and a procedure statement.
+      --
+      --  A variadic routine is skipped whole: write and writeln take anything,
+      --  in any number, and have no parameter list to check against.
+      --
+      --  A var parameter takes its actual by address, so it wants that exact
+      --  type -- there is nowhere to put the promoted copy that a value
+      --  parameter would receive.
+      local
+         Index  : Integer
+         Formal : Integer
+         Actual : Integer
+         T      : Pascal.Checks.Types
+      do
+         if not Sig.Is_Variadic then
+            from
+               Index := 0
+            until
+               Index >= Given
+            loop
+               Index := Index + 1
+               Actual := T.Packed_Type (Actual_Mask, Index)
+               Formal := Sig.Parameter_Type (Index)
+               if T.Is_Known (Formal) and then not T.Is_Quiet (Actual) then
+                  if Sig.Parameter_By_Reference (Index) then
+                     if not (Formal = Actual) then
+                        Error ("argument " & Index.To_String & " of " & Name
+                               & " is a var " & T.Name (Formal)
+                               & ", so a " & T.Name (Actual)
+                               & " cannot be passed to it")
+                     end
+                  elsif not T.Assignable (Formal, Actual) then
+                     Error ("argument " & Index.To_String & " of " & Name
+                            & " is " & T.Name (Formal) & ", but a "
+                            & T.Name (Actual) & " was given")
+                  end
+               end
+            end
+         end
+      end
+
+   Check_Known (Code : Integer; Role : String) : Integer
+      --  Report an operand whose type is outside the model, in a position that
+      --  is not an operator -- an assignment side, a for-loop bound, a call
+      --  argument. Returns the code to carry on with, poisoned if reported.
+      local
+         T : Pascal.Checks.Types
+      do
+         if T.Is_Quiet (Code) or else T.Is_Known (Code) then
+            Result := Code
+         else
+            Error ("unsupported type for " & Role & ": only integer, real,"
+                   & " boolean and char are modelled")
+            Result := T.Error_Type
+         end
       end
 
 end

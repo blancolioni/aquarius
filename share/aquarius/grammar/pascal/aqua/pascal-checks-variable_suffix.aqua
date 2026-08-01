@@ -26,11 +26,15 @@ feature
 
    Variable_Mask : Integer
 
+   Type_Mask : Integer
+      --  The argument types, three bits apiece (issue #88)
+
    After_Function_Designator (Child : Pascal.Checks.Function_Designator)
       do
          Is_Call := True
          Argument_Count := Child.Count
          Variable_Mask := Child.Variable_Mask
+         Type_Mask := Child.Type_Mask
       end
 
 end

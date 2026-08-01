@@ -8,6 +8,10 @@ inherit
 --  its binding and exposes the offset plus whether it is an argument rather than
 --  a local (issue #82); the code stage reads them via type-injection (#66).
 --  Undeclared name is a semantic error.
+--
+--  ISO Pascal requires the control variable to be of an ordinal type, which of
+--  the four modelled types rules out real (issue #88): the loop counts by
+--  successor, and a real has no successor.
 
 feature
 
@@ -18,9 +22,13 @@ feature
    By_Reference : Boolean
 
    After_Node
+      --  The type is a local, not a published attribute: nothing outside reads
+      --  it, and an attribute more on a visitor is not free (issues #107, #120).
       local
-         N : String
-         B : detachable Pascal.Checks.Binding
+         N  : String
+         B  : detachable Pascal.Checks.Binding
+         T  : Pascal.Checks.Types
+         Ty : Integer
       do
          N := Concatenated_Image
          B := Current_Frame_Scope.Lookup (N)
@@ -28,9 +36,14 @@ feature
             Offset := Bound.Offset
             Is_Argument := Bound.Is_Argument
             By_Reference := Bound.By_Reference
+            Ty := Bound.Ty
             if Bound.Is_Constant then
                --  The loop assigns to its control variable
                Error ("cannot use a constant as a loop variable: " & N)
+            end
+            if not T.Is_Quiet (Ty) and then not T.Is_Ordinal (Ty) then
+               Error ("a loop variable must be ordinal, but " & N & " is "
+                      & T.Name (Ty))
             end
             --  The for-loop control variable is written by the loop.
             Refer (Current, "write", Current_Frame_Scope.Lookup_Declaration (N))

@@ -1,0 +1,21 @@
+class
+   Pascal.Checks.Type_Identifier
+
+inherit
+   Pascal.Checks.Node
+
+--  type_identifier ::= identifier
+--
+--  The type named by a parameter specification or a function's result_type,
+--  neither of which goes through type_denoter (issue #88).
+
+feature
+
+   Ty : Integer
+
+   After_Node
+      do
+         Ty := Resolve_Type_Name (Concatenated_Image)
+      end
+
+end

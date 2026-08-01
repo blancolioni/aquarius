@@ -1,0 +1,21 @@
+class
+   Pascal.Checks.Result_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  result_type ::= type_identifier
+--
+--  A rung of its own because a function_heading sees its direct children only,
+--  and the type_identifier is nested inside this rule (issue #88).
+
+feature
+
+   Ty : Integer
+
+   After_Type_Identifier (Child : Pascal.Checks.Type_Identifier)
+      do
+         Ty := Child.Ty
+      end
+
+end

@@ -1,0 +1,37 @@
+class
+   Pascal.Checks.Adding_Operator
+
+inherit
+   Pascal.Checks.Node
+
+--  adding_operator ::= '+' | '-' | 'or'
+--
+--  Classifies the token into the typing rule its enclosing simple_expression
+--  must apply (issue #88): the two arithmetic signs take numbers, 'or' takes
+--  booleans. See Pascal.Checks.Multiplying_Operator, which does the same for its
+--  five tokens and carries the fuller note.
+
+feature
+
+   Kind : Integer
+
+   After_Node
+      local
+         T : Pascal.Checks.Types
+         S : String
+      do
+         --  Concatenated_Image, not Standard_Text: on this node the standard
+         --  text comes back empty for the keyword alternative, which silently
+         --  stopped 'or', 'div' and 'mod' from being classified at all.
+         S := Concatenated_Image
+         S := S.To_Lower
+         if S.Equal ("+") or else S.Equal ("-") then
+            Kind := T.Arithmetic_Op
+         elsif S.Equal ("or") then
+            Kind := T.Boolean_Op
+         else
+            Kind := T.No_Op
+         end
+      end
+
+end
