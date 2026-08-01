@@ -1,0 +1,122 @@
+class
+   Pascal.Checks.Structure
+
+create
+   Make_Record,
+   Make_Array
+
+--  One record type or one array type (issue #124). Held by the root
+--  Pascal.Checks.Scope and referred to everywhere else by its index there:
+--  Types.Structured_Type says a value is one of these, and an Integer index
+--  says which.
+--
+--  Records and arrays share a class rather than getting one each because they
+--  are asked the same two questions -- how wide are you, and what does this
+--  component of you yield. Kind discriminates; the features of the other kind
+--  are simply unused.
+--
+--  THIS CLASS HOLDS NO CONTAINERS, and must not gain any. Its fields and its
+--  dimensions live in flat lists on Scope, each entry naming its owner, rather
+--  than in lists here. That is not a preference: a
+--  Linked_List [Pascal.Checks.Structure] whose element class holds containers
+--  of its own corrupts whatever object holds the list -- reproduced on both
+--  Pascal.Checks.Context and Pascal.Checks.Scope, in both cases turning every
+--  subsequent read of Context.Active_Frame_Scope into Void and killing the
+--  pass on the first for-statement it reached. Linked_List [Binding] works,
+--  and Binding holds no containers either. See the VM issue for the full
+--  bisection.
+--
+--  Parent_Index is the enclosing structure while one is being BUILT, not a
+--  type relationship: a record_section inside a record inside an array has to
+--  know which record it is adding fields to. An index rather than a reference,
+--  for the same reason as above -- the whole build stack is integers.
+--
+--  All sizes and offsets are in WORDS. See Pascal.Checks.Types.Width.
+
+feature
+
+   Make_Record
+      do
+         Kind := Record_Kind
+      end
+
+   Make_Array
+      do
+         Kind := Array_Kind
+      end
+
+feature  --  kind
+
+   Record_Kind : Integer do Result := 1 end
+   Array_Kind  : Integer do Result := 2 end
+
+   Kind : Integer
+
+   Is_Record : Boolean
+      do
+         Result := Kind = Record_Kind
+      end
+
+   Is_Array : Boolean
+      do
+         Result := Kind = Array_Kind
+      end
+
+feature  --  building
+
+   Parent_Index : Integer
+      --  Structure being built around this one, or 0
+
+   Set_Parent_Index (Index : Integer)
+      do
+         Parent_Index := Index
+      end
+
+   Next_Offset : Integer
+      --  Where the next field goes. Public because a variant_part rewinds it:
+      --  every variant starts where the variant_part started, which is what
+      --  makes the variants a union rather than a sequence.
+
+   Set_Next_Offset (Where : Integer)
+      do
+         Next_Offset := Where
+      end
+
+   Size : Integer
+      --  Words the whole structure occupies. For a record this is the HIGH
+      --  WATER MARK of Next_Offset, not its current value, so that rewinding
+      --  for a variant does not shrink the record: a record with variants is
+      --  as big as its largest variant, which is what Pascal means by one.
+      --  For an array, set once the component type is known.
+
+   Set_Size (Words : Integer)
+      do
+         Size := Words
+      end
+
+   Note_Offset (Where : Integer)
+      --  Advance the high water mark if this is the furthest reached
+      do
+         if Where > Size then
+            Size := Where
+         end
+      end
+
+feature  --  arrays
+
+   Element_Ty : Integer
+
+   Element_Structure : Integer
+
+   Element_Width : Integer
+
+   Set_Element_Type (Type_Code       : Integer
+                     Structure_Index : Integer
+                     Width           : Integer)
+      do
+         Element_Ty := Type_Code
+         Element_Structure := Structure_Index
+         Element_Width := Width
+      end
+
+end
