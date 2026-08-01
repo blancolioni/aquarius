@@ -1,0 +1,11 @@
+class
+   Pascal.Checks.Sign
+
+inherit
+   Pascal.Checks.Node
+
+--  sign ::= '+' | '-'. Presence alone matters: a signed expression is not a bare
+--  variable, so it cannot be passed to a var parameter (issue #105).
+--  Pascal.Checks.Simple_Expression reads it by After_Sign firing.
+
+end

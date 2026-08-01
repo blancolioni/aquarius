@@ -9,8 +9,17 @@ inherit
 --  whether that offset indexes the routine's arguments or its locals -- separate
 --  spaces in Tagatha, so the code stage has to know which (issue #82).
 --  Pascal.Generate.Variable_Access for the same node receives this object by
---  type-injection (issue #66) and reads the fields directly. An undeclared name
---  is a semantic error. Scalars only.
+--  type-injection (issue #66) and reads the fields directly.
+--
+--  A call is written this way too: a function_designator suffix makes this a call
+--  rather than a load (issue #105), which is why an unknown standard function
+--  used to be reported as an undeclared VARIABLE. When the name resolves to a
+--  routine, the argument count is checked against its signature and Is_Call is
+--  set, so that the code stage does not treat the name as storage -- it has no
+--  offset, and emitting a load for it produced a store to local slot 0.
+--
+--  Structured access (a subscript, a field, a pointer dereference) is still
+--  unsupported, but is now reported rather than silently ignored: issue #104.
 
 feature
 
@@ -27,6 +36,14 @@ feature
       --  The constant's value, when Is_Constant: the code stage emits it as a
       --  literal, since a constant has no storage to load from (issue #103)
 
+   Is_Call : Boolean
+      --  The name is a routine; the code stage must not load it (issue #105)
+
+   Is_Component : Boolean
+      --  A subscript, field or dereference was written. The code stage must not
+      --  emit a plain load of the base variable, which is what it did while the
+      --  suffix was ignored altogether (issue #104)
+
    Is_Target : Boolean
 
    Set_Target
@@ -39,6 +56,17 @@ feature
          Nm := Child.Concatenated_Image
       end
 
+   After_Variable_Suffix (Child : Pascal.Checks.Variable_Suffix)
+      do
+         if Child.Is_Call then
+            Has_Argument_List := True
+            Given_Arguments := Child.Argument_Count
+            Argument_Variables := Child.Variable_Mask
+         else
+            Is_Component := True
+         end
+      end
+
    After_Node
       local
          B : detachable Pascal.Checks.Binding
@@ -46,13 +74,23 @@ feature
          if attached Nm as N then
             B := Current_Frame_Scope.Lookup (N)
             if attached B as Bound then
-               Offset := Bound.Offset
-               Is_Argument := Bound.Is_Argument
-               By_Reference := Bound.By_Reference
-               Is_Constant := Bound.Is_Constant
-               Value := Bound.Value
-               if Is_Constant and then Is_Target then
-                  Error ("cannot assign to a constant: " & N)
+               if Bound.Is_Routine then
+                  Check_Call (N, Bound)
+               else
+                  Offset := Bound.Offset
+                  Is_Argument := Bound.Is_Argument
+                  By_Reference := Bound.By_Reference
+                  Is_Constant := Bound.Is_Constant
+                  Value := Bound.Value
+                  if Is_Constant and then Is_Target then
+                     Error ("cannot assign to a constant: " & N)
+                  end
+                  if Has_Argument_List then
+                     Error ("not a routine, so it cannot be called: " & N)
+                  end
+                  if Is_Component then
+                     Error ("not supported yet: a component of " & N)
+                  end
                end
                --  Record a cross reference to the declared variable: a write
                --  when this access is an assignment target (flagged by the
@@ -63,7 +101,11 @@ feature
                   Refer (Current, "read", Current_Frame_Scope.Lookup_Declaration (N))
                end
             else
-               Error ("undeclared variable: " & N)
+               if Has_Argument_List then
+                  Error ("undeclared routine: " & N)
+               else
+                  Error ("undeclared variable: " & N)
+               end
             end
          end
       end
@@ -71,5 +113,58 @@ feature
 feature { None }
 
    Nm : detachable String
+
+   Has_Argument_List  : Boolean
+   Given_Arguments    : Integer
+   Argument_Variables : Integer
+      --  One bit per argument, set when it is a bare variable. A mask rather
+      --  than the suffix object, because a visitor holding a reference to
+      --  another plugin object corrupts generated code (issue #107).
+
+   Check_Call (Name : String; Bound : Pascal.Checks.Binding)
+      --  The name is a routine. Report what a call to it cannot do, and check
+      --  the argument count against the signature.
+      do
+         Is_Call := True
+         if Is_Target then
+            --  Assigning to a function name sets its result, which needs the
+            --  result slot: issue #84.
+            Error ("not supported yet: assignment to the result of " & Name)
+         elsif attached Bound.Signature as Sig then
+            if not Sig.Is_Function then
+               Error ("a procedure has no value, so it cannot be used here: "
+                      & Name)
+            elsif not Sig.Is_Variadic
+              and then Given_Arguments /= Sig.Argument_Count
+            then
+               Error ("wrong number of arguments for " & Name
+                      & ": expected " & Sig.Argument_Count.To_String
+                      & ", found " & Given_Arguments.To_String)
+            else
+               Check_Var_Arguments (Name, Sig)
+            end
+         end
+      end
+
+   Check_Var_Arguments (Name : String; Sig : Pascal.Checks.Signature)
+      --  As Pascal.Checks.Procedure_Statement does: a var parameter is passed by
+      --  address, so its actual has to be a variable.
+      local
+         Index : Integer
+      do
+         from
+            Index := 1
+         until
+            Index > Given_Arguments
+         loop
+            if Sig.Parameter_By_Reference (Index) then
+               if not Mask_Holds (Argument_Variables, Index) then
+                  Error ("argument " & Index.To_String & " of " & Name
+                         & " is a var parameter, so it needs a variable")
+               end
+            end
+            Index := Index + 1
+         end
+      end
 
 end

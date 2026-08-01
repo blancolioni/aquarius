@@ -1,0 +1,30 @@
+class
+   Pascal.Checks.Expression
+
+inherit
+   Pascal.Checks.Node
+
+--  expression ::= < simple_expression / relational_operator >. Top of the chain
+--  that carries "this expression is a bare variable" up to actual_parameter
+--  (issue #105). A comparison is not a variable, so more than one
+--  simple_expression settles it.
+
+feature
+
+   Is_Variable : Boolean
+
+   After_Simple_Expression (Child : Pascal.Checks.Simple_Expression)
+      do
+         if Parts = 0 then
+            Is_Variable := Child.Is_Variable
+         else
+            Is_Variable := False
+         end
+         Parts := Parts + 1
+      end
+
+feature { None }
+
+   Parts : Integer
+
+end

@@ -1,0 +1,28 @@
+class
+   Pascal.Checks.Term
+
+inherit
+   Pascal.Checks.Node
+
+--  term ::= < factor / multiplying_operator >. A bare variable only if it is one
+--  factor and no operator: x is a variable, x * 2 is not (issue #105).
+
+feature
+
+   Is_Variable : Boolean
+
+   After_Factor (Child : Pascal.Checks.Factor)
+      do
+         if Factors = 0 then
+            Is_Variable := Child.Is_Variable
+         else
+            Is_Variable := False
+         end
+         Factors := Factors + 1
+      end
+
+feature { None }
+
+   Factors : Integer
+
+end

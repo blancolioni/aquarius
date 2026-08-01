@@ -102,6 +102,24 @@ feature
          Current_Scope.Add_Declaration (Result)
       end
 
+   Declare_Routine (Name        : String
+                    Is_Function : Boolean
+                    Is_Variadic : Boolean) : Pascal.Checks.Signature
+      --  Bind Name as a routine in the current scope, which for a heading is the
+      --  scope ENCLOSING the routine, and return the signature now in force
+      --  (issue #105). The caller passes it to Set_Routine on the routine's own
+      --  scope after entering it.
+      --
+      --  A function rather than a procedure leaving the signature in a field:
+      --  adding an attribute to this class -- the base of every checks visitor --
+      --  corrupted the generated code (see the note in Program.Before_Node).
+      local
+         Sig : Pascal.Checks.Signature
+      do
+         create Sig.Make (Is_Function, Is_Variadic)
+         Result := Current_Frame_Scope.Declare_Routine (Name, Sig)
+      end
+
    Declare_Parameters (List         : Pascal.Checks.Identifier_List
                        By_Reference : Boolean
                        Category     : String)
@@ -130,11 +148,59 @@ feature
             else
                Ignore :=
                   Current_Frame_Scope.Declare_Argument (Name, By_Reference)
+               --  Record it in the routine's signature too, so a call can be
+               --  checked against it (issue #105)
+               if attached Current_Frame_Scope.Routine as Sig then
+                  Sig.Add_Parameter (By_Reference)
+               end
                Decl := Record_Declaration (Current, Name, Category)
                Current_Frame_Scope.Add_Declaration (Decl)
             end
             It.Next
          end
+      end
+
+   Argument_Weight (Index : Integer) : Integer
+      --  2 ** (Index - 1), the bit that stands for argument Index in an argument
+      --  mask. Zero beyond Argument_Mask_Limit, where the mask runs out.
+      local
+         At : Integer
+      do
+         if Index >= 1 and then Index <= Argument_Mask_Limit then
+            Result := 1
+            from
+               At := 1
+            until
+               At >= Index
+            loop
+               Result := Result * 2
+               At := At + 1
+            end
+         end
+      end
+
+   Mask_Holds (Mask : Integer; Index : Integer) : Boolean
+      --  Whether the bit for argument Index is set in Mask.
+      --
+      --  Arithmetic rather than bit operations because Integer has neither an
+      --  and nor a shift (issue #109), and a mask rather than a list because a
+      --  visitor cannot hold a reference to another plugin object (issue #107).
+      --  Both go away when those are fixed.
+      local
+         Weight : Integer
+      do
+         Weight := Argument_Weight (Index)
+         if Weight > 0 then
+            Result := (Mask / Weight) mod 2 = 1
+         end
+      end
+
+   Argument_Mask_Limit : Integer
+      --  Arguments past the 30th are not represented: an Integer is 32 bits and
+      --  the mask is built by doubling. No Pascal call comes close, and a call
+      --  that did would simply go unchecked rather than wrong.
+      do
+         Result := 30
       end
 
    Ensure_Builtins
@@ -153,6 +219,24 @@ feature
             Declare_Builtin ("read",     "builtin-procedure")
             Declare_Builtin ("readln",   "builtin-procedure")
          end
+      end
+
+   Declare_Builtin_Routines
+      --  Bind the standard I/O procedures as routines in the ROOT frame scope,
+      --  so a call to one resolves like a call to any other (issue #105). They
+      --  are variadic: write and writeln take any number of arguments, and each
+      --  may carry field widths, so an argument count proves nothing.
+      --
+      --  Re-declared for each program rather than once, because the root scope
+      --  is a once value that Program.Before_Node resets. The type names and the
+      --  entity-model declarations are handled separately by Ensure_Builtins.
+      local
+         Ignore : Pascal.Checks.Signature
+      do
+         Ignore := Declare_Routine ("write", False, True)
+         Ignore := Declare_Routine ("writeln", False, True)
+         Ignore := Declare_Routine ("read", False, True)
+         Ignore := Declare_Routine ("readln", False, True)
       end
 
    Declare_Builtin (Name : String; Category : String)
