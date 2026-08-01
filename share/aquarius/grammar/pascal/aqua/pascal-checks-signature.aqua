@@ -5,7 +5,8 @@ create
    Make
 
 --  What a call has to agree with: how many parameters a routine takes, which of
---  them are passed by reference, and whether it returns a value (issue #105).
+--  them are passed by reference, whether it returns a value (issue #105), and
+--  the type of each parameter and of the result (issue #88).
 --
 --  A signature outlives the scope it describes. A routine's own scope -- which
 --  holds its parameter bindings and knows how many there are -- is popped when
@@ -21,6 +22,7 @@ feature
    Make (Returns_A_Value : Boolean; Any_Argument_Count : Boolean)
       do
          create By_Reference_Flags
+         create Parameter_Types
          Argument_Count := 0
          Is_Function := Returns_A_Value
          Is_Variadic := Any_Argument_Count
@@ -32,13 +34,24 @@ feature
 
    Is_Variadic : Boolean
 
-   Add_Parameter (By_Reference : Boolean)
+   Result_Type : Integer
+      --  The Pascal.Checks.Types code a call to this routine yields, from the
+      --  result_type on a function heading (issue #88). Zero -- No_Type -- for
+      --  a procedure, and for a function whose result type is not modelled.
+
+   Set_Result_Type (Type_Code : Integer)
+      do
+         Result_Type := Type_Code
+      end
+
+   Add_Parameter (By_Reference : Boolean; Type_Code : Integer)
       do
          if By_Reference then
             By_Reference_Flags.Append (1)
          else
             By_Reference_Flags.Append (0)
          end
+         Parameter_Types.Append (Type_Code)
          Argument_Count := Argument_Count + 1
       end
 
@@ -66,8 +79,34 @@ feature
          end
       end
 
+   Parameter_Type (Index : Integer) : Integer
+      --  The declared type of parameter Index (1-based), or 0 -- No_Type -- for
+      --  an index out of range, which the arity check reports separately and
+      --  which the type check then stays quiet about.
+      local
+         It : Aqua.Containers.Linked_List_Iterator [Integer]
+         At : Integer
+      do
+         from
+            It := Parameter_Types.New_Cursor
+            At := 0
+         until
+            It.After
+         loop
+            At := At + 1
+            if At = Index then
+               Result := It.Element
+            end
+            It.Next
+         end
+      end
+
 feature { None }
 
    By_Reference_Flags : Aqua.Containers.Linked_List [Integer]
+
+   Parameter_Types : Aqua.Containers.Linked_List [Integer]
+      --  Type codes, in declaration order. A list of Integer for the same
+      --  reason as By_Reference_Flags above.
 
 end

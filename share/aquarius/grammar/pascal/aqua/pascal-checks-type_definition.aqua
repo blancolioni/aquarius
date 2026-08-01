@@ -5,8 +5,15 @@ inherit
    Pascal.Checks.Node
 
 --  type_definition ::= identifier '=' type_denoter. Records the type's name in
---  the current entity scope (issue #74). The denoted type is not resolved and
---  no structural type model is built (minimal semantic pass).
+--  the current entity scope (issue #74). No structural type model is built
+--  (minimal semantic pass).
+--
+--  An alias of a built-in -- Counter = integer -- is bound as a type name in the
+--  frame scope, so that a variable declared with it is typed as what it aliases
+--  (issue #88). Anything else denotes a type outside the model and is bound as
+--  Unknown, which is honest: a use of it is then reported rather than guessed at.
+--  Binding it either way matters, because an unbound name would resolve to
+--  whatever a variable of the same name happened to be.
 
 feature
 
@@ -14,7 +21,26 @@ feature
       local
          Ignore : Aquarius.Entities.Declaration
       do
+         Nm := Name
          Ignore := Record_Declaration (Current, Name, "type")
       end
+
+   After_Type_Denoter (Child : Pascal.Checks.Type_Denoter)
+      do
+         Ty := Child.Ty
+      end
+
+   After_Node
+      do
+         if attached Nm as Defined then
+            Current_Frame_Scope.Declare_Type (Defined, Ty)
+         end
+      end
+
+feature { None }
+
+   Nm : detachable String
+
+   Ty : Integer
 
 end

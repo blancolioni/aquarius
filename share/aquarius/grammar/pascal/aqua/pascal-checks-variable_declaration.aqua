@@ -5,7 +5,18 @@ inherit
    Pascal.Checks.Node
 
 --  variable_declaration ::= identifier_list ':' type_denoter ';'. Allocates a
---  frame slot per name in the scope being declared (issue #81).
+--  frame slot per name in the scope being declared (issue #81), and records the
+--  declared type on each binding (issue #88).
+--
+--  The names arrive before the type does -- After_Identifier_List fires when the
+--  list reduces, which is before the type_denoter sibling has been visited -- so
+--  the names are stashed and the declaring happens in After_Node, once both are
+--  in hand. Pascal.Checks.Constant_Definition has the same shape for the same
+--  reason.
+--
+--  A real takes one slot like everything else. The slot index is not a word
+--  offset: Tagatha sizes a float slot to the register pair it needs, from the
+--  content of the accesses to it. See Pascal.Checks.Scope.Declare_Local.
 --
 --  The duplicate check asks THIS scope only, so redeclaring a name in one block
 --  is an error while shadowing an outer declaration is not -- an inner x is a
@@ -15,33 +26,51 @@ inherit
 feature
 
    After_Identifier_List (Child : Pascal.Checks.Identifier_List)
+      do
+         Names := Child.Names
+      end
+
+   After_Type_Denoter (Child : Pascal.Checks.Type_Denoter)
+      do
+         Ty := Child.Ty
+      end
+
+   After_Node
       local
          It     : Aqua.Containers.Linked_List_Iterator [String]
          Name   : String
          Ignore : Integer
          Decl   : Aquarius.Entities.Declaration
       do
-         from
-            It := Child.Names.New_Cursor
-         until
-            It.After
-         loop
-            Name := It.Element
-            if Current_Frame_Scope.Is_Declared_Here (Name) then
-               Error ("duplicate declaration: " & Name)
-            else
-               Ignore := Current_Frame_Scope.Declare_Local (Name)
-               --  Record the variable in the standard entity model, keyed
-               --  in the scope so a later access can resolve and refer to it.
-               create Decl.Make (Name, Name, "variable", Current)
-               Environment.Add_Declaration (Decl)
-               Current_Frame_Scope.Add_Declaration (Decl)
-               --  Also record in the current entity scope (issue #74): the
-               --  program scope, or a procedure/function's own child scope.
-               Current_Scope.Add_Declaration (Decl)
+         if attached Names as Declared then
+            from
+               It := Declared.New_Cursor
+            until
+               It.After
+            loop
+               Name := It.Element
+               if Current_Frame_Scope.Is_Declared_Here (Name) then
+                  Error ("duplicate declaration: " & Name)
+               else
+                  Ignore := Current_Frame_Scope.Declare_Local (Name, Ty)
+                  --  Record the variable in the standard entity model, keyed
+                  --  in the scope so a later access can resolve and refer to it.
+                  create Decl.Make (Name, Name, "variable", Current)
+                  Environment.Add_Declaration (Decl)
+                  Current_Frame_Scope.Add_Declaration (Decl)
+                  --  Also record in the current entity scope (issue #74): the
+                  --  program scope, or a procedure/function's own child scope.
+                  Current_Scope.Add_Declaration (Decl)
+               end
+               It.Next
             end
-            It.Next
          end
       end
+
+feature { None }
+
+   Names : detachable Aqua.Containers.Linked_List [String]
+
+   Ty : Integer
 
 end

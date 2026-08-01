@@ -1,0 +1,348 @@
+expanded class
+   Pascal.Checks.Types
+
+--  The type codes of the minimal Pascal type system (issue #88): integer, real,
+--  boolean and char, and nothing else. Codes rather than objects, following
+--  Ast.Operator, because a visitor publishes its type as a plain Integer for the
+--  code stage to read, and because Integer has neither bit operations (issue
+--  #109) nor a safe generic '=' (issue #60) to build anything richer with.
+--
+--  Two codes stand outside the model and are the reason a check can be made
+--  without drowning a program in messages:
+--
+--    Unknown is a type the system does not model -- a record, an array, a
+--    pointer, a set, a string literal, nil. It is reported when it is USED,
+--    which is what makes the check honest rather than silently permissive.
+--
+--    Error is poison. It is what an operand becomes once its problem has been
+--    reported, and it is compatible with everything, so one mistyped subterm
+--    yields one message rather than one per enclosing operator.
+--
+--  No_Type is the initial value of an untyped node, and is treated like Error:
+--  nothing is known, so nothing is claimed.
+
+feature
+
+   No_Type      : Integer do Result := 0 end
+   Integer_Type : Integer do Result := 1 end
+   Real_Type    : Integer do Result := 2 end
+   Boolean_Type : Integer do Result := 3 end
+   Char_Type    : Integer do Result := 4 end
+   Unknown_Type : Integer do Result := 5 end
+   Error_Type   : Integer do Result := 6 end
+
+   Name (Code : Integer) : String
+      --  For error messages
+      do
+         if Code = Integer_Type then
+            Result := "integer"
+         elsif Code = Real_Type then
+            Result := "real"
+         elsif Code = Boolean_Type then
+            Result := "boolean"
+         elsif Code = Char_Type then
+            Result := "char"
+         else
+            Result := "unknown type"
+         end
+      end
+
+   Is_Known (Code : Integer) : Boolean
+      --  One of the four modelled types: worth checking, and worth reporting
+      --  about. Anything else has either not been typed or has been reported.
+      do
+         Result := Code >= Integer_Type and then Code <= Char_Type
+      end
+
+   Is_Quiet (Code : Integer) : Boolean
+      --  Say nothing about this operand: it is poison from an error already
+      --  reported, or a node the pass never typed.
+      do
+         Result := Code = Error_Type or else Code = No_Type
+      end
+
+   Is_Numeric (Code : Integer) : Boolean
+      do
+         Result := Code = Integer_Type or else Code = Real_Type
+      end
+
+   Is_Ordinal (Code : Integer) : Boolean
+      --  What a for-loop control variable and a case selector must be. Real is
+      --  the one modelled type that is not ordinal.
+      do
+         Result := Code = Integer_Type or else Code = Boolean_Type
+            or else Code = Char_Type
+      end
+
+   Assignable (Target : Integer; Source : Integer) : Boolean
+      --  Pascal assignment compatibility for the modelled types: identical, or
+      --  the one widening the language performs for you, integer to real. The
+      --  reverse needs an explicit round or trunc.
+      do
+         if Is_Quiet (Target) or else Is_Quiet (Source) then
+            Result := True
+         elsif Target = Source then
+            Result := True
+         else
+            Result := Target = Real_Type and then Source = Integer_Type
+         end
+      end
+
+   Both_Numeric (Left : Integer; Right : Integer) : Boolean
+      do
+         Result := Is_Numeric (Left) and then Is_Numeric (Right)
+      end
+
+   --  How an operator constrains its operands. The three operator rungs --
+   --  multiplying, adding and relational -- have five typing rules between
+   --  them, not fifteen, so each classifies its token into one of these and
+   --  they share one fold.
+   --
+   --  The relational rung does not classify at all: every relational operator
+   --  yields a boolean from two compatible operands, so it passes Compare_Op
+   --  and needs no visitor of its own. 'in' is the exception, and its right
+   --  operand is a set_constructor, which is never typed, so the fold stays
+   --  quiet about it rather than wrong.
+
+   No_Op          : Integer do Result := 0 end
+   Arithmetic_Op  : Integer do Result := 1 end
+   Real_Divide_Op : Integer do Result := 2 end
+   Integer_Op     : Integer do Result := 3 end
+   Boolean_Op     : Integer do Result := 4 end
+   Compare_Op     : Integer do Result := 5 end
+
+   Operand_Requirement (Op : Integer) : String
+      --  What the operator wanted, for the error message
+      do
+         if Op = Boolean_Op then
+            Result := "boolean"
+         elsif Op = Integer_Op then
+            Result := "integer"
+         else
+            Result := "numeric"
+         end
+      end
+
+   --  The fold itself, in two halves: what the combination yields, and what to
+   --  say if it is illegal. Both are pure, and both live here rather than on
+   --  Pascal.Checks.Node, which reports the message. Node is the base of every
+   --  checks visitor, and features accumulated on it break the plugin VM in
+   --  unrelated places (issues #107, #117), so it keeps only the thin wrapper
+   --  that needs Error.
+
+   --  Argument types travel from a call's argument list to the check against
+   --  its signature packed into one Integer, three bits per argument, exactly
+   --  as the var-parameter flags travel as one bit per argument. A list would
+   --  read better, but a Linked_List attribute on THOSE visitors faults the VM
+   --  (issue #120), and Integer has no bit operations (issue #109), so the
+   --  packing is arithmetic: base 8, since the codes run 0 .. 6.
+
+   Type_Slot_Limit : Integer
+      --  Arguments past the tenth are not represented: ten slots of three bits
+      --  is thirty, and an Integer is thirty-two. A call that long simply goes
+      --  unchecked rather than wrong.
+      do
+         Result := 10
+      end
+
+   Type_Weight (Index : Integer) : Integer
+      --  8 ** (Index - 1), the place value of argument Index. Zero beyond the
+      --  limit, which is what stops anything being packed there.
+      local
+         At : Integer
+      do
+         if Index >= 1 and then Index <= Type_Slot_Limit then
+            Result := 1
+            from
+               At := 1
+            until
+               At >= Index
+            loop
+               Result := Result * 8
+               At := At + 1
+            end
+         end
+      end
+
+   Packed_Type (Mask : Integer; Index : Integer) : Integer
+      --  The code packed at Index, or No_Type past the limit
+      local
+         Weight : Integer
+      do
+         Weight := Type_Weight (Index)
+         if Weight > 0 then
+            Result := (Mask / Weight) mod 8
+         end
+      end
+
+   Legal (Op : Integer; Left : Integer; Right : Integer) : Boolean
+      --  Whether the operator accepts these two operand types. Only ever asked
+      --  about two known types: quiet and unknown operands are settled first.
+      do
+         if Op = Boolean_Op then
+            Result := Left = Boolean_Type and then Right = Boolean_Type
+         elsif Op = Integer_Op then
+            Result := Left = Integer_Type and then Right = Integer_Type
+         elsif Op = Compare_Op then
+            --  Comparable if either side would be assignable to the other,
+            --  which admits integer against real and nothing else mixed.
+            Result := Assignable (Left, Right) or else Assignable (Right, Left)
+         else
+            --  Arithmetic and real division both want numbers
+            Result := Both_Numeric (Left, Right)
+         end
+      end
+
+   Yield (Op : Integer; Left : Integer; Right : Integer) : Integer
+      --  What a legal combination produces
+      do
+         if Op = Compare_Op then
+            Result := Boolean_Type
+         elsif Op = Boolean_Op then
+            Result := Boolean_Type
+         elsif Op = Integer_Op then
+            Result := Integer_Type
+         elsif Op = Real_Divide_Op then
+            --  '/' is real division: integral operands and all
+            Result := Real_Type
+         else
+            Result := Arithmetic_Result (Left, Right)
+         end
+      end
+
+   Combine (Op : Integer; Left : Integer; Right : Integer) : Integer
+      --  The type of "Left op Right". Error is poison, and is what an illegal
+      --  or already-reported combination yields, so that one mistyped subterm
+      --  produces one message rather than one per enclosing operator.
+      do
+         if Op = No_Op then
+            Result := No_Type
+         elsif Is_Quiet (Left) or else Is_Quiet (Right) then
+            Result := Error_Type
+         elsif not Is_Known (Left) or else not Is_Known (Right) then
+            Result := Error_Type
+         elsif Legal (Op, Left, Right) then
+            Result := Yield (Op, Left, Right)
+         else
+            Result := Error_Type
+         end
+      end
+
+   Combine_Message (Op : Integer; Left : Integer; Right : Integer) : String
+      --  What to report about "Left op Right", or the empty string if there is
+      --  nothing to say. Kept beside Combine so the two agree about what is
+      --  legal; the caller reports it.
+      do
+         Result := ""
+         if Op = No_Op then
+         elsif Is_Quiet (Left) or else Is_Quiet (Right) then
+         elsif not Is_Known (Left) or else not Is_Known (Right) then
+            Result := "unsupported operand type: only integer, real, boolean"
+               & " and char are modelled"
+         elsif Legal (Op, Left, Right) then
+         elsif Op = Compare_Op then
+            Result := "cannot compare " & Name (Left) & " with " & Name (Right)
+         else
+            Result := "operator requires " & Operand_Requirement (Op)
+               & " operands, found " & Name (Left) & " and " & Name (Right)
+         end
+      end
+
+   Literal_Type (Text : String) : Integer
+      --  The type of a literal, from its text with any sign already peeled off.
+      --  Shared by unsigned_constant in an expression and by constant in a const
+      --  definition. A name is No_Type: the caller resolves it.
+      --
+      --  This and the spelling predicates below live here, on a class nobody
+      --  inherits, rather than on Pascal.Checks.Node. Node is the base of every
+      --  checks visitor, and features added to it break the plugin VM in ways
+      --  that show up in unrelated places (issues #107, #117).
+      do
+         if Text.Length = 0 then
+            Result := No_Type
+         elsif Is_Digit (Text.Element (1)) then
+            if Looks_Real (Text) then
+               Result := Real_Type
+            else
+               Result := Integer_Type
+            end
+         elsif Is_Quote (Text.Element (1)) then
+            if Is_Character_Literal (Text) then
+               Result := Char_Type
+            else
+               --  A string of more than one character: no place to put the
+               --  text, and no string type in the model (issue #88).
+               Result := Unknown_Type
+            end
+         elsif Text.Length = 3 then
+            if Text.To_Lower.Equal ("nil") then
+               Result := Unknown_Type
+            end
+         end
+      end
+
+   Is_Digit (Ch : Character) : Boolean
+      --  Character has no Is_Digit, so compare code points: '0' is 48, '9' is 57
+      local
+         Code : Integer
+      do
+         Code.Convert_From (Ch.UTF_32_Code)
+         Result := Code >= 48 and then Code <= 57
+      end
+
+   Looks_Real (Text : String) : Boolean
+      --  A decimal point or an exponent makes it a real literal
+      local
+         Index : Integer
+         Ch    : Character
+      do
+         from
+            Index := 1
+         until
+            Index > Text.Length or else Result
+         loop
+            Ch := Text.Element (Index)
+            if Ch = '.' or else Ch = 'e' or else Ch = 'E' then
+               Result := True
+            end
+            Index := Index + 1
+         end
+      end
+
+   Is_Quote (Ch : Character) : Boolean
+      --  The apostrophe is written ''' -- character_constant is !\'[.]\'!, so
+      --  the middle character may itself be a quote. The double quote is
+      --  accepted too, because this Pascal lexer takes either around a string.
+      do
+         Result := Ch = ''' or else Ch = '"'
+      end
+
+   Is_Character_Literal (Text : String) : Boolean
+      --  A quoted literal of exactly one character, counting the doubled quote
+      --  that denotes the quote itself.
+      local
+         Inner : String
+      do
+         if Text.Length >= 2 then
+            Inner := Text.Slice (2, Text.Length - 1)
+            if Inner.Length = 1 then
+               Result := True
+            elsif Inner.Length = 2 then
+               Result := Is_Quote (Inner.Element (1))
+                  and then Is_Quote (Inner.Element (2))
+            end
+         end
+      end
+
+   Arithmetic_Result (Left : Integer; Right : Integer) : Integer
+      --  The type of Left op Right for '+', '-' and '*': real if either side
+      --  is, integer otherwise. The promotion is the caller's to generate.
+      do
+         if Left = Real_Type or else Right = Real_Type then
+            Result := Real_Type
+         else
+            Result := Integer_Type
+         end
+      end
+
+end

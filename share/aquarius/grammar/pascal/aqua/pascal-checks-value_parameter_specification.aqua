@@ -13,12 +13,35 @@ inherit
 --  Also recorded in the entity model as a "parameter" (issue #74), and in the
 --  frame scope's declarations so a reference to the parameter can resolve to it
 --  and record a cross reference.
+--
+--  The declared type reaches the binding and the routine's signature (issue
+--  #88), which is what lets a call be checked against it. As in a variable
+--  declaration, the names reduce before the type does, so the binding waits for
+--  After_Node.
 
 feature
 
    After_Identifier_List (Child : Pascal.Checks.Identifier_List)
       do
-         Declare_Parameters (Child, False, "parameter")
+         Names := Child.Names
       end
+
+   After_Type_Identifier (Child : Pascal.Checks.Type_Identifier)
+      do
+         Ty := Child.Ty
+      end
+
+   After_Node
+      do
+         if attached Names as Declared then
+            Declare_Parameters (Declared, False, "parameter", Ty)
+         end
+      end
+
+feature { None }
+
+   Names : detachable Aqua.Containers.Linked_List [String]
+
+   Ty : Integer
 
 end

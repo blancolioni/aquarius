@@ -1,0 +1,54 @@
+class
+   Pascal.Checks.Unsigned_Constant
+
+inherit
+   Pascal.Checks.Node
+
+--  unsigned_constant ::= numeric_literal | string_literal | 'nil'
+--
+--  Types a literal where it appears in an expression (issue #88). The const
+--  section has its own path through Pascal.Checks.Constant, which additionally
+--  evaluates the literal; here only the type is wanted.
+--
+--  numeric_literal is the standard ada_numeric_literal, so a decimal point or an
+--  exponent is what separates 3.14 and 1.0e10 from 42 and 16#FF#. A string
+--  literal of one character is a char; a longer one is not modelled, and neither
+--  is nil, which is a keyword and so fires no hook at all.
+--
+--  Taken from the token hooks rather than from this node's Concatenated_Image so
+--  that the string handed across the tree device is the literal itself and never
+--  more (issue #118).
+
+feature
+
+   Ty : Integer
+
+   After_Numeric_Literal (Value : String)
+      local
+         T : Pascal.Checks.Types
+      do
+         Ty := T.Literal_Type (Value)
+      end
+
+   After_String_Literal (Value : String)
+      local
+         T : Pascal.Checks.Types
+      do
+         if T.Is_Character_Literal (Value) then
+            Ty := T.Char_Type
+         else
+            Ty := T.Unknown_Type
+         end
+      end
+
+   After_Node
+      local
+         T : Pascal.Checks.Types
+      do
+         if Ty = T.No_Type then
+            --  nil
+            Ty := T.Unknown_Type
+         end
+      end
+
+end

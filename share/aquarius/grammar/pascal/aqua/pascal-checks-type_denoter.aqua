@@ -1,0 +1,42 @@
+class
+   Pascal.Checks.Type_Denoter
+
+inherit
+   Pascal.Checks.Node
+
+--  type_denoter ::= type_identifier | new_type
+--
+--  Publishes the type its enclosing variable_declaration or type_definition is
+--  declaring (issue #88).
+--
+--  Only the type_identifier alternative is resolved, and through the child
+--  rather than through this node's own text. A new_type -- a record, an array, a
+--  set, a subrange, a pointer -- fires no hook and stays Unknown, which is what
+--  it is to a system that models four scalar types; structured types are issue
+--  #104.
+--
+--  Reading Concatenated_Image here would answer both alternatives at once, and
+--  is how this was first written, but the image of a whole record denotation is
+--  far longer than the 252 characters the tree device can pass back to the
+--  plugin, and overflowing that window kills the run with a range check
+--  (issue #118). The child's image is a single identifier.
+
+feature
+
+   Ty : Integer
+
+   After_Type_Identifier (Child : Pascal.Checks.Type_Identifier)
+      do
+         Ty := Child.Ty
+      end
+
+   After_Node
+      local
+         T : Pascal.Checks.Types
+      do
+         if Ty = T.No_Type then
+            Ty := T.Unknown_Type
+         end
+      end
+
+end

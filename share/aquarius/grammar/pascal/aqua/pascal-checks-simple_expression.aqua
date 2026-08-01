@@ -7,29 +7,55 @@ inherit
 --  simple_expression ::= [ sign ] < term / adding_operator >. A bare variable
 --  only if it is one term with no sign and no operator: -x and x + 1 are not
 --  variables (issue #105).
+--
+--  Types '+', '-' and 'or' the way term types its own operators (issue #88). A
+--  leading sign is the one unary case here: it needs a numeric term, and leaves
+--  the type alone.
 
 feature
 
    Is_Variable : Boolean
+
+   Ty : Integer
 
    After_Sign (Child : Pascal.Checks.Sign)
       do
          Signed := True
       end
 
+   After_Adding_Operator (Child : Pascal.Checks.Adding_Operator)
+      do
+         Pending := Child.Kind
+      end
+
    After_Term (Child : Pascal.Checks.Term)
+      local
+         T : Pascal.Checks.Types
       do
          if Terms = 0 and then not Signed then
             Is_Variable := Child.Is_Variable
+            Ty := Child.Ty
          else
             Is_Variable := False
+            if Terms = 0 then
+               --  Signed: '-' and '+' on their own take a number
+               Ty := Child.Ty
+               if not T.Is_Quiet (Ty) and then not T.Is_Numeric (Ty) then
+                  Error ("a sign needs a numeric operand, found "
+                         & T.Name (Ty))
+                  Ty := T.Error_Type
+               end
+            else
+               Ty := Combine_Types (Pending, Ty, Child.Ty)
+            end
          end
          Terms := Terms + 1
       end
 
 feature { None }
 
-   Terms  : Integer
-   Signed : Boolean
+   Terms   : Integer
+   Signed  : Boolean
+   Pending : Integer
 
 end

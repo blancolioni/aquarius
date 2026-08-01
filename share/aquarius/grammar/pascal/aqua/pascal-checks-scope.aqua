@@ -73,20 +73,28 @@ feature
 
 feature  --  declaring
 
-   Declare_Local (Name : String) : Integer
+   Declare_Local (Name : String; Type_Code : Integer) : Integer
       --  Bind Name in THIS scope to a freshly allocated frame slot, and return
       --  the slot. The caller is expected to have checked Find first: declaring
       --  the same name twice in one scope leaves both bindings, and Find will
       --  answer with the first.
+      --
+      --  One slot per name whatever the type, including a real (issue #88).
+      --  A slot index is not a word offset: Tagatha's Aqua backend maps slot to
+      --  register with its own prefix sum over Slot_Width, widening a slot that
+      --  is pushed or popped as floating point to the pair it needs. A second
+      --  prefix sum here would compose wrongly with that one.
       local
          B : Pascal.Checks.Binding
       do
          Result := Allocate
-         create B.Make_Local (Name, Result)
+         create B.Make_Local (Name, Result, Type_Code)
          Bindings.Append (B)
       end
 
-   Declare_Argument (Name : String; By_Reference : Boolean) : Integer
+   Declare_Argument (Name : String
+                     By_Reference : Boolean
+                     Type_Code : Integer) : Integer
       --  Bind Name in THIS scope to the next argument index of the routine this
       --  scope belongs to, and return the index. Same caller contract as
       --  Declare_Local: check Find first.
@@ -95,7 +103,7 @@ feature  --  declaring
       do
          Allocated_Arguments := Allocated_Arguments + 1
          Result := Allocated_Arguments
-         create B.Make_Argument (Name, Result, By_Reference)
+         create B.Make_Argument (Name, Result, By_Reference, Type_Code)
          Bindings.Append (B)
       end
 
@@ -126,13 +134,24 @@ feature  --  declaring
          end
       end
 
-   Declare_Constant (Name : String; Value : Integer)
+   Declare_Constant (Name : String; Value : Integer; Type_Code : Integer)
       --  Bind Name in THIS scope to a value (issue #103). Nothing is allocated:
       --  a constant is not storage, so it takes no slot in either index space.
       local
          B : Pascal.Checks.Binding
       do
-         create B.Make_Constant (Name, Value)
+         create B.Make_Constant (Name, Value, Type_Code)
+         Bindings.Append (B)
+      end
+
+   Declare_Type (Name : String; Type_Code : Integer)
+      --  Bind Name in THIS scope as the name of a type (issue #88). Used for
+      --  the four built-ins, declared into the root scope for each program, and
+      --  for a user alias of one of them.
+      local
+         B : Pascal.Checks.Binding
+      do
+         create B.Make_Type (Name, Type_Code)
          Bindings.Append (B)
       end
 
@@ -246,6 +265,22 @@ feature  --  resolving
          B := Lookup (Name)
          if attached B as Found then
             Result := Found.Offset
+         end
+      end
+
+   Lookup_Type (Name : String) : Integer
+      --  The type the innermost Name stands for, or 0 -- Types.No_Type -- if
+      --  the name is not bound, or is bound to something that is not a type.
+      --  Left as the default rather than naming the constant, so that the
+      --  symbol table stays independent of the type codes, as Offset is.
+      local
+         B : detachable Pascal.Checks.Binding
+      do
+         B := Lookup (Name)
+         if attached B as Found then
+            if Found.Is_Type then
+               Result := Found.Ty
+            end
          end
       end
 

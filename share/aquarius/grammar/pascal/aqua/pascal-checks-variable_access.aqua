@@ -46,6 +46,13 @@ feature
 
    Is_Target : Boolean
 
+   Ty : Integer
+      --  What this access yields (issue #88): the bound name's type, or the
+      --  result type of the function when it is a call. This is the leaf the
+      --  whole expression chain is typed from, and -- since this object is the
+      --  one the code stage receives by injection -- the type it will read to
+      --  choose a float operator (issue #87).
+
    Set_Target
       do
          Is_Target := True
@@ -62,6 +69,7 @@ feature
             Has_Argument_List := True
             Given_Arguments := Child.Argument_Count
             Argument_Variables := Child.Variable_Mask
+            Argument_Types := Child.Type_Mask
          else
             Is_Component := True
          end
@@ -70,6 +78,7 @@ feature
    After_Node
       local
          B : detachable Pascal.Checks.Binding
+         T : Pascal.Checks.Types
       do
          if attached Nm as N then
             B := Current_Frame_Scope.Lookup (N)
@@ -82,6 +91,7 @@ feature
                   By_Reference := Bound.By_Reference
                   Is_Constant := Bound.Is_Constant
                   Value := Bound.Value
+                  Ty := Bound.Ty
                   if Is_Constant and then Is_Target then
                      Error ("cannot assign to a constant: " & N)
                   end
@@ -90,6 +100,10 @@ feature
                   end
                   if Is_Component then
                      Error ("not supported yet: a component of " & N)
+                     --  Reported, so the type it yields is poison rather than
+                     --  the base variable's: saying nothing more about a
+                     --  subscript is better than saying something wrong.
+                     Ty := T.Error_Type
                   end
                end
                --  Record a cross reference to the declared variable: a write
@@ -121,11 +135,19 @@ feature { None }
       --  than the suffix object, because a visitor holding a reference to
       --  another plugin object corrupts generated code (issue #107).
 
+   Argument_Types : Integer
+      --  One type code per argument, three bits apiece (issue #88)
+
    Check_Call (Name : String; Bound : Pascal.Checks.Binding)
       --  The name is a routine. Report what a call to it cannot do, and check
-      --  the argument count against the signature.
+      --  the argument count and types against the signature.
       do
          Is_Call := True
+         if attached Bound.Signature as Called then
+            --  A call has the function's result type, whatever else is wrong
+            --  with it (issue #88)
+            Ty := Called.Result_Type
+         end
          if Is_Target then
             --  Assigning to a function name sets its result, which needs the
             --  result slot: issue #84.
@@ -142,6 +164,7 @@ feature { None }
                       & ", found " & Given_Arguments.To_String)
             else
                Check_Var_Arguments (Name, Sig)
+               Check_Argument_Types (Name, Sig, Given_Arguments, Argument_Types)
             end
          end
       end

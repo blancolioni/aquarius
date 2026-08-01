@@ -1,0 +1,43 @@
+class
+   Pascal.Checks.Multiplying_Operator
+
+inherit
+   Pascal.Checks.Node
+
+--  multiplying_operator ::= '*' | '/' | 'div' | 'mod' | 'and'
+--
+--  Classifies the token into the typing rule its enclosing term must apply
+--  (issue #88). The three operator levels share five rules, described on
+--  Pascal.Checks.Types, and fold through Node.Combine_Types.
+--
+--  This is where Pascal's two divisions separate: '/' yields a real however
+--  integral its operands are, while 'div' and 'mod' take integers only. The
+--  code stage still maps both to one Divide (issue #87).
+
+feature
+
+   Kind : Integer
+
+   After_Node
+      local
+         T : Pascal.Checks.Types
+         S : String
+      do
+         --  Concatenated_Image, not Standard_Text: see the note in
+         --  Pascal.Checks.Adding_Operator.
+         S := Concatenated_Image
+         S := S.To_Lower
+         if S.Equal ("*") then
+            Kind := T.Arithmetic_Op
+         elsif S.Equal ("/") then
+            Kind := T.Real_Divide_Op
+         elsif S.Equal ("div") or else S.Equal ("mod") then
+            Kind := T.Integer_Op
+         elsif S.Equal ("and") then
+            Kind := T.Boolean_Op
+         else
+            Kind := T.No_Op
+         end
+      end
+
+end

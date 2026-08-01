@@ -14,6 +14,10 @@ inherit
 --  As for a procedure, the name is bound as a routine in the enclosing scope
 --  with a signature the parameters fill in (issue #105); this one returns a
 --  value, so a call to it is legal in an expression.
+--
+--  The result type goes on that signature too (issue #88), which is what gives
+--  a call its type. It arrives last, after the parameters, and lands on the
+--  signature of the scope the heading has already opened.
 
 feature
 
@@ -28,6 +32,13 @@ feature
          create Func_Scope.Make
          Enter_Scope (Func_Scope)
          Current_Frame_Scope.Set_Routine (Sig)
+      end
+
+   After_Result_Type (Child : Pascal.Checks.Result_Type)
+      do
+         if attached Current_Frame_Scope.Routine as Sig then
+            Sig.Set_Result_Type (Child.Ty)
+         end
       end
 
 end

@@ -16,9 +16,35 @@ inherit
 --  which is why the code stage has the same chain -- but each rung is a copy.
 --  A parenthesised expression counts: (x) is still the variable x.
 
+--  The leaves of the type chain hang here (issue #88): a variable access, a
+--  literal, a parenthesised expression, and 'not'. A set_constructor has no hook
+--  at all, so it stays No_Type and every operator above it keeps quiet, which is
+--  what an unmodelled construct deserves until sets exist.
+
 feature
 
    Is_Variable : Boolean
+
+   Ty : Integer
+
+   After_Unsigned_Constant (Child : Pascal.Checks.Unsigned_Constant)
+      do
+         Ty := Child.Ty
+      end
+
+   After_Factor (Child : Pascal.Checks.Factor)
+      --  factor as a child of factor is the 'not' alternative, the only one
+      local
+         T : Pascal.Checks.Types
+      do
+         Ty := T.Boolean_Type
+         if not T.Is_Quiet (Child.Ty)
+           and then not (Child.Ty = T.Boolean_Type)
+         then
+            Error ("'not' needs a boolean operand, found " & T.Name (Child.Ty))
+            Ty := T.Error_Type
+         end
+      end
 
    After_Variable_Access (Child : Pascal.Checks.Variable_Access)
       do
@@ -28,11 +54,13 @@ feature
          --  (prgm[i] passed to a var parameter). That the code stage cannot yet
          --  take that address is issue #104, and it says so there.
          Is_Variable := not Child.Is_Call
+         Ty := Child.Ty
       end
 
    After_Expression (Child : Pascal.Checks.Expression)
       do
          Is_Variable := Child.Is_Variable
+         Ty := Child.Ty
       end
 
 end

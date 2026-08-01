@@ -24,6 +24,7 @@ feature
       do
          Given_Arguments := Child.Count
          Argument_Variables := Child.Variable_Mask
+         Argument_Types := Child.Type_Mask
       end
 
    After_Node
@@ -43,6 +44,8 @@ feature
                                & ", found " & Given_Arguments.To_String)
                      else
                         Check_Var_Arguments (N, Sig)
+                        Check_Argument_Types (N, Sig, Given_Arguments,
+                                              Argument_Types)
                      end
                   end
                   Refer (Current, "call",
@@ -62,6 +65,9 @@ feature { None }
    Given_Arguments    : Integer
    Argument_Variables : Integer
       --  One bit per argument, set when it is a bare variable (issue #107)
+
+   Argument_Types : Integer
+      --  One type code per argument, three bits apiece (issue #88)
 
    Check_Var_Arguments (Name : String; Sig : Pascal.Checks.Signature)
       --  A var parameter is passed by address, so its actual has to be something
