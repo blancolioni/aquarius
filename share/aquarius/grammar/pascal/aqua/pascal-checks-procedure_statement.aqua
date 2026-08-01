@@ -1,0 +1,88 @@
+class
+   Pascal.Checks.Procedure_Statement
+
+inherit
+   Pascal.Checks.Node
+
+--  procedure_statement ::= procedure_identifier [ actual_parameter_list ].
+--  Resolves the callee and checks the argument count against its signature
+--  (issue #105). Nothing checked a call before this: calling an undeclared
+--  procedure, or passing any number of arguments to a known one, was accepted
+--  silently.
+--
+--  A function may be called as a statement in real Pascal code, discarding the
+--  result, so that is not treated as an error here.
+
+feature
+
+   After_Procedure_Identifier (Child : Pascal.Checks.Procedure_Identifier)
+      do
+         Nm := Child.Concatenated_Image
+      end
+
+   After_Actual_Parameter_List (Child : Pascal.Checks.Actual_Parameter_List)
+      do
+         Given_Arguments := Child.Count
+         Argument_Variables := Child.Variable_Mask
+      end
+
+   After_Node
+      local
+         B : detachable Pascal.Checks.Binding
+      do
+         if attached Nm as N then
+            B := Current_Frame_Scope.Lookup (N)
+            if attached B as Bound then
+               if Bound.Is_Routine then
+                  if attached Bound.Signature as Sig then
+                     if not Sig.Is_Variadic
+                       and then Given_Arguments /= Sig.Argument_Count
+                     then
+                        Error ("wrong number of arguments for " & N
+                               & ": expected " & Sig.Argument_Count.To_String
+                               & ", found " & Given_Arguments.To_String)
+                     else
+                        Check_Var_Arguments (N, Sig)
+                     end
+                  end
+                  Refer (Current, "call",
+                         Current_Frame_Scope.Lookup_Declaration (N))
+               else
+                  Error ("not a procedure: " & N)
+               end
+            else
+               Error ("undeclared procedure: " & N)
+            end
+         end
+      end
+
+feature { None }
+
+   Nm                 : detachable String
+   Given_Arguments    : Integer
+   Argument_Variables : Integer
+      --  One bit per argument, set when it is a bare variable (issue #107)
+
+   Check_Var_Arguments (Name : String; Sig : Pascal.Checks.Signature)
+      --  A var parameter is passed by address, so its actual has to be something
+      --  with an address. This is checkable without any type system, and it
+      --  catches a mistake the compiler would otherwise have no way to notice.
+      local
+         Index : Integer
+      do
+         from
+            Index := 1
+         until
+            Index > Given_Arguments
+         loop
+            if Sig.Parameter_By_Reference (Index) then
+               if not Mask_Holds (Argument_Variables, Index) then
+                  Error ("argument " & Index.To_String & " of " & Name
+                         & " is a var parameter, so it needs a variable")
+               end
+            end
+            Index := Index + 1
+         end
+      end
+
+end

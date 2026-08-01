@@ -1,0 +1,36 @@
+class
+   Pascal.Checks.Variable_Suffix
+
+inherit
+   Pascal.Checks.Node
+
+--  variable_suffix ::= indexed_variable | field_designator | identified_variable
+--                    | function_designator
+--
+--  Only the call form is understood (issue #105): a function_designator makes
+--  the enclosing variable_access a call rather than a load, and carries the
+--  number of arguments and which of them are bare variables. The other three --
+--  subscript, field selection and pointer dereference -- are structured access,
+--  issue #104, and are reported by variable_access as unsupported rather than
+--  silently ignored, which is what used to happen.
+--
+--  The argument information is copied out as values rather than kept as a
+--  reference to the child: a visitor holding a reference to another plugin
+--  object corrupts the generated code (issue #107).
+
+feature
+
+   Is_Call : Boolean
+
+   Argument_Count : Integer
+
+   Variable_Mask : Integer
+
+   After_Function_Designator (Child : Pascal.Checks.Function_Designator)
+      do
+         Is_Call := True
+         Argument_Count := Child.Count
+         Variable_Mask := Child.Variable_Mask
+      end
+
+end

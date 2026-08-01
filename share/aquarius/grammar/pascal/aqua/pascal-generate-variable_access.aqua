@@ -28,7 +28,18 @@ feature
          K : Ast.Expression.Literal
       do
          if attached Checks as C then
-            if C.Is_Constant then
+            if C.Is_Call then
+               --  A routine name, not storage. Lowering a call written in an
+               --  expression needs the argument expressions from the suffix and
+               --  an Ast.Expression.Call; until then, refuse. Emitting a load
+               --  here stored to local slot 0 (issue #105).
+               Error ("not implemented: calling a routine in an expression")
+            elsif C.Is_Component then
+               --  A subscript, field or dereference. Loading the base variable
+               --  and discarding the suffix is what used to happen, silently
+               --  (issue #104).
+               Error ("not implemented: a component of a structured variable")
+            elsif C.Is_Constant then
                --  A constant has no storage: emit its value (issue #103)
                create K.Make_Integer (Void, Current, C.Value)
                Set_Expr (K)

@@ -1,0 +1,11 @@
+class
+   Pascal.Checks.Procedure_Identifier
+
+inherit
+   Pascal.Checks.Node
+
+--  procedure_identifier ::= identifier. The callee name of a procedure
+--  statement; the enclosing Pascal.Checks.Procedure_Statement reads it from
+--  Concatenated_Image (issue #105).
+
+end

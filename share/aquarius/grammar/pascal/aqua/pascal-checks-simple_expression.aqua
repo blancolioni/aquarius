@@ -1,0 +1,35 @@
+class
+   Pascal.Checks.Simple_Expression
+
+inherit
+   Pascal.Checks.Node
+
+--  simple_expression ::= [ sign ] < term / adding_operator >. A bare variable
+--  only if it is one term with no sign and no operator: -x and x + 1 are not
+--  variables (issue #105).
+
+feature
+
+   Is_Variable : Boolean
+
+   After_Sign (Child : Pascal.Checks.Sign)
+      do
+         Signed := True
+      end
+
+   After_Term (Child : Pascal.Checks.Term)
+      do
+         if Terms = 0 and then not Signed then
+            Is_Variable := Child.Is_Variable
+         else
+            Is_Variable := False
+         end
+         Terms := Terms + 1
+      end
+
+feature { None }
+
+   Terms  : Integer
+   Signed : Boolean
+
+end

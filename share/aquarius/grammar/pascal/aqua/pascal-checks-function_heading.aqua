@@ -10,6 +10,10 @@ inherit
 --  identifier is nested (inside result_type), so After_Identifier fires only
 --  for the function name. Pascal.Checks.Function_Declaration.After_Node closes
 --  the scope.
+--
+--  As for a procedure, the name is bound as a routine in the enclosing scope
+--  with a signature the parameters fill in (issue #105); this one returns a
+--  value, so a call to it is legal in an expression.
 
 feature
 
@@ -17,10 +21,13 @@ feature
       local
          Ignore     : Aquarius.Entities.Declaration
          Func_Scope : Aquarius.Entities.Scope
+         Sig        : Pascal.Checks.Signature
       do
          Ignore := Record_Declaration (Current, Name, "function")
+         Sig := Declare_Routine (Name, True, False)
          create Func_Scope.Make
          Enter_Scope (Func_Scope)
+         Current_Frame_Scope.Set_Routine (Sig)
       end
 
 end

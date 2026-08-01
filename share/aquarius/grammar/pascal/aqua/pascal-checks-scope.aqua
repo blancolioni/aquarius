@@ -49,6 +49,16 @@ feature
          Parent := Enclosing
       end
 
+   Routine : detachable Pascal.Checks.Signature
+      --  The signature of the routine this scope belongs to, so that parameters
+      --  reducing into the scope can be added to it (issue #105). Void for the
+      --  root and the program scope, which are not routines.
+
+   Set_Routine (Signature : Pascal.Checks.Signature)
+      do
+         Routine := Signature
+      end
+
    Reset
       --  Return the scope to its initial state. The shared root scope is a once
       --  value and the plugin reuses one VM across files, so the root has to be
@@ -87,6 +97,33 @@ feature  --  declaring
          Result := Allocated_Arguments
          create B.Make_Argument (Name, Result, By_Reference)
          Bindings.Append (B)
+      end
+
+   Declare_Routine (Name : String; Routine : Pascal.Checks.Signature)
+      : Pascal.Checks.Signature
+      --  Bind Name in THIS scope to a routine, and return the signature that is
+      --  now in force (issue #105).
+      --
+      --  If the name is already bound to a routine here, the existing signature
+      --  is kept and returned: that is a forward declaration being completed.
+      --  Pascal gives the parameters on the FORWARD heading and repeats only the
+      --  name on the body, so the first signature is the complete one.
+      local
+         B        : Pascal.Checks.Binding
+         Existing : detachable Pascal.Checks.Binding
+      do
+         Existing := Find (Name)
+         Result := Routine
+         if attached Existing as Already then
+            if Already.Is_Routine then
+               if attached Already.Signature as Known then
+                  Result := Known
+               end
+            end
+         else
+            create B.Make_Routine (Name, Routine)
+            Bindings.Append (B)
+         end
       end
 
    Declare_Constant (Name : String; Value : Integer)

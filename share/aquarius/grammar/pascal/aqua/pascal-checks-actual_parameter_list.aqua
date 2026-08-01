@@ -1,0 +1,29 @@
+class
+   Pascal.Checks.Actual_Parameter_List
+
+inherit
+   Pascal.Checks.Node
+
+--  actual_parameter_list ::= '(' < actual_parameter / ',' > ')'. The argument
+--  list of a procedure statement; Count is its arity (issue #105).
+--
+--  Variable_Mask carries one bit per argument, set when that argument is a bare
+--  variable: a visitor cannot hold a reference to another plugin object
+--  (issue #107), and Integer has no bit operations (issue #109), so the flags
+--  travel as arithmetic. Node.Mask_Holds reads it back.
+
+feature
+
+   Count : Integer
+
+   Variable_Mask : Integer
+
+   After_Actual_Parameter (Child : Pascal.Checks.Actual_Parameter)
+      do
+         Count := Count + 1
+         if Child.Is_Variable then
+            Variable_Mask := Variable_Mask + Argument_Weight (Count)
+         end
+      end
+
+end

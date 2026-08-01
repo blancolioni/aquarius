@@ -1,0 +1,73 @@
+class
+   Pascal.Checks.Signature
+
+create
+   Make
+
+--  What a call has to agree with: how many parameters a routine takes, which of
+--  them are passed by reference, and whether it returns a value (issue #105).
+--
+--  A signature outlives the scope it describes. A routine's own scope -- which
+--  holds its parameter bindings and knows how many there are -- is popped when
+--  its declaration ends, so a call written later would have nothing to check
+--  against. The signature is therefore declared in the ENCLOSING scope, as part
+--  of the routine's binding, and filled in as the parameters reduce.
+--
+--  Variadic covers the standard I/O procedures: write and writeln take any
+--  number of arguments, so counting them proves nothing.
+
+feature
+
+   Make (Returns_A_Value : Boolean; Any_Argument_Count : Boolean)
+      do
+         create By_Reference_Flags
+         Argument_Count := 0
+         Is_Function := Returns_A_Value
+         Is_Variadic := Any_Argument_Count
+      end
+
+   Argument_Count : Integer
+
+   Is_Function : Boolean
+
+   Is_Variadic : Boolean
+
+   Add_Parameter (By_Reference : Boolean)
+      do
+         if By_Reference then
+            By_Reference_Flags.Append (1)
+         else
+            By_Reference_Flags.Append (0)
+         end
+         Argument_Count := Argument_Count + 1
+      end
+
+   Parameter_By_Reference (Index : Integer) : Boolean
+      --  True if parameter Index (1-based) is a var parameter. False for an
+      --  index out of range, which the arity check reports separately.
+      --
+      --  The flags are held as 1 and 0 rather than as Booleans: a
+      --  Linked_List [Boolean] corrupts the VM (see the class comment).
+      local
+         It : Aqua.Containers.Linked_List_Iterator [Integer]
+         At : Integer
+      do
+         from
+            It := By_Reference_Flags.New_Cursor
+            At := 0
+         until
+            It.After
+         loop
+            At := At + 1
+            if At = Index then
+               Result := It.Element = 1
+            end
+            It.Next
+         end
+      end
+
+feature { None }
+
+   By_Reference_Flags : Aqua.Containers.Linked_List [Integer]
+
+end

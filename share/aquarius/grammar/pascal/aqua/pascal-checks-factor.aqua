@@ -1,0 +1,38 @@
+class
+   Pascal.Checks.Factor
+
+inherit
+   Pascal.Checks.Node
+
+--  factor ::= variable_access | unsigned_constant | set_constructor
+--           | '(' expression ')' | 'not' factor
+--
+--  First rung of the chain that carries "this expression is a bare variable"
+--  from a variable_access up to the actual_parameter that encloses it, which is
+--  what a var parameter needs to know: it takes the address of its actual, so an
+--  expression has nothing to take the address of (issue #105).
+--
+--  A class per level is unavoidable -- After_ handlers see direct children only,
+--  which is why the code stage has the same chain -- but each rung is a copy.
+--  A parenthesised expression counts: (x) is still the variable x.
+
+feature
+
+   Is_Variable : Boolean
+
+   After_Variable_Access (Child : Pascal.Checks.Variable_Access)
+      do
+         --  A call is not a variable. A component IS one: an indexed variable or
+         --  a field has an address, so Pascal allows it as a var actual, and
+         --  rejecting it reported 24 false positives in basics.pas alone
+         --  (prgm[i] passed to a var parameter). That the code stage cannot yet
+         --  take that address is issue #104, and it says so there.
+         Is_Variable := not Child.Is_Call
+      end
+
+   After_Expression (Child : Pascal.Checks.Expression)
+      do
+         Is_Variable := Child.Is_Variable
+      end
+
+end

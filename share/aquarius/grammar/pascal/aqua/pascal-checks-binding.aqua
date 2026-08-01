@@ -2,7 +2,7 @@ class
    Pascal.Checks.Binding
 
 create
-   Make_Local, Make_Argument, Make_Constant
+   Make_Local, Make_Argument, Make_Constant, Make_Routine
 
 --  One name bound to one slot of the enclosing routine's frame, held by
 --  Pascal.Checks.Scope (issue #81).
@@ -48,6 +48,13 @@ feature
          Is_Constant := True
       end
 
+   Make_Routine (Bound_Name : String; Routine : Pascal.Checks.Signature)
+      do
+         Name := Bound_Name.To_Lower
+         Signature := Routine
+         Is_Routine := True
+      end
+
    Name : String
 
    Offset : Integer
@@ -57,9 +64,14 @@ feature
    Value : Integer
       --  The value of a constant; meaningless for anything else
 
+   Signature : detachable Pascal.Checks.Signature
+      --  What the routine takes, when Is_Routine; Void otherwise
+
    Is_Argument : Boolean
 
    Is_Constant : Boolean
+
+   Is_Routine : Boolean
 
    By_Reference : Boolean
 
