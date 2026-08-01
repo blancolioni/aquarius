@@ -27,12 +27,13 @@ package body Ack.Bindings is
      new WL.String_Maps
        (Ack.Classes.Constant_Class_Entity, Ack.Classes."=");
 
-   --  Maps a class's qualified name to the list of its "group reference"
-   --  attributes -- attributes whose type is another visitor class in the same
-   --  grammar (e.g. Pascal.Generate.Factor with a field of type
-   --  Pascal.Checks.Factor). Each such attribute is auto-injected, per node,
-   --  from the property bag when the class's visitor is materialised, giving a
-   --  later stage typed access to an earlier stage's object for the same node.
+   --  Maps a class's qualified name to the list of its injection slots --
+   --  attributes whose type is a visitor class of the same grammar belonging
+   --  to a DIFFERENT action group (e.g. Pascal.Generate.Factor with a field of
+   --  type Pascal.Checks.Factor). Each such attribute is auto-injected, per
+   --  node, from the property bag when the class's visitor is materialised,
+   --  giving a later stage typed access to an earlier stage's object for the
+   --  same node. See Classify_Attribute for what does and does not qualify.
    --  Kept per class (not group-global) so a class's generated _Aqua_Binding
    --  subclass only gets setters for the attributes it actually declares.
    package Class_Reference_Maps is
@@ -48,6 +49,15 @@ package body Ack.Bindings is
       new Ada.Containers.Doubly_Linked_Lists (Implicit_Call_Record);
 
    Local_Program_Tree_Class : Ack.Classes.Constant_Class_Entity;
+
+   Bound_Classes : WL.String_Sets.Set;
+   --  Qualified names of every class that some action group materialises as a
+   --  generated <Class>_Aqua_Binding subclass. Package level, and never
+   --  cleared, because the check that needs it spans groups: the group that
+   --  wraps a class and the group that wants to inject it are different calls
+   --  to Load_Ack_Binding. Groups are loaded in trigger order and a stage only
+   --  injects an earlier stage, so a wrapped class is always registered before
+   --  anything asks about it.
 
    function Aquarius_Trees_Program_Tree
      return Ack.Classes.Constant_Class_Entity;
@@ -120,11 +130,24 @@ package body Ack.Bindings is
              when Before => "Before",
              when After  => "After");
 
-      function Is_Group_Reference
+      type Injection_Kind is
+        (Ordinary_Attribute, Injection_Slot);
+      --  How an attribute of a visitor class is to be read. Injection_Slot is
+      --  the issue #66 contract: the attribute names ANOTHER stage's visitor
+      --  for the same tree node, and the action bindings populate it from the
+      --  property bag. Everything else is Ordinary_Attribute -- ordinary state
+      --  the class manages itself. That includes two shapes the older test got
+      --  wrong: a type that merely looks like a visitor name
+      --  (Pascal.Checks.Binding is a plain data class, issue #107), and a
+      --  reference to a visitor of the class's OWN group
+      --  (Pascal.Generate.Procedure_Statement.Args holds the child
+      --  actual_parameter_list it just visited).
+
+      function Classify_Attribute
         (Class    : not null access constant
            Ack.Classes.Class_Entity_Record'Class;
          Property : not null access constant Root_Entity_Type'Class)
-         return Boolean;
+         return Injection_Kind;
 
       function Refs_Of (Class_Full_Name : String)
          return List_Of_Constant_Entities.List;
@@ -193,25 +216,31 @@ package body Ack.Bindings is
          if Ack.Features.Is_Feature (Feature)
            and then Ack.Features.Feature_Entity_Record (Feature.all)
            .Is_Property
-           and then Is_Group_Reference
-             (Class,
-              Ack.Features.Feature_Entity_Record'Class (Feature.all)'Access)
          then
-            declare
-               Key : constant String := Class.Qualified_Name;
-               L   : List_Of_Constant_Entities.List;
-            begin
-               if Class_References.Contains (Key) then
-                  L := Class_References.Element (Key);
-               end if;
-               L.Append (Constant_Entity_Type (Feature));
-               if Class_References.Contains (Key) then
-                  Class_References.Replace (Key, L);
-               else
-                  Class_References.Insert (Key, L);
-               end if;
-            end;
-            return;
+            case Classify_Attribute
+              (Class,
+               Ack.Features.Feature_Entity_Record'Class (Feature.all)'Access)
+            is
+               when Injection_Slot =>
+                  declare
+                     Key : constant String := Class.Qualified_Name;
+                     L   : List_Of_Constant_Entities.List;
+                  begin
+                     if Class_References.Contains (Key) then
+                        L := Class_References.Element (Key);
+                     end if;
+                     L.Append (Constant_Entity_Type (Feature));
+                     if Class_References.Contains (Key) then
+                        Class_References.Replace (Key, L);
+                     else
+                        Class_References.Insert (Key, L);
+                     end if;
+                  end;
+                  return;
+
+               when Ordinary_Attribute =>
+                  null;
+            end case;
          end if;
 
          if Position_Name = ""
@@ -438,40 +467,115 @@ package body Ack.Bindings is
       end Check_Conforming_Children;
 
       ------------------------
-      -- Is_Group_Reference --
+      -- Classify_Attribute --
       ------------------------
 
-      function Is_Group_Reference
+      function Classify_Attribute
         (Class    : not null access constant
            Ack.Classes.Class_Entity_Record'Class;
          Property : not null access constant
            Root_Entity_Type'Class)
-         return Boolean
+         return Injection_Kind
       is
-         use Ada.Strings.Fixed;
-         Property_Type : constant Entity_Type := Property.Get_Type;
+         Property_Type      : constant Entity_Type := Property.Get_Type;
          Property_Link_Name : constant String := Property_Type.Link_Name;
          Class_Link_Name    : constant String := Class.Link_Name;
-         Property_Top_Name  : constant String :=
-                                Property_Link_Name
-                                  (Property_Link_Name'First
-                                   .. Index (Property_Link_Name, "."));
-         Class_Top_Name     : constant String :=
-                                Class_Link_Name
-                                  (Class_Link_Name'First
-                                   .. Index (Class_Link_Name, "."));
-         Count              : Natural := 0;
-      begin
-         for I in Property_Link_Name'First .. Property_Link_Name'Last - 1 loop
-            if Property_Link_Name (I .. I) = "." then
-               Count := Count + 1;
-            end if;
-         end loop;
 
-         return Count = 2
-           and then Property_Link_Name /= Class_Link_Name
-           and then Property_Top_Name = Class_Top_Name;
-      end Is_Group_Reference;
+         function Component
+           (Link_Name : String;
+            Index     : Positive)
+            return String;
+         --  The Index'th dot-separated component of a link name, or "" if
+         --  there is no such component.
+
+         ---------------
+         -- Component --
+         ---------------
+
+         function Component
+           (Link_Name : String;
+            Index     : Positive)
+            return String
+         is
+            Count : Positive := 1;
+            First : Positive := Link_Name'First;
+         begin
+            for I in Link_Name'Range loop
+               if Link_Name (I) = '.' then
+                  if Count = Index then
+                     return Link_Name (First .. I - 1);
+                  end if;
+                  Count := Count + 1;
+                  First := I + 1;
+               end if;
+            end loop;
+            return (if Count = Index
+                    then Link_Name (First .. Link_Name'Last)
+                    else "");
+         end Component;
+
+      begin
+
+         --  The shape of an injection is <grammar>.<group>.<visitor>, naming
+         --  something in the same grammar as the class holding the attribute
+         --  but not the class itself.
+
+         if Component (Property_Link_Name, 4) /= ""
+           or else Component (Property_Link_Name, 3) = ""
+           or else Property_Link_Name = Class_Link_Name
+           or else Component (Property_Link_Name, 1)
+                     /= Component (Class_Link_Name, 1)
+         then
+            return Ordinary_Attribute;
+         end if;
+
+         --  Only a visitor -- a class named for a rule of the grammar -- is
+         --  ever put in the property bag, so only a visitor can be injected.
+         --  Anything else with the same name shape (Pascal.Checks.Binding) is
+         --  a plain data class and the attribute is ordinary state.
+
+         if not Grammar.Have_Syntax (Property_Type.Standard_Name) then
+            return Ordinary_Attribute;
+         end if;
+
+         --  A visitor holding a visitor of its own group is holding a node it
+         --  visited itself, not waiting for an earlier stage to fill it in.
+
+         if Component (Property_Link_Name, 2)
+           = Component (Class_Link_Name, 2)
+         then
+            return Ordinary_Attribute;
+         end if;
+
+         --  The class being named may itself be materialised as a generated
+         --  <Class>_Aqua_Binding subclass, because it has injection slots of
+         --  its own -- but it is filed in the property bag under its own name,
+         --  so reading it back as that type lands one word out of step with
+         --  the object actually stored (issue #107). Refuse the injection
+         --  rather than emit code that reads the wrong fields. Ask by class
+         --  name, the way the bag is keyed: the type entity of a detachable
+         --  attribute is not the class entity.
+
+         if Bound_Classes.Contains
+           (Property_Type.Class_Context.Qualified_Name)
+         then
+            Warning (Property.Declaration_Node,
+                     E_Cannot_Inject_Bound_Class,
+                     Property_Type.Class_Context, Class);
+
+            --  This class has already been analysed, so its Error_Report work
+            --  item has been and gone: flush the message here or it is never
+            --  shown. A warning rather than an error because falling back to
+            --  an ordinary attribute is safe -- the field simply stays void --
+            --  and an error here would stop the group binding at all.
+
+            Ack.Errors.Record_Errors (Class.Top_Class_Node);
+            Ack.Errors.Report_Errors (Class.Top_Class_Node);
+            return Ordinary_Attribute;
+         end if;
+
+         return Injection_Slot;
+      end Classify_Attribute;
 
       -------------
       -- Refs_Of --
@@ -956,6 +1060,7 @@ package body Ack.Bindings is
                then
                   if not Refs_Of (Parent_Name).Is_Empty then
                      Aqua_Bound_Classes.Include (Parent_Name);
+                     Bound_Classes.Include (Parent_Name);
                   end if;
                end if;
             end;

@@ -142,6 +142,14 @@ package body Ack.Errors is
               & " (property " & Get_Error_Entity (Node).Description & ")";
          when E_Class_Name_Does_Not_Match_File_Name =>
             return "class name does not match file name";
+         when E_Cannot_Inject_Bound_Class =>
+            return "cannot inject "
+              & Get_Error_Entity (Node).Qualified_Name
+              & " into "
+              & Get_Error_Context (Node).Qualified_Name
+              & ": the injected class has injection slots of its own, so it"
+              & " is stored in the property bag as a subclass and would be"
+              & " read at the wrong offsets";
       end case;
    end Error_Message;
 
