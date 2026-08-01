@@ -162,7 +162,10 @@ feature
             else
                Ignore :=
                   Current_Frame_Scope.Declare_Argument
-                     (Name, By_Reference, Type_Code)
+                     (Name, By_Reference, Type_Code, 0)
+                  --  Structure 0: a parameter's type comes from a
+                  --  type_identifier, which cannot name a record or an array
+                  --  until #125 and #126 make one resolvable there.
                --  Record it in the routine's signature too, so a call can be
                --  checked against it (issue #105), including its type (#88):
                --  a parameter slot's content has to be declared for the caller
@@ -280,10 +283,10 @@ feature
       local
          T : Pascal.Checks.Types
       do
-         Scope.Declare_Type ("integer", T.Integer_Type)
-         Scope.Declare_Type ("real",    T.Real_Type)
-         Scope.Declare_Type ("boolean", T.Boolean_Type)
-         Scope.Declare_Type ("char",    T.Char_Type)
+         Scope.Declare_Type ("integer", T.Integer_Type, 0)
+         Scope.Declare_Type ("real",    T.Real_Type,    0)
+         Scope.Declare_Type ("boolean", T.Boolean_Type, 0)
+         Scope.Declare_Type ("char",    T.Char_Type,    0)
       end
 
    Resolve_Type_Name (Text : String) : Integer

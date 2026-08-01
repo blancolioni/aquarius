@@ -33,7 +33,7 @@ feature
    After_Node
       do
          if attached Nm as Defined then
-            Current_Frame_Scope.Declare_Type (Defined, Ty)
+            Current_Frame_Scope.Declare_Type (Defined, Ty, 0)
          end
       end
 

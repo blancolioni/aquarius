@@ -28,26 +28,38 @@ create
 --  a type_denoter is the same lookup as resolving a variable name, and so that
 --  a user-defined alias can shadow one in an inner block. Its Ty is the type it
 --  NAMES; every other kind's Ty is the type it HAS.
+--
+--  Structure is the second half of a structured type (issue #124). Ty says only
+--  that this is a record or an array -- Types.Structured_Type, one code for all
+--  of them, because the argument-type packing has no room for more -- and
+--  Structure says WHICH, as an index into Pascal.Checks.Type_Table. It is zero
+--  for every scalar, which is the table's "no structure" index.
 
 feature
 
-   Make_Local (Bound_Name : String; Frame_Slot : Integer; Type_Code : Integer)
+   Make_Local (Bound_Name      : String
+               Frame_Slot      : Integer
+               Type_Code       : Integer
+               Structure_Index : Integer)
       do
          Name := Bound_Name.To_Lower
          Offset := Frame_Slot
          Ty := Type_Code
+         Structure := Structure_Index
       end
 
    Make_Argument (Bound_Name           : String
                   Argument_Index       : Integer
                   Passed_By_Reference  : Boolean
-                  Type_Code            : Integer)
+                  Type_Code            : Integer
+                  Structure_Index      : Integer)
       do
          Name := Bound_Name.To_Lower
          Offset := Argument_Index
          Is_Argument := True
          By_Reference := Passed_By_Reference
          Ty := Type_Code
+         Structure := Structure_Index
       end
 
    Make_Constant (Bound_Name : String
@@ -67,10 +79,13 @@ feature
          Is_Routine := True
       end
 
-   Make_Type (Bound_Name : String; Type_Code : Integer)
+   Make_Type (Bound_Name      : String
+              Type_Code       : Integer
+              Structure_Index : Integer)
       do
          Name := Bound_Name.To_Lower
          Ty := Type_Code
+         Structure := Structure_Index
          Is_Type := True
       end
 
@@ -87,6 +102,11 @@ feature
       --  The Pascal.Checks.Types code of the variable, argument or constant;
       --  for a type binding, the type the name stands for. A routine's result
       --  type is on its Signature instead, since only a call has one.
+
+   Structure : Integer
+      --  Index into Pascal.Checks.Type_Table when Ty is Structured_Type, and 0
+      --  otherwise (issue #124). Which record or array, as opposed to Ty, which
+      --  says only that it is one.
 
    Signature : detachable Pascal.Checks.Signature
       --  What the routine takes, when Is_Routine; Void otherwise

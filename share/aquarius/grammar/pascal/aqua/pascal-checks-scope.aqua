@@ -73,7 +73,9 @@ feature
 
 feature  --  declaring
 
-   Declare_Local (Name : String; Type_Code : Integer) : Integer
+   Declare_Local (Name            : String
+                  Type_Code       : Integer
+                  Structure_Index : Integer) : Integer
       --  Bind Name in THIS scope to a freshly allocated frame slot, and return
       --  the slot. The caller is expected to have checked Find first: declaring
       --  the same name twice in one scope leaves both bindings, and Find will
@@ -84,17 +86,24 @@ feature  --  declaring
       --  register with its own prefix sum over Slot_Width, widening a slot that
       --  is pushed or popped as floating point to the pair it needs. A second
       --  prefix sum here would compose wrongly with that one.
+      --
+      --  A record or an array gets one slot here too, and that slot cannot hold
+      --  it: an aggregate needs as many words as its structure says, and on the
+      --  Aqua target a local is a register and has no address at all (issue
+      --  #129). Structure_Index records WHAT was declared; where it will live is
+      --  that issue's problem, and nothing generates code for one meanwhile.
       local
          B : Pascal.Checks.Binding
       do
          Result := Allocate
-         create B.Make_Local (Name, Result, Type_Code)
+         create B.Make_Local (Name, Result, Type_Code, Structure_Index)
          Bindings.Append (B)
       end
 
-   Declare_Argument (Name : String
-                     By_Reference : Boolean
-                     Type_Code : Integer) : Integer
+   Declare_Argument (Name            : String
+                     By_Reference    : Boolean
+                     Type_Code       : Integer
+                     Structure_Index : Integer) : Integer
       --  Bind Name in THIS scope to the next argument index of the routine this
       --  scope belongs to, and return the index. Same caller contract as
       --  Declare_Local: check Find first.
@@ -103,7 +112,8 @@ feature  --  declaring
       do
          Allocated_Arguments := Allocated_Arguments + 1
          Result := Allocated_Arguments
-         create B.Make_Argument (Name, Result, By_Reference, Type_Code)
+         create B.Make_Argument
+            (Name, Result, By_Reference, Type_Code, Structure_Index)
          Bindings.Append (B)
       end
 
@@ -144,14 +154,17 @@ feature  --  declaring
          Bindings.Append (B)
       end
 
-   Declare_Type (Name : String; Type_Code : Integer)
+   Declare_Type (Name            : String
+                 Type_Code       : Integer
+                 Structure_Index : Integer)
       --  Bind Name in THIS scope as the name of a type (issue #88). Used for
-      --  the four built-ins, declared into the root scope for each program, and
-      --  for a user alias of one of them.
+      --  the four built-ins, declared into the root scope for each program, for
+      --  a user alias of one of them, and -- since #124 -- for a record or an
+      --  array definition, where Structure_Index says which one.
       local
          B : Pascal.Checks.Binding
       do
-         create B.Make_Type (Name, Type_Code)
+         create B.Make_Type (Name, Type_Code, Structure_Index)
          Bindings.Append (B)
       end
 
@@ -281,6 +294,35 @@ feature  --  resolving
             if Found.Is_Type then
                Result := Found.Ty
             end
+         end
+      end
+
+   Lookup_Type_Structure (Name : String) : Integer
+      --  Which record or array the innermost type name stands for, as an index
+      --  into Pascal.Checks.Type_Table, or 0 if it names a scalar or is not a
+      --  type name at all (issue #124). The companion of Lookup_Type: that
+      --  answers WHAT KIND, this answers WHICH.
+      local
+         B : detachable Pascal.Checks.Binding
+      do
+         B := Lookup (Name)
+         if attached B as Found then
+            if Found.Is_Type then
+               Result := Found.Structure
+            end
+         end
+      end
+
+   Lookup_Structure (Name : String) : Integer
+      --  Which record or array the innermost VARIABLE, argument or constant
+      --  Name has, as an index into Pascal.Checks.Type_Table, or 0 (issue
+      --  #124). What a component access resolves its base against.
+      local
+         B : detachable Pascal.Checks.Binding
+      do
+         B := Lookup (Name)
+         if attached B as Found then
+            Result := Found.Structure
          end
       end
 

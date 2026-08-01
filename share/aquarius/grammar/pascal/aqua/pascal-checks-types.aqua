@@ -31,6 +31,28 @@ feature
    Unknown_Type : Integer do Result := 5 end
    Error_Type   : Integer do Result := 6 end
 
+   Structured_Type : Integer do Result := 7 end
+      --  A record or an array (issue #124). ONE code for both, and for every
+      --  record and every array in the program: which one is carried alongside
+      --  as an index into Pascal.Checks.Type_Table, never in a type code.
+      --
+      --  Seven, and no eighth. Argument types travel to the signature check
+      --  packed three bits apiece (Type_Weight, Packed_Type below), so the
+      --  codes have to fit in 0 .. 7 and this is the last free value. That is
+      --  the whole reason structured types share a code rather than getting
+      --  one each.
+      --
+      --  It sits outside Is_Known deliberately, alongside Unknown_Type, so
+      --  every existing check treats a whole record exactly as it did before
+      --  this issue: using one as an operand, an argument or an assignment
+      --  side is still reported. What the code buys is that a COMPONENT of it
+      --  can now be resolved (issues #125, #126, #127).
+
+   Is_Structured (Code : Integer) : Boolean
+      do
+         Result := Code = Structured_Type
+      end
+
    Name (Code : Integer) : String
       --  For error messages
       do
@@ -42,8 +64,30 @@ feature
             Result := "boolean"
          elsif Code = Char_Type then
             Result := "char"
+         elsif Code = Structured_Type then
+            Result := "record or array"
          else
             Result := "unknown type"
+         end
+      end
+
+   Width (Code : Integer) : Integer
+      --  Storage taken by a value of this type, in WORDS (issue #124).
+      --
+      --  Words, not bytes, and the unit is part of the contract: a real is two
+      --  words, matching Tagatha.Arch.Aqua.Slot_Width, and everything else is
+      --  one. Whichever unit the IR settles on for a dereference offset (issue
+      --  #128 -- Aqua reads it as a word index, PDP-11 and 6502 as a byte
+      --  displacement) is a conversion applied by the code stage, not a
+      --  different measurement here.
+      --
+      --  A structured field's width is the size of its own structure and does
+      --  not come from here; the caller has the table and asks it instead.
+      do
+         if Code = Real_Type then
+            Result := 2
+         else
+            Result := 1
          end
       end
 
@@ -135,7 +179,10 @@ feature
    --  as the var-parameter flags travel as one bit per argument. A list would
    --  read better, but a Linked_List attribute on THOSE visitors faults the VM
    --  (issue #120), and Integer has no bit operations (issue #109), so the
-   --  packing is arithmetic: base 8, since the codes run 0 .. 6.
+   --  packing is arithmetic: base 8, since the codes run 0 .. 7.
+   --
+   --  0 .. 7 is now full: Structured_Type is 7. A new type code cannot be added
+   --  without changing this packing first.
 
    Type_Slot_Limit : Integer
       --  Arguments past the tenth are not represented: ten slots of three bits
