@@ -6,6 +6,7 @@ with Ack.Loader;
 
 with Aquarius.Configuration;
 with Aquarius.Devices.Character_Handler;
+with Aquarius.Devices.Real_Handler;
 with Aquarius.Devices.Tagatha_Device;
 with Aquarius.Devices.Text_Writer;
 with Aquarius.Grammars.Manager;
@@ -159,6 +160,9 @@ package body Aquarius.Library is
       Aquarius.Devices.Register
         ("aqua-character-handler",
          Aquarius.Devices.Character_Handler.Create);
+      Aquarius.Devices.Register
+        ("aqua-real-handler",
+         Aquarius.Devices.Real_Handler.Create);
       Aquarius.Devices.Register
         ("aquarius-program-tree",
          Aquarius.Programs.Device.Aquarius_Tree_Driver);
