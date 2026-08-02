@@ -1,0 +1,142 @@
+expanded class
+   Pascal.Checks.Standard_Functions
+
+--  The required Pascal standard functions (issue #83): abs, arctan, cos, exp,
+--  ln, sin, sqr, sqrt, round, trunc, chr, ord, pred, succ, odd, eof, eoln.
+--  Every one of them takes exactly one argument, but unlike a declared
+--  routine's, several results depend on the argument's OWN type rather than
+--  one fixed type a Pascal.Checks.Signature could name -- abs, sqr, pred and
+--  succ return whatever type they were given -- so this is a small pure fold
+--  over (Name, Argument_Type), the same shape and for the same reason as
+--  Pascal.Checks.Types.Combine / Combine_Message: the rule lives here, and
+--  Pascal.Checks.Variable_Access.Check_Standard_Call reports the message.
+--
+--  eof and eoln take a file, which this system does not model (Types.
+--  Declare_Builtin_Types deliberately leaves 'text' unbound, so a file
+--  variable's type is Unknown), so their argument is accepted whatever its
+--  type: there is nothing known to check it against.
+
+feature
+
+   Is_Standard (Name : String) : Boolean
+      --  Whether Name is one of the standard functions, so
+      --  Pascal.Checks.Node.Declare_Builtin_Standard_Functions and
+      --  Variable_Access both recognise the same set.
+      local
+         N : String
+      do
+         N := Name.To_Lower
+         Result :=
+            N.Equal ("abs") or else N.Equal ("arctan")
+            or else N.Equal ("cos") or else N.Equal ("exp")
+            or else N.Equal ("ln") or else N.Equal ("sin")
+            or else N.Equal ("sqr") or else N.Equal ("sqrt")
+            or else N.Equal ("round") or else N.Equal ("trunc")
+            or else N.Equal ("chr") or else N.Equal ("ord")
+            or else N.Equal ("pred") or else N.Equal ("succ")
+            or else N.Equal ("odd") or else N.Equal ("eof")
+            or else N.Equal ("eoln")
+      end
+
+   Result_Type (Name : String; Argument_Type : Integer) : Integer
+      --  What a call to Name yields, given its one argument's type. Error
+      --  (poison) both when the argument is already poisoned -- so one
+      --  mistyped subterm does not also report the call around it -- and
+      --  when Accepts refuses it.
+      local
+         T : Pascal.Checks.Types
+      do
+         if T.Is_Quiet (Argument_Type) then
+            Result := T.Error_Type
+         elsif Accepts (Name, Argument_Type) then
+            Result := Yield (Name, Argument_Type)
+         else
+            Result := T.Error_Type
+         end
+      end
+
+   Message (Name : String; Argument_Type : Integer) : String
+      --  What to report about the argument, or the empty string if there is
+      --  nothing to say. Kept beside Result_Type so the two agree about what
+      --  is legal, same relationship as Types.Combine / Combine_Message.
+      local
+         T : Pascal.Checks.Types
+      do
+         Result := ""
+         if T.Is_Quiet (Argument_Type) then
+         elsif Accepts (Name, Argument_Type) then
+         else
+            Result := "argument of " & Name & " must be " & Requirement (Name)
+               & ", but found " & T.Name (Argument_Type)
+         end
+      end
+
+feature { None }
+
+   Accepts (Name : String; Argument_Type : Integer) : Boolean
+      --  Whether Argument_Type is legal for Name
+      local
+         N : String
+         T : Pascal.Checks.Types
+      do
+         N := Name.To_Lower
+         if N.Equal ("eof") or else N.Equal ("eoln") then
+            Result := True
+         elsif N.Equal ("chr") or else N.Equal ("odd") then
+            Result := Argument_Type = T.Integer_Type
+         elsif N.Equal ("ord") or else N.Equal ("pred") or else N.Equal ("succ")
+         then
+            Result := T.Is_Ordinal (Argument_Type)
+         else
+            --  abs, arctan, cos, exp, ln, sin, sqr, sqrt, round, trunc
+            Result := T.Is_Numeric (Argument_Type)
+         end
+      end
+
+   Yield (Name : String; Argument_Type : Integer) : Integer
+      --  What Name yields, given that Accepts already allowed Argument_Type
+      local
+         N : String
+         T : Pascal.Checks.Types
+      do
+         N := Name.To_Lower
+         if N.Equal ("abs") or else N.Equal ("sqr")
+           or else N.Equal ("pred") or else N.Equal ("succ")
+         then
+            Result := Argument_Type
+         elsif N.Equal ("arctan") or else N.Equal ("cos")
+           or else N.Equal ("exp") or else N.Equal ("ln")
+           or else N.Equal ("sin") or else N.Equal ("sqrt")
+         then
+            Result := T.Real_Type
+         elsif N.Equal ("round") or else N.Equal ("trunc") then
+            Result := T.Integer_Type
+         elsif N.Equal ("chr") then
+            Result := T.Char_Type
+         elsif N.Equal ("ord") then
+            Result := T.Integer_Type
+         elsif N.Equal ("odd") then
+            Result := T.Boolean_Type
+         else
+            --  eof, eoln
+            Result := T.Boolean_Type
+         end
+      end
+
+   Requirement (Name : String) : String
+      --  What Name's argument must be, for the error message
+      local
+         N : String
+      do
+         N := Name.To_Lower
+         if N.Equal ("chr") or else N.Equal ("odd") then
+            Result := "integer"
+         elsif N.Equal ("ord") or else N.Equal ("pred") or else N.Equal ("succ")
+         then
+            Result := "ordinal (integer, boolean, char or an enumerated type)"
+         else
+            Result := "numeric"
+         end
+      end
+
+end

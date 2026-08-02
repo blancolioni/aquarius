@@ -28,6 +28,7 @@ feature
          Context.Set_Active_Structure_Index (0)
          Declare_Builtin_Types
          Declare_Builtin_Routines
+         Declare_Builtin_Standard_Functions
          create Program_Scope.Make
          Enter_Scope (Program_Scope)
       end

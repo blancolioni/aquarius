@@ -361,31 +361,68 @@ feature { None }
 
    Check_Call (Name : String; Routine_Binding : Pascal.Checks.Binding)
       --  The name is a routine. Report what a call to it cannot do, and check
-      --  the argument count and types against the signature.
+      --  the argument count and types against the signature -- or, for a
+      --  standard function (issue #83), against Pascal.Checks.Standard_
+      --  Functions instead, since it has no Signature.
       do
          Is_Call := True
-         if attached Routine_Binding.Signature as Called then
-            --  A call has the function's result type, whatever else is wrong
-            --  with it (issue #88)
-            Ty := Called.Result_Type
-         end
-         if Is_Target then
-            --  Assigning to a function name sets its result, which needs the
-            --  result slot: issue #84.
-            Error ("not supported yet: assignment to the result of " & Name)
-         elsif attached Routine_Binding.Signature as Sig then
-            if not Sig.Is_Function then
-               Error ("a procedure has no value, so it cannot be used here: "
+         if Routine_Binding.Is_Standard then
+            Check_Standard_Call (Name)
+         else
+            if attached Routine_Binding.Signature as Called then
+               --  A call has the function's result type, whatever else is
+               --  wrong with it (issue #88)
+               Ty := Called.Result_Type
+            end
+            if Is_Target then
+               --  Assigning to a function name sets its result, which needs
+               --  the result slot: issue #84.
+               Error ("not supported yet: assignment to the result of "
                       & Name)
-            elsif not Sig.Is_Variadic
-              and then Given_Arguments /= Sig.Argument_Count
-            then
-               Error ("wrong number of arguments for " & Name
-                      & ": expected " & Sig.Argument_Count.To_String
-                      & ", found " & Given_Arguments.To_String)
-            else
-               Check_Var_Arguments (Name, Sig)
-               Check_Argument_Types (Name, Sig, Argument_Types)
+            elsif attached Routine_Binding.Signature as Sig then
+               if not Sig.Is_Function then
+                  Error ("a procedure has no value, so it cannot be used"
+                         & " here: " & Name)
+               elsif not Sig.Is_Variadic
+                 and then Given_Arguments /= Sig.Argument_Count
+               then
+                  Error ("wrong number of arguments for " & Name
+                         & ": expected " & Sig.Argument_Count.To_String
+                         & ", found " & Given_Arguments.To_String)
+               else
+                  Check_Var_Arguments (Name, Sig)
+                  Check_Argument_Types (Name, Sig, Argument_Types)
+               end
+            end
+         end
+      end
+
+   Check_Standard_Call (Name : String)
+      --  A standard function (issue #83): always exactly one argument, and
+      --  its result can depend on that argument's own type in a way no fixed
+      --  Signature could name (abs, sqr, pred, succ each return whatever type
+      --  they were given). Argument_Types was filled in by the
+      --  function_designator suffix exactly as for a user routine.
+      local
+         SF   : Pascal.Checks.Standard_Functions
+         T    : Pascal.Checks.Types
+         Cur  : Aqua.Containers.Linked_List_Iterator [Integer]
+         Arg  : Integer
+         Msg  : String
+      do
+         if Is_Target then
+            Error ("not supported yet: assignment to the result of " & Name)
+         elsif Given_Arguments /= 1 then
+            Ty := T.Error_Type
+            Error ("wrong number of arguments for " & Name
+                   & ": expected 1, found " & Given_Arguments.To_String)
+         else
+            Cur := Argument_Types.New_Cursor
+            Arg := Cur.Element
+            Ty := SF.Result_Type (Name, Arg)
+            Msg := SF.Message (Name, Arg)
+            if Msg.Length > 0 then
+               Error (Msg)
             end
          end
       end

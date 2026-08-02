@@ -240,6 +240,23 @@ feature
             Declare_Builtin ("writeln",  "builtin-procedure")
             Declare_Builtin ("read",     "builtin-procedure")
             Declare_Builtin ("readln",   "builtin-procedure")
+            Declare_Builtin ("abs",      "builtin-function")
+            Declare_Builtin ("arctan",   "builtin-function")
+            Declare_Builtin ("cos",      "builtin-function")
+            Declare_Builtin ("exp",      "builtin-function")
+            Declare_Builtin ("ln",       "builtin-function")
+            Declare_Builtin ("sin",      "builtin-function")
+            Declare_Builtin ("sqr",      "builtin-function")
+            Declare_Builtin ("sqrt",     "builtin-function")
+            Declare_Builtin ("round",    "builtin-function")
+            Declare_Builtin ("trunc",    "builtin-function")
+            Declare_Builtin ("chr",      "builtin-function")
+            Declare_Builtin ("ord",      "builtin-function")
+            Declare_Builtin ("pred",     "builtin-function")
+            Declare_Builtin ("succ",     "builtin-function")
+            Declare_Builtin ("odd",      "builtin-function")
+            Declare_Builtin ("eof",      "builtin-function")
+            Declare_Builtin ("eoln",     "builtin-function")
          end
       end
 
@@ -259,6 +276,38 @@ feature
          Ignore := Declare_Routine ("writeln", False, True)
          Ignore := Declare_Routine ("read", False, True)
          Ignore := Declare_Routine ("readln", False, True)
+      end
+
+   Declare_Builtin_Standard_Functions
+      --  Bind the standard functions (issue #83) in the ROOT frame scope, so
+      --  a call to one resolves like a call to any other (issue #105) -- but
+      --  as a standard-function binding rather than through Declare_Routine:
+      --  none of these has a fixed Signature, since several (abs, sqr, pred,
+      --  succ) return whatever type they were given rather than one type a
+      --  Signature could name. Pascal.Checks.Variable_Access.Check_Call reads
+      --  Pascal.Checks.Standard_Functions instead.
+      --
+      --  Re-declared for each program rather than once, same reason as
+      --  Declare_Builtin_Routines: the root scope is a once value that
+      --  Program.Before_Node resets.
+      do
+         Current_Frame_Scope.Declare_Standard_Function ("abs")
+         Current_Frame_Scope.Declare_Standard_Function ("arctan")
+         Current_Frame_Scope.Declare_Standard_Function ("cos")
+         Current_Frame_Scope.Declare_Standard_Function ("exp")
+         Current_Frame_Scope.Declare_Standard_Function ("ln")
+         Current_Frame_Scope.Declare_Standard_Function ("sin")
+         Current_Frame_Scope.Declare_Standard_Function ("sqr")
+         Current_Frame_Scope.Declare_Standard_Function ("sqrt")
+         Current_Frame_Scope.Declare_Standard_Function ("round")
+         Current_Frame_Scope.Declare_Standard_Function ("trunc")
+         Current_Frame_Scope.Declare_Standard_Function ("chr")
+         Current_Frame_Scope.Declare_Standard_Function ("ord")
+         Current_Frame_Scope.Declare_Standard_Function ("pred")
+         Current_Frame_Scope.Declare_Standard_Function ("succ")
+         Current_Frame_Scope.Declare_Standard_Function ("odd")
+         Current_Frame_Scope.Declare_Standard_Function ("eof")
+         Current_Frame_Scope.Declare_Standard_Function ("eoln")
       end
 
    Declare_Builtin (Name : String; Category : String)
