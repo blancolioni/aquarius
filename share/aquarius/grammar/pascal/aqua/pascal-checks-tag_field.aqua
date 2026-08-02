@@ -1,0 +1,21 @@
+class
+   Pascal.Checks.Tag_Field
+
+inherit
+   Pascal.Checks.Node
+
+--  tag_field ::= identifier
+--
+--  The name of a variant_part's discriminant, when it has one (issue #125 --
+--  see Pascal.Checks.Variant_Selector and Pascal.Checks.Variant_Part).
+
+feature
+
+   Name : detachable String
+
+   After_Identifier (Id : String)
+      do
+         Name := Id
+      end
+
+end

@@ -17,28 +17,41 @@ inherit
 --  Size ends up the high water mark over all of them -- as big as its largest
 --  variant, which is what Pascal means by one.
 --
---  All this node does is remember that starting offset, on the record itself
---  (Structure.Variant_Start): each Pascal.Checks.Case_Variant then rewinds to
---  it in its OWN Before_Node. Nothing here needs a hook on variant_selector or
---  case_variant -- record_section (reached through each variant's nested
---  field_list) does the actual field-adding, found via
---  Node.Current_Structure_Index exactly as it is outside a variant_part.
+--  variant_selector's tag_field -- the discriminant -- IS added as a field
+--  here when it comes with a type (issue #125: found necessary once real
+--  programs turned up reading it directly, e.g. chess.pas's
+--  'case RMPR : boolean of ...' and then testing A.RMPR). Written as
+--  'case tag of ...' instead, with no type, it names a field declared earlier
+--  in the same field_list, so nothing is added -- adding it again would
+--  double it up, and there is no type here to give it anyway.
 --
---  variant_selector's tag_field -- the discriminant -- is NOT added as a field
---  here. Written as 'case tag : sometype of ...' it declares one; written as
---  bare 'case tag of ...' it names one already declared earlier in the same
---  field_list. Telling those apart needs more than this issue's scope asks for,
---  so the tag field itself goes unmodelled while every field inside every
---  variant is modelled fully -- a deliberate partial answer, not an oversight.
+--  Either way, Variant_Start is saved AFTER the discriminant (if one was
+--  added): each Pascal.Checks.Case_Variant rewinds Next_Offset to it in its
+--  OWN Before_Node, so the variants start past the tag rather than
+--  overlapping it. record_section (reached through each variant's nested
+--  field_list) does the fields inside the variants, found via
+--  Node.Current_Structure_Index exactly as it is outside a variant_part.
 
 feature
 
-   Before_Node
+   After_Variant_Selector (Child : Pascal.Checks.Variant_Selector)
       local
-         Rec : Pascal.Checks.Structure
+         Rec   : Pascal.Checks.Structure
+         Width : Integer
+         T     : Pascal.Checks.Types
       do
          if Current_Structure_Index > 0 then
             Rec := Current_Frame_Scope.Structure (Current_Structure_Index)
+            if Child.Has_Type then
+               if attached Child.Name as Tag_Name then
+                  Width := T.Width (Child.Ty)
+                  Current_Frame_Scope.Add_Field
+                     (Current_Structure_Index, Tag_Name, Rec.Next_Offset,
+                      Width, Child.Ty, 0)
+                  Rec.Set_Next_Offset (Rec.Next_Offset + Width)
+                  Rec.Note_Offset (Rec.Next_Offset)
+               end
+            end
             Rec.Set_Variant_Start (Rec.Next_Offset)
          end
       end
