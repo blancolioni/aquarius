@@ -65,6 +65,22 @@ feature
       --  needs Structure_Index threaded through every operator, which nothing
       --  in this model does yet.
 
+   String_Literal_Type : Integer do Result := 9 end
+      --  A quoted literal of more than one character, e.g. 'input     '
+      --  (issue #104's string-literal follow-up). Its own code rather than
+      --  Structured_Type: it carries a LENGTH (Literal_Length below), not a
+      --  Structure_Index into Scope's structure table -- it names no
+      --  declared record or array, so there is nothing to index. Deliberately
+      --  NOT Is_Known: a string literal is still refused as an operator
+      --  operand, a call argument, or a for-loop bound, exactly as before.
+      --  The one place it is legal is Pascal.Checks.Assignment_Statement,
+      --  which asks Scope directly for the target's element type and
+      --  dimension length rather than through Is_Known/Assignable -- ISO
+      --  Pascal's rule that a string literal of length n is assignable to
+      --  any array [1 .. n] of char, matching by shape and length rather
+      --  than by declared type identity, unlike the whole-structure copy
+      --  Assignment_Statement already checks via Structure_Index.
+
    Is_Structured (Code : Integer) : Boolean
       do
          Result := Code = Structured_Type
@@ -85,6 +101,8 @@ feature
             Result := "record or array"
          elsif Code = Enumerated_Type then
             Result := "enumerated type"
+         elsif Code = String_Literal_Type then
+            Result := "string literal"
          else
             Result := "unknown type"
          end
@@ -298,9 +316,11 @@ feature
             if Is_Character_Literal (Text) then
                Result := Char_Type
             else
-               --  A string of more than one character: no place to put the
-               --  text, and no string type in the model (issue #88).
-               Result := Unknown_Type
+               --  A string of more than one character: no place to keep the
+               --  text itself (issue #88), but its LENGTH is enough to check
+               --  it against an array-of-char target (issue #104's
+               --  string-literal follow-up) -- see Literal_Length.
+               Result := String_Literal_Type
             end
          elsif Text.Length = 3 then
             if Text.To_Lower.Equal ("nil") then
@@ -358,6 +378,39 @@ feature
             elsif Inner.Length = 2 then
                Result := Is_Quote (Inner.Element (1))
                   and then Is_Quote (Inner.Element (2))
+            end
+         end
+      end
+
+   Literal_Length (Text : String) : Integer
+      --  Character count of the quoted literal Text denotes, collapsing a
+      --  doubled quote (the escape for an embedded one) to the single
+      --  character it denotes -- same quoting rule Is_Character_Literal
+      --  uses, generalised to any length (issue #104's string-literal
+      --  follow-up). Meaningless when Literal_Type (Text) is not
+      --  String_Literal_Type.
+      local
+         Inner : String
+         Delim : Character
+         Index : Integer
+         Ch    : Character
+      do
+         if Text.Length >= 2 then
+            Inner := Text.Slice (2, Text.Length - 1)
+            Delim := Text.Element (1)
+            from
+               Index := 1
+            until
+               Index > Inner.Length
+            loop
+               Ch := Inner.Element (Index)
+               Result := Result + 1
+               if Ch = Delim and then Index < Inner.Length then
+                  if Inner.Element (Index + 1) = Delim then
+                     Index := Index + 1
+                  end
+               end
+               Index := Index + 1
             end
          end
       end

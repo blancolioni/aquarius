@@ -32,6 +32,11 @@ feature
       --  Assignment_Statement reads this to check a whole record or array
       --  copy.
 
+   Literal_Length : Integer
+      --  As Structure_Index, but for a string literal (issue #104's
+      --  string-literal follow-up) -- Assignment_Statement reads this to
+      --  check a string literal against an array-of-char target.
+
    After_Simple_Expression (Child : Pascal.Checks.Simple_Expression)
       local
          T : Pascal.Checks.Types
@@ -40,10 +45,12 @@ feature
             Is_Variable := Child.Is_Variable
             Ty := Child.Ty
             Structure_Index := Child.Structure_Index
+            Literal_Length := Child.Literal_Length
          else
             Is_Variable := False
             Ty := Combine_Types (T.Compare_Op, Ty, Child.Ty)
             Structure_Index := 0
+            Literal_Length := 0
          end
          Parts := Parts + 1
       end

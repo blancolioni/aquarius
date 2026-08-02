@@ -24,6 +24,10 @@ feature
       --  neither a sign nor an operator ever legally yields a structure
       --  (issue #104).
 
+   Literal_Length : Integer
+      --  As Structure_Index, but for a string literal (issue #104's
+      --  string-literal follow-up).
+
    After_Sign (Child : Pascal.Checks.Sign)
       do
          Signed := True
@@ -42,6 +46,7 @@ feature
             Is_Variable := Child.Is_Variable
             Ty := Child.Ty
             Structure_Index := Child.Structure_Index
+            Literal_Length := Child.Literal_Length
          else
             Is_Variable := False
             if Terms = 0 then
@@ -53,9 +58,11 @@ feature
                   Ty := T.Error_Type
                end
                Structure_Index := 0
+               Literal_Length := 0
             else
                Ty := Combine_Types (Pending, Ty, Child.Ty)
                Structure_Index := 0
+               Literal_Length := 0
             end
          end
          Terms := Terms + 1

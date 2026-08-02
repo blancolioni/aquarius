@@ -32,9 +32,15 @@ feature
       --  otherwise (issue #104) -- the companion of Ty, threaded up from
       --  Variable_Access so a whole-structure assignment can be checked.
 
+   Literal_Length : Integer
+      --  As Structure_Index, but for a string literal (issue #104's
+      --  string-literal follow-up): character count when Ty is
+      --  String_Literal_Type, 0 otherwise.
+
    After_Unsigned_Constant (Child : Pascal.Checks.Unsigned_Constant)
       do
          Ty := Child.Ty
+         Literal_Length := Child.Length
       end
 
    After_Factor (Child : Pascal.Checks.Factor)
@@ -68,6 +74,7 @@ feature
          Is_Variable := Child.Is_Variable
          Ty := Child.Ty
          Structure_Index := Child.Structure_Index
+         Literal_Length := Child.Literal_Length
       end
 
 end

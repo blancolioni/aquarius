@@ -12,8 +12,11 @@ inherit
 --
 --  numeric_literal is the standard ada_numeric_literal, so a decimal point or an
 --  exponent is what separates 3.14 and 1.0e10 from 42 and 16#FF#. A string
---  literal of one character is a char; a longer one is not modelled, and neither
---  is nil, which is a keyword and so fires no hook at all.
+--  literal of one character is a char; a longer one has no place to keep the
+--  text (issue #88), but its Length is recorded (issue #104's string-literal
+--  follow-up) so Pascal.Checks.Assignment_Statement can check it against an
+--  array-of-char target -- the one place String_Literal_Type is legal. nil is
+--  a keyword and so fires no hook at all.
 --
 --  Taken from the token hooks rather than from this node's Concatenated_Image so
 --  that the string handed across the tree device is the literal itself and never
@@ -22,6 +25,11 @@ inherit
 feature
 
    Ty : Integer
+
+   Length : Integer
+      --  Character count, when Ty is String_Literal_Type; meaningless
+      --  otherwise, same "0 unless Ty says so" contract Structure_Index
+      --  keeps elsewhere.
 
    After_Numeric_Literal (Value : String)
       local
@@ -37,7 +45,8 @@ feature
          if T.Is_Character_Literal (Value) then
             Ty := T.Char_Type
          else
-            Ty := T.Unknown_Type
+            Ty := T.String_Literal_Type
+            Length := T.Literal_Length (Value)
          end
       end
 

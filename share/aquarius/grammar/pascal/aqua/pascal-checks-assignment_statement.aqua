@@ -27,6 +27,15 @@ inherit
 --  "0 unless Ty says structured" contract Variable_Access
 --  already keeps -- reset to 0 the moment an operator combines two operands,
 --  since no operator ever legally yields a structure.
+--
+--  A string literal assigned to an array-of-char target -- Target
+--  Structured_Type and Source Types.String_Literal_Type -- is the second such
+--  place (issue #104's string-literal follow-up): ISO Pascal's rule that a
+--  string literal of length n is assignable to any array [1 .. n] of char,
+--  matched by SHAPE (element char, one dimension, that length), not by
+--  Structure_Index identity the way two structured operands are. Literal_
+--  Length travels alongside Ty the same way Structure_Index does, reset to 0
+--  the same way.
 
 feature
 
@@ -45,18 +54,26 @@ feature
       do
          Source_Type := Child.Ty
          Source_Structure := Child.Structure_Index
+         Source_Literal_Length := Child.Literal_Length
       end
 
    After_Node
       local
-         T        : Pascal.Checks.Types
-         Target   : Integer
-         Source   : Integer
-         Matched  : Boolean
+         T       : Pascal.Checks.Types
+         Target  : Integer
+         Source  : Integer
+         Matched : Boolean
       do
          if T.Is_Structured (Target_Type) and then T.Is_Structured (Source_Type)
          then
             if Target_Structure = Source_Structure then
+               Matched := True
+            end
+         elsif T.Is_Structured (Target_Type)
+           and then Source_Type = T.String_Literal_Type
+         then
+            if Matches_String_Literal (Target_Structure, Source_Literal_Length)
+            then
                Matched := True
             end
          end
@@ -74,9 +91,30 @@ feature
 
 feature { None }
 
-   Target_Type      : Integer
-   Source_Type      : Integer
-   Target_Structure : Integer
-   Source_Structure : Integer
+   Target_Type           : Integer
+   Source_Type           : Integer
+   Target_Structure      : Integer
+   Source_Structure      : Integer
+   Source_Literal_Length : Integer
+
+   Matches_String_Literal (Structure_Idx : Integer; Len : Integer) : Boolean
+      --  Whether the array numbered Structure_Idx is a one-dimensional array
+      --  of char whose length is exactly Len (issue #104's string-literal
+      --  follow-up).
+      local
+         T   : Pascal.Checks.Types
+         Arr : Pascal.Checks.Structure
+         Dim : Pascal.Checks.Bounds
+      do
+         Arr := Current_Frame_Scope.Structure (Structure_Idx)
+         if Arr.Is_Array and then Arr.Element_Ty = T.Char_Type then
+            if Current_Frame_Scope.Dimension_Count (Structure_Idx) = 1 then
+               Dim := Current_Frame_Scope.Dimension (Structure_Idx, 1)
+               if Dim.Is_Known and then Dim.Length = Len then
+                  Result := True
+               end
+            end
+         end
+      end
 
 end
