@@ -3,11 +3,8 @@
 
   Covers: a declared type on every variable, an alias of a built-in, the two
   divisions, mixed arithmetic, integer-to-real promotion, comparisons, boolean
-  operators, an ordinal control variable, and a call checked against a typed
-  parameter list.
-
-  Note there is no 'true' or 'false': the standard boolean constants are not
-  declared yet (issue #83), so the booleans here come from comparisons.
+  operators (including the true/false constants, issue #88), an ordinal
+  control variable, and a call checked against a typed parameter list.
 
   Check with: bin/aquarius --check test_types.pas }
 
@@ -56,6 +53,9 @@ begin
    flag := flag and (i = j);
    flag := not flag;
    flag := (i > 0) or (j > 0);
+   flag := true;
+   flag := false;
+   flag := true and not false;
 
    for i := 1 to Limit do
       j := j + i;
