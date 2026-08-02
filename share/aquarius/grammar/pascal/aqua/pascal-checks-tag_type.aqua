@@ -1,0 +1,23 @@
+class
+   Pascal.Checks.Tag_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  tag_type ::= type_identifier
+--
+--  The type of a variant_part's discriminant, when it has one (issue #125).
+--  Always one of the four scalars in practice -- a case selector has to be
+--  ordinal -- so only Ty is published; a tag can't itself name a record or an
+--  array.
+
+feature
+
+   Ty : Integer
+
+   After_Type_Identifier (Child : Pascal.Checks.Type_Identifier)
+      do
+         Ty := Child.Ty
+      end
+
+end

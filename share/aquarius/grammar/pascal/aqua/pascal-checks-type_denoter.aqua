@@ -18,6 +18,12 @@ inherit
 --  standalone type, a pointer -- fires no hook here and stays Unknown, which is
 --  what it is to a system that models the four scalars plus records and arrays.
 --
+--  type_identifier also carries Structure_Index (issue #125, for the parameter
+--  path which never goes through this class at all): 'Board = record ... end'
+--  binds Board as a record type, and 'x : Board' reaches it through
+--  type_identifier, not new_type -- an alias of a record or an array is exactly
+--  as structured as the thing it aliases, so this must copy both, not just Ty.
+--
 --  Reading Concatenated_Image here would answer both alternatives at once, and
 --  is how this was first written, but the image of a whole record denotation is
 --  far longer than the 252 characters the tree device can pass back to the
@@ -33,6 +39,7 @@ feature
    After_Type_Identifier (Child : Pascal.Checks.Type_Identifier)
       do
          Ty := Child.Ty
+         Structure_Index := Child.Structure_Index
       end
 
    After_New_Type (Child : Pascal.Checks.New_Type)

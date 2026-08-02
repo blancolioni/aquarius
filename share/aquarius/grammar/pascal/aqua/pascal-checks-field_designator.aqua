@@ -1,0 +1,22 @@
+class
+   Pascal.Checks.Field_Designator
+
+inherit
+   Pascal.Checks.Node
+
+--  field_designator ::= '.' identifier
+--
+--  Publishes the field name (issue #125), read through the child identifier
+--  token rather than Concatenated_Image -- which would include the '.' --
+--  the same choice Pascal.Checks.Identifier_List makes for its names.
+
+feature
+
+   Name : detachable String
+
+   After_Identifier (Id : String)
+      do
+         Name := Id
+      end
+
+end

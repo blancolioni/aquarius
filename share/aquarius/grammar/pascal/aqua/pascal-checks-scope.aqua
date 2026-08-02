@@ -296,6 +296,35 @@ feature  --  structures
          end
       end
 
+   Find_Field (Owner_Index : Integer; Field_Name : String)
+      : detachable Pascal.Checks.Field
+      --  The field named Field_Name (case-insensitive) belonging to the
+      --  record numbered Owner_Index, or Void if there is none (issue #125).
+      local
+         It    : Aqua.Containers.Linked_List_Iterator [Pascal.Checks.Field]
+         Key   : String
+         Found : Boolean
+      do
+         if attached Parent as P then
+            Result := P.Find_Field (Owner_Index, Field_Name)
+         else
+            Key := Field_Name.To_Lower
+            from
+               It := Fields.New_Cursor
+            until
+               It.After or else Found
+            loop
+               if It.Element.Owner = Owner_Index
+                 and then It.Element.Name.Equal (Key)
+               then
+                  Result := It.Element
+                  Found := True
+               end
+               It.Next
+            end
+         end
+      end
+
    Array_Size (Owner_Index : Integer; Element_Width : Integer) : Integer
       --  Element_Width times the product of every dimension recorded for
       --  Owner_Index, or 0 if there are none or any dimension's extent is

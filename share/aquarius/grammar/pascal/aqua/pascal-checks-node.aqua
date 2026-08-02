@@ -150,10 +150,11 @@ feature
          Result := Current_Frame_Scope.Declare_Routine (Name, Sig)
       end
 
-   Declare_Parameters (Names        : Aqua.Containers.Linked_List [String]
-                       By_Reference : Boolean
-                       Category     : String
-                       Type_Code    : Integer)
+   Declare_Parameters (Names           : Aqua.Containers.Linked_List [String]
+                       By_Reference    : Boolean
+                       Category        : String
+                       Type_Code       : Integer
+                       Structure_Index : Integer)
       --  Bind each name as an argument of the routine whose scope is current
       --  (issue #82). Shared by the value and var parameter specifications,
       --  which differ only in By_Reference and Category.
@@ -183,10 +184,9 @@ feature
             else
                Ignore :=
                   Current_Frame_Scope.Declare_Argument
-                     (Name, By_Reference, Type_Code, 0)
-                  --  Structure 0: a parameter's type comes from a
-                  --  type_identifier, which cannot name a record or an array
-                  --  until #125 and #126 make one resolvable there.
+                     (Name, By_Reference, Type_Code, Structure_Index)
+                  --  Structure_Index: which record or array the parameter's
+                  --  type_identifier names, or 0 for a scalar (issue #125).
                --  Record it in the routine's signature too, so a call can be
                --  checked against it (issue #105), including its type (#88):
                --  a parameter slot's content has to be declared for the caller

@@ -1,0 +1,35 @@
+class
+   Pascal.Checks.Variant_Selector
+
+inherit
+   Pascal.Checks.Node
+
+--  variant_selector ::= tag_field [ ':' tag_type ]
+--
+--  Publishes the discriminant's name, and whether a type came with it (issue
+--  #125): 'case tag : sometype of ...' declares tag as a new field of the
+--  enclosing record, so Has_Type is True and Pascal.Checks.Variant_Part adds
+--  it; bare 'case tag of ...' names a field declared earlier in the same
+--  field_list, so Has_Type is False and nothing is added -- adding it again
+--  would double it up.
+
+feature
+
+   Name : detachable String
+
+   Ty : Integer
+
+   Has_Type : Boolean
+
+   After_Tag_Field (Child : Pascal.Checks.Tag_Field)
+      do
+         Name := Child.Name
+      end
+
+   After_Tag_Type (Child : Pascal.Checks.Tag_Type)
+      do
+         Ty := Child.Ty
+         Has_Type := True
+      end
+
+end

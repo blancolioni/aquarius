@@ -29,12 +29,13 @@ feature
    After_Type_Identifier (Child : Pascal.Checks.Type_Identifier)
       do
          Ty := Child.Ty
+         Structure_Index := Child.Structure_Index
       end
 
    After_Node
       do
          if attached Names as Declared then
-            Declare_Parameters (Declared, False, "parameter", Ty)
+            Declare_Parameters (Declared, False, "parameter", Ty, Structure_Index)
          end
       end
 
@@ -43,5 +44,7 @@ feature { None }
    Names : detachable Aqua.Containers.Linked_List [String]
 
    Ty : Integer
+
+   Structure_Index : Integer
 
 end

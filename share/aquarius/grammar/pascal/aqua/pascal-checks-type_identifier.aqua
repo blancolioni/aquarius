@@ -7,15 +7,24 @@ inherit
 --  type_identifier ::= identifier
 --
 --  The type named by a parameter specification or a function's result_type,
---  neither of which goes through type_denoter (issue #88).
+--  neither of which goes through type_denoter (issue #88). Structure_Index is
+--  which record or array it names, when Ty says it is one (issue #125) -- the
+--  companion Pascal.Checks.Type_Denoter already publishes for a
+--  variable_declaration or a type_definition.
 
 feature
 
    Ty : Integer
 
+   Structure_Index : Integer
+
    After_Node
+      local
+         Name : String
       do
-         Ty := Resolve_Type_Name (Concatenated_Image)
+         Name := Concatenated_Image
+         Ty := Resolve_Type_Name (Name)
+         Structure_Index := Current_Frame_Scope.Lookup_Type_Structure (Name)
       end
 
 end
