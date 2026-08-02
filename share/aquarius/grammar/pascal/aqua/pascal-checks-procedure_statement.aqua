@@ -23,8 +23,8 @@ feature
    After_Actual_Parameter_List (Child : Pascal.Checks.Actual_Parameter_List)
       do
          Given_Arguments := Child.Count
-         Argument_Variables := Child.Variable_Mask
-         Argument_Types := Child.Type_Mask
+         Argument_Variables := Child.Argument_Variables
+         Argument_Types := Child.Argument_Types
       end
 
    After_Node
@@ -44,8 +44,7 @@ feature
                                & ", found " & Given_Arguments.To_String)
                      else
                         Check_Var_Arguments (N, Sig)
-                        Check_Argument_Types (N, Sig, Given_Arguments,
-                                              Argument_Types)
+                        Check_Argument_Types (N, Sig, Argument_Types)
                      end
                   end
                   Refer (Current, "call",
@@ -63,11 +62,11 @@ feature { None }
 
    Nm                 : detachable String
    Given_Arguments    : Integer
-   Argument_Variables : Integer
-      --  One bit per argument, set when it is a bare variable (issue #107)
+   Argument_Variables : Aqua.Containers.Linked_List [Boolean]
+      --  One entry per argument, set when it is a bare variable (issue #105)
 
-   Argument_Types : Integer
-      --  One type code per argument, three bits apiece (issue #88)
+   Argument_Types : Aqua.Containers.Linked_List [Integer]
+      --  One entry per argument, its type (issue #88)
 
    Check_Var_Arguments (Name : String; Sig : Pascal.Checks.Signature)
       --  A var parameter is passed by address, so its actual has to be something
@@ -82,7 +81,7 @@ feature { None }
             Index > Given_Arguments
          loop
             if Sig.Parameter_By_Reference (Index) then
-               if not Mask_Holds (Argument_Variables, Index) then
+               if not Is_Variable_Argument (Argument_Variables, Index) then
                   Error ("argument " & Index.To_String & " of " & Name
                          & " is a var parameter, so it needs a variable")
                end

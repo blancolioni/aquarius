@@ -202,47 +202,27 @@ feature
          end
       end
 
-   Argument_Weight (Index : Integer) : Integer
-      --  2 ** (Index - 1), the bit that stands for argument Index in an argument
-      --  mask. Zero beyond Argument_Mask_Limit, where the mask runs out.
+   Is_Variable_Argument (Flags : Aqua.Containers.Linked_List [Boolean]
+                         Index  : Integer) : Boolean
+      --  Whether argument Index (1-based) was a bare variable, from the list
+      --  Pascal.Checks.Actual_Parameter_List / Function_Designator built as
+      --  the arguments reduced (issue #133). False past the end of the list,
+      --  same as an out-of-range index was for the packed mask this replaced.
       local
+         It : Aqua.Containers.Linked_List_Iterator [Boolean]
          At : Integer
       do
-         if Index >= 1 and then Index <= Argument_Mask_Limit then
-            Result := 1
-            from
-               At := 1
-            until
-               At >= Index
-            loop
-               Result := Result * 2
-               At := At + 1
+         from
+            It := Flags.New_Cursor
+         until
+            It.After
+         loop
+            At := At + 1
+            if At = Index then
+               Result := It.Element
             end
+            It.Next
          end
-      end
-
-   Mask_Holds (Mask : Integer; Index : Integer) : Boolean
-      --  Whether the bit for argument Index is set in Mask.
-      --
-      --  Arithmetic rather than bit operations because Integer has neither an
-      --  and nor a shift (issue #109), and a mask rather than a list because a
-      --  visitor cannot hold a reference to another plugin object (issue #107).
-      --  Both go away when those are fixed.
-      local
-         Weight : Integer
-      do
-         Weight := Argument_Weight (Index)
-         if Weight > 0 then
-            Result := (Mask / Weight) mod 2 = 1
-         end
-      end
-
-   Argument_Mask_Limit : Integer
-      --  Arguments past the 30th are not represented: an Integer is 32 bits and
-      --  the mask is built by doubling. No Pascal call comes close, and a call
-      --  that did would simply go unchecked rather than wrong.
-      do
-         Result := 30
       end
 
    Ensure_Builtins
@@ -343,10 +323,9 @@ feature
          Result := T.Combine (Op, Left, Right)
       end
 
-   Check_Argument_Types (Name        : String
-                         Sig         : Pascal.Checks.Signature
-                         Given       : Integer
-                         Actual_Mask : Integer)
+   Check_Argument_Types (Name         : String
+                         Sig          : Pascal.Checks.Signature
+                         Actual_Types : Aqua.Containers.Linked_List [Integer])
       --  Check each actual against the parameter it is passed to (issue #88),
       --  extending the arity and var-parameter checks of issue #105. Shared by
       --  a call in an expression and a procedure statement.
@@ -358,6 +337,7 @@ feature
       --  type -- there is nowhere to put the promoted copy that a value
       --  parameter would receive.
       local
+         It     : Aqua.Containers.Linked_List_Iterator [Integer]
          Index  : Integer
          Formal : Integer
          Actual : Integer
@@ -365,12 +345,12 @@ feature
       do
          if not Sig.Is_Variadic then
             from
-               Index := 0
+               It := Actual_Types.New_Cursor
             until
-               Index >= Given
+               It.After
             loop
                Index := Index + 1
-               Actual := T.Packed_Type (Actual_Mask, Index)
+               Actual := It.Element
                Formal := Sig.Parameter_Type (Index)
                if T.Is_Known (Formal) and then not T.Is_Quiet (Actual) then
                   if Sig.Parameter_By_Reference (Index) then
@@ -386,6 +366,7 @@ feature
                             & T.Name (Actual) & " was given")
                   end
                end
+               It.Next
             end
          end
       end

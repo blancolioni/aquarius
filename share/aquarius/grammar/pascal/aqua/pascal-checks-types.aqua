@@ -37,11 +37,13 @@ feature
       --  as an index into Pascal.Checks.Scope's structure table, never in a
       --  type code.
       --
-      --  Seven, and no eighth. Argument types travel to the signature check
-      --  packed three bits apiece (Type_Weight, Packed_Type below), so the
-      --  codes have to fit in 0 .. 7 and this is the last free value. That is
-      --  the whole reason structured types share a code rather than getting
-      --  one each.
+      --  Not the last code available: argument types used to travel to the
+      --  signature check packed three bits apiece, which capped every type
+      --  code in the system at 0 .. 7 (issue #133 unpacked that back into a
+      --  real list, so a ninth or further code is just as easy to add as this
+      --  one was). Structured types still share a single code rather than one
+      --  each -- that was never about the packing, and stays for #124's own
+      --  reasons.
       --
       --  It sits outside Is_Known deliberately, alongside Unknown_Type, so
       --  every existing check treats a whole record exactly as it did before
@@ -174,54 +176,13 @@ feature
    --  checks visitor, and features accumulated on it break the plugin VM in
    --  unrelated places (issues #107, #117), so it keeps only the thin wrapper
    --  that needs Error.
-
-   --  Argument types travel from a call's argument list to the check against
-   --  its signature packed into one Integer, three bits per argument, exactly
-   --  as the var-parameter flags travel as one bit per argument. A list would
-   --  read better, but a Linked_List attribute on THOSE visitors faults the VM
-   --  (issue #120), and Integer has no bit operations (issue #109), so the
-   --  packing is arithmetic: base 8, since the codes run 0 .. 7.
    --
-   --  0 .. 7 is now full: Structured_Type is 7. A new type code cannot be added
-   --  without changing this packing first.
-
-   Type_Slot_Limit : Integer
-      --  Arguments past the tenth are not represented: ten slots of three bits
-      --  is thirty, and an Integer is thirty-two. A call that long simply goes
-      --  unchecked rather than wrong.
-      do
-         Result := 10
-      end
-
-   Type_Weight (Index : Integer) : Integer
-      --  8 ** (Index - 1), the place value of argument Index. Zero beyond the
-      --  limit, which is what stops anything being packed there.
-      local
-         At : Integer
-      do
-         if Index >= 1 and then Index <= Type_Slot_Limit then
-            Result := 1
-            from
-               At := 1
-            until
-               At >= Index
-            loop
-               Result := Result * 8
-               At := At + 1
-            end
-         end
-      end
-
-   Packed_Type (Mask : Integer; Index : Integer) : Integer
-      --  The code packed at Index, or No_Type past the limit
-      local
-         Weight : Integer
-      do
-         Weight := Type_Weight (Index)
-         if Weight > 0 then
-            Result := (Mask / Weight) mod 8
-         end
-      end
+   --  Argument types travel from a call's argument list to the check against
+   --  its signature as a real Linked_List [Integer] (Pascal.Checks.Node.
+   --  Check_Argument_Types reads it). They used to travel packed into one
+   --  Integer, three bits per argument, base 8 since the codes ran 0 .. 7 --
+   --  a cap that left no room for an eighth type code. Issue #133 undid the
+   --  packing once #131, its actual cause, was fixed.
 
    Legal (Op : Integer; Left : Integer; Right : Integer) : Boolean
       --  Whether the operator accepts these two operand types. Only ever asked

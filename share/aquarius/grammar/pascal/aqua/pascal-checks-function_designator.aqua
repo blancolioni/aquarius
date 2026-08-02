@@ -9,32 +9,24 @@ inherit
 --  but it reaches the checks stage as a variable_suffix, because that is how the
 --  grammar spells a call (issue #105).
 --
---  Which arguments are bare variables is carried as one bit per argument in
---  Variable_Mask rather than as a list, because a visitor cannot hold a
---  reference to another plugin object (issue #107) and Integer has no bit
---  operations (issue #109). Node.Mask_Holds reads it back.
-
---  Type_Mask carries the type of each argument the same way, three bits apiece
---  (issue #88). See Pascal.Checks.Actual_Parameter_List for why it is a mask
---  and not the list it should be.
+--  Argument_Variables and Argument_Types carry, one entry per argument,
+--  whether it is a bare variable and its type (issues #105, #88). Real lists
+--  rather than a packed mask, for the same reason as
+--  Pascal.Checks.Actual_Parameter_List (issue #133).
 
 feature
 
    Count : Integer
 
-   Variable_Mask : Integer
+   Argument_Variables : Aqua.Containers.Linked_List [Boolean]
 
-   Type_Mask : Integer
+   Argument_Types : Aqua.Containers.Linked_List [Integer]
 
    After_Actual_Parameter (Child : Pascal.Checks.Actual_Parameter)
-      local
-         T : Pascal.Checks.Types
       do
          Count := Count + 1
-         if Child.Is_Variable then
-            Variable_Mask := Variable_Mask + Argument_Weight (Count)
-         end
-         Type_Mask := Type_Mask + Child.Ty * T.Type_Weight (Count)
+         Argument_Variables.Append (Child.Is_Variable)
+         Argument_Types.Append (Child.Ty)
       end
 
 end
