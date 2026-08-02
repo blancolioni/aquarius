@@ -7,13 +7,16 @@ inherit
 --  type_denoter ::= type_identifier | new_type
 --
 --  Publishes the type its enclosing variable_declaration or type_definition is
---  declaring (issue #88).
+--  declaring (issue #88), and, since issue #124, which record or array it is
+--  when Ty says it is one: Structure_Index, an index into
+--  Pascal.Checks.Scope's structure table, or 0 for a scalar.
 --
---  Only the type_identifier alternative is resolved, and through the child
---  rather than through this node's own text. A new_type -- a record, an array, a
---  set, a subrange, a pointer -- fires no hook and stays Unknown, which is what
---  it is to a system that models four scalar types; structured types are issue
---  #104.
+--  The type_identifier alternative resolves through the child rather than
+--  through this node's own text; new_type reaches down through
+--  Pascal.Checks.New_Type to whichever of record_type / array_type built the
+--  structure. A new_type that is not one of those -- a set, a subrange as a
+--  standalone type, a pointer -- fires no hook here and stays Unknown, which is
+--  what it is to a system that models the four scalars plus records and arrays.
 --
 --  Reading Concatenated_Image here would answer both alternatives at once, and
 --  is how this was first written, but the image of a whole record denotation is
@@ -25,9 +28,17 @@ feature
 
    Ty : Integer
 
+   Structure_Index : Integer
+
    After_Type_Identifier (Child : Pascal.Checks.Type_Identifier)
       do
          Ty := Child.Ty
+      end
+
+   After_New_Type (Child : Pascal.Checks.New_Type)
+      do
+         Ty := Child.Ty
+         Structure_Index := Child.Structure_Index
       end
 
    After_Node

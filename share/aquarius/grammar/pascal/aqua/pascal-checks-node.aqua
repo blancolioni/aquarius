@@ -100,6 +100,27 @@ feature
          end
       end
 
+   Current_Structure_Index : Integer
+      --  The record or array being built right now, or 0 (issue #124)
+      do
+         Result := Context.Active_Structure_Index
+      end
+
+   Enter_Structure (Index : Integer) : Integer
+      --  Push Index as the structure now being built, and return the one it
+      --  replaces (0 if none), so the caller can restore it once Index is done.
+      --  A record or array nested inside a field or a component uses this to
+      --  come back to the enclosing structure it is part of.
+      do
+         Result := Context.Active_Structure_Index
+         Context.Set_Active_Structure_Index (Index)
+      end
+
+   Leave_Structure (Outer_Index : Integer)
+      do
+         Context.Set_Active_Structure_Index (Outer_Index)
+      end
+
    Record_Declaration (Tree     : Aquarius.Trees.Program_Tree
                        Name     : String
                        Category : String) : Aquarius.Entities.Declaration

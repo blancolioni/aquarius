@@ -1,0 +1,58 @@
+class
+   Pascal.Checks.Record_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  record_type ::= 'record' field_list 'end'
+--
+--  Allocates a fresh Pascal.Checks.Structure and makes it the one being built
+--  (issue #124), so that field_list's record_section and variant_part nodes --
+--  visited between this node's Before_Node and After_Node -- add their fields
+--  to IT, found via Node.Current_Structure_Index rather than through any hook
+--  passed down from here: field_list and record_field are not modelled as
+--  visitor classes at all (nothing needs to relay data up through them), which
+--  is why the only two classes downstream of this one are record_section and
+--  variant_part.
+--
+--  Set_Parent_Index records the structure being built when THIS one was
+--  entered (0 at the top level), which is what makes a record nested inside
+--  another record's field resolvable back to its enclosing one; Enter_Structure
+--  / Leave_Structure push and pop Current_Structure_Index the same way
+--  Enter_Scope / Leave_Scope push and pop the frame scope.
+--
+--  An empty field_list -- 'record end' -- builds a structure with no fields and
+--  a Size of 0, which is exactly what it is.
+
+feature
+
+   Ty : Integer
+
+   Structure_Index : Integer
+
+   Before_Node
+      local
+         Rec : Pascal.Checks.Structure
+      do
+         Own_Index := Current_Frame_Scope.New_Record
+         Rec := Current_Frame_Scope.Structure (Own_Index)
+         Rec.Set_Parent_Index (Current_Structure_Index)
+         Saved_Outer := Enter_Structure (Own_Index)
+      end
+
+   After_Node
+      local
+         T : Pascal.Checks.Types
+      do
+         Leave_Structure (Saved_Outer)
+         Ty := T.Structured_Type
+         Structure_Index := Own_Index
+      end
+
+feature { None }
+
+   Own_Index : Integer
+
+   Saved_Outer : Integer
+
+end

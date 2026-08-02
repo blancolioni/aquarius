@@ -1,0 +1,31 @@
+class
+   Pascal.Checks.Unpacked_Structured_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  unpacked_structured_type ::= array_type | record_type | set_type | file_type
+--
+--  Relays whichever of record_type / array_type fired up to New_Structured_Type
+--  (issue #124). set_type and file_type are not modelled -- Ty stays No_Type,
+--  which Type_Denoter reports as Unknown, same as before this issue.
+
+feature
+
+   Ty : Integer
+
+   Structure_Index : Integer
+
+   After_Record_Type (Child : Pascal.Checks.Record_Type)
+      do
+         Ty := Child.Ty
+         Structure_Index := Child.Structure_Index
+      end
+
+   After_Array_Type (Child : Pascal.Checks.Array_Type)
+      do
+         Ty := Child.Ty
+         Structure_Index := Child.Structure_Index
+      end
+
+end

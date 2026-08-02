@@ -1,0 +1,27 @@
+class
+   Pascal.Checks.Component_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  component_type ::= type_denoter
+--
+--  A pure relay (issue #124), and the recursive step that lets an array's
+--  element be another array or a record: by the time Pascal.Checks.Array_Type
+--  reads Ty / Structure_Index from this node, the nested type_denoter -- and
+--  whatever record_type or array_type it built -- has already finished, since
+--  children are visited before their parent.
+
+feature
+
+   Ty : Integer
+
+   Structure_Index : Integer
+
+   After_Type_Denoter (Child : Pascal.Checks.Type_Denoter)
+      do
+         Ty := Child.Ty
+         Structure_Index := Child.Structure_Index
+      end
+
+end

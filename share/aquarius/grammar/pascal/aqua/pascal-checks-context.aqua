@@ -32,6 +32,19 @@ feature
          Active_Frame_Scope := Frame
       end
 
+   Active_Structure_Index : Integer
+      --  Which record or array is being BUILT right now, as an index into
+      --  Pascal.Checks.Scope's structure table, or 0 if none (issue #124). Not
+      --  a type relationship: a record_section inside a record inside an array
+      --  pushes and pops this as it descends, so a nested record_type or
+      --  array_type always records the right Parent_Index and a field always
+      --  lands in the right structure's flat lists.
+
+   Set_Active_Structure_Index (Index : Integer)
+      do
+         Active_Structure_Index := Index
+      end
+
    Make
       do
       end

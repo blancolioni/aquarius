@@ -102,6 +102,16 @@ feature  --  building
          end
       end
 
+   Variant_Start : Integer
+      --  Next_Offset saved at the start of a variant_part, so each variant can
+      --  rewind to it: every variant begins where the case started, which is
+      --  what makes the variants a union rather than a sequence.
+
+   Set_Variant_Start (Where : Integer)
+      do
+         Variant_Start := Where
+      end
+
 feature  --  arrays
 
    Element_Ty : Integer

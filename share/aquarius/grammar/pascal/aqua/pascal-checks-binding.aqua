@@ -32,8 +32,9 @@ create
 --  Structure is the second half of a structured type (issue #124). Ty says only
 --  that this is a record or an array -- Types.Structured_Type, one code for all
 --  of them, because the argument-type packing has no room for more -- and
---  Structure says WHICH, as an index into Pascal.Checks.Type_Table. It is zero
---  for every scalar, which is the table's "no structure" index.
+--  Structure says WHICH, as an index into Pascal.Checks.Scope's structure
+--  table (Structure / New_Record / New_Array). It is zero for every scalar,
+--  which is the table's "no structure" index.
 
 feature
 
@@ -104,7 +105,8 @@ feature
       --  type is on its Signature instead, since only a call has one.
 
    Structure : Integer
-      --  Index into Pascal.Checks.Type_Table when Ty is Structured_Type, and 0
+      --  Index into Pascal.Checks.Scope's structure table when Ty is
+      --  Structured_Type, and 0
       --  otherwise (issue #124). Which record or array, as opposed to Ty, which
       --  says only that it is one.
 

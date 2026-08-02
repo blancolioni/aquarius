@@ -1,0 +1,46 @@
+class
+   Pascal.Checks.Variant_Part
+
+inherit
+   Pascal.Checks.Node
+
+--  variant_part ::= 'case' variant_selector 'of' case_variant
+--                  { ';' [ case_variant ] }
+--
+--  (ISO Pascal calls the repeated part "variant"; that word is reserved in the
+--  aqua language itself, so pascal.ebnf's rule is named case_variant instead --
+--  see the note on Pascal.Checks.Case_Variant.)
+--
+--  Settles issue #124's variant_part question by modelling the variants'
+--  fields: each variant starts at the offset the case started at, which is
+--  what makes them a union rather than a sequence, and the enclosing record's
+--  Size ends up the high water mark over all of them -- as big as its largest
+--  variant, which is what Pascal means by one.
+--
+--  All this node does is remember that starting offset, on the record itself
+--  (Structure.Variant_Start): each Pascal.Checks.Case_Variant then rewinds to
+--  it in its OWN Before_Node. Nothing here needs a hook on variant_selector or
+--  case_variant -- record_section (reached through each variant's nested
+--  field_list) does the actual field-adding, found via
+--  Node.Current_Structure_Index exactly as it is outside a variant_part.
+--
+--  variant_selector's tag_field -- the discriminant -- is NOT added as a field
+--  here. Written as 'case tag : sometype of ...' it declares one; written as
+--  bare 'case tag of ...' it names one already declared earlier in the same
+--  field_list. Telling those apart needs more than this issue's scope asks for,
+--  so the tag field itself goes unmodelled while every field inside every
+--  variant is modelled fully -- a deliberate partial answer, not an oversight.
+
+feature
+
+   Before_Node
+      local
+         Rec : Pascal.Checks.Structure
+      do
+         if Current_Structure_Index > 0 then
+            Rec := Current_Frame_Scope.Structure (Current_Structure_Index)
+            Rec.Set_Variant_Start (Rec.Next_Offset)
+         end
+      end
+
+end

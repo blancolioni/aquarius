@@ -1,0 +1,76 @@
+class
+   Pascal.Checks.Array_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  array_type ::= 'array' '[' < index_type / ',' > ']' 'of' component_type
+--
+--  Allocates a fresh Pascal.Checks.Structure and makes it the one being built
+--  (issue #124), exactly as Pascal.Checks.Record_Type does, so that each
+--  index_type -- visited between Before_Node and After_Node -- can record its
+--  dimension against Node.Current_Structure_Index without this node relaying
+--  anything down to it.
+--
+--  component_type DOES relay up, through After_Component_Type: the element's
+--  type and (if it is itself a record or an array) which one, needed here to
+--  compute the element width and hence the whole array's Size.
+--
+--  Size is Element_Width times the product of every dimension's Length, or 0
+--  if any dimension's extent was not known (Pascal.Checks.Scope.Array_Size) --
+--  the same "0 means not known" convention Pascal.Checks.Bounds.Length uses.
+
+feature
+
+   Ty : Integer
+
+   Structure_Index : Integer
+
+   Before_Node
+      local
+         Arr : Pascal.Checks.Structure
+      do
+         Own_Index := Current_Frame_Scope.New_Array
+         Arr := Current_Frame_Scope.Structure (Own_Index)
+         Arr.Set_Parent_Index (Current_Structure_Index)
+         Saved_Outer := Enter_Structure (Own_Index)
+      end
+
+   After_Component_Type (Child : Pascal.Checks.Component_Type)
+      do
+         Element_Ty := Child.Ty
+         Element_Structure := Child.Structure_Index
+      end
+
+   After_Node
+      local
+         Arr       : Pascal.Checks.Structure
+         Elem_Rec  : Pascal.Checks.Structure
+         Width     : Integer
+         T         : Pascal.Checks.Types
+      do
+         Leave_Structure (Saved_Outer)
+         Arr := Current_Frame_Scope.Structure (Own_Index)
+         if T.Is_Structured (Element_Ty) and then Element_Structure > 0 then
+            Elem_Rec := Current_Frame_Scope.Structure (Element_Structure)
+            Width := Elem_Rec.Size
+         else
+            Width := T.Width (Element_Ty)
+         end
+         Arr.Set_Element_Type (Element_Ty, Element_Structure, Width)
+         Arr.Set_Size (Current_Frame_Scope.Array_Size (Own_Index, Width))
+         Ty := T.Structured_Type
+         Structure_Index := Own_Index
+      end
+
+feature { None }
+
+   Own_Index : Integer
+
+   Saved_Outer : Integer
+
+   Element_Ty : Integer
+
+   Element_Structure : Integer
+
+end

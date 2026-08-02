@@ -25,6 +25,7 @@ feature
          --  last program compiled in this session.
          Scope.Reset
          Context.Set_Current_Frame_Scope (Scope)
+         Context.Set_Active_Structure_Index (0)
          Declare_Builtin_Types
          Declare_Builtin_Routines
          create Program_Scope.Make

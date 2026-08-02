@@ -1,0 +1,24 @@
+class
+   Pascal.Checks.New_Structured_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  new_structured_type ::= [ 'packed' ] unpacked_structured_type
+--
+--  A pure relay (issue #124): 'packed' changes nothing this system models, so
+--  the only work is passing Ty and Structure_Index up one level.
+
+feature
+
+   Ty : Integer
+
+   Structure_Index : Integer
+
+   After_Unpacked_Structured_Type (Child : Pascal.Checks.Unpacked_Structured_Type)
+      do
+         Ty := Child.Ty
+         Structure_Index := Child.Structure_Index
+      end
+
+end

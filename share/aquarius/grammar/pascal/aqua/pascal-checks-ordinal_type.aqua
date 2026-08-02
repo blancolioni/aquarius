@@ -1,0 +1,39 @@
+class
+   Pascal.Checks.Ordinal_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  ordinal_type ::= type_identifier | subrange_type
+--
+--  Publishes what an index_type or a base_type needs to know about its
+--  ordinal (issue #124): its type, and, for a subrange, its bounds.
+--  type_identifier alone (an enumerated type used as an index, e.g.
+--  'array [colour] of ...') leaves Is_Known False: enumerated types are not
+--  modelled, but the dimension still counts, which is what Is_Known
+--  distinguishes on Pascal.Checks.Bounds.
+
+feature
+
+   Ty : Integer
+
+   Is_Known : Boolean
+
+   Low : Integer
+
+   High : Integer
+
+   After_Type_Identifier (Child : Pascal.Checks.Type_Identifier)
+      do
+         Ty := Child.Ty
+      end
+
+   After_Subrange_Type (Child : Pascal.Checks.Subrange_Type)
+      do
+         Ty := Child.Ty
+         Is_Known := Child.Is_Known
+         Low := Child.Low
+         High := Child.High
+      end
+
+end

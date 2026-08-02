@@ -34,7 +34,8 @@ feature
    Structured_Type : Integer do Result := 7 end
       --  A record or an array (issue #124). ONE code for both, and for every
       --  record and every array in the program: which one is carried alongside
-      --  as an index into Pascal.Checks.Type_Table, never in a type code.
+      --  as an index into Pascal.Checks.Scope's structure table, never in a
+      --  type code.
       --
       --  Seven, and no eighth. Argument types travel to the signature check
       --  packed three bits apiece (Type_Weight, Packed_Type below), so the

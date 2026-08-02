@@ -1,0 +1,93 @@
+class
+   Pascal.Checks.Record_Section
+
+inherit
+   Pascal.Checks.Node
+
+--  record_section ::= identifier_list ':' type_denoter
+--
+--  Adds one field per name to the record Node.Current_Structure_Index names --
+--  the one record_type most recently entered and not yet left (issue #124) --
+--  at its Next_Offset, advancing that offset by the field's width and letting
+--  Note_Offset track the high water mark that becomes the record's Size.
+--
+--  The names arrive before the type does -- After_Identifier_List fires before
+--  the type_denoter sibling has been visited -- so both are stashed and the
+--  fields are added in After_Node, once both are in hand. Same shape as
+--  Pascal.Checks.Variable_Declaration, for the same reason.
+--
+--  A field whose type is itself a record or an array takes its width from that
+--  structure's Size rather than from Pascal.Checks.Types.Width, which only
+--  knows the four scalars: by the time this After_Node runs, a NESTED
+--  record_type or array_type inside the type_denoter has already finished
+--  building (children are visited before their parent), so its Size is final.
+--
+--  Silently does nothing if Current_Structure_Index is 0: record_section only
+--  ever appears inside a record_type's field_list, so that should not happen,
+--  but there is nowhere to report it usefully if it does.
+
+feature
+
+   After_Identifier_List (Child : Pascal.Checks.Identifier_List)
+      do
+         Names := Child.Names
+      end
+
+   After_Type_Denoter (Child : Pascal.Checks.Type_Denoter)
+      do
+         Ty := Child.Ty
+         Field_Structure := Child.Structure_Index
+      end
+
+   After_Node
+      local
+         It    : Aqua.Containers.Linked_List_Iterator [String]
+         Name  : String
+         Rec   : Pascal.Checks.Structure
+         Width : Integer
+      do
+         if attached Names as Declared then
+            if Current_Structure_Index > 0 then
+               Rec := Current_Frame_Scope.Structure (Current_Structure_Index)
+               Width := Field_Width
+               from
+                  It := Declared.New_Cursor
+               until
+                  It.After
+               loop
+                  Name := It.Element
+                  Current_Frame_Scope.Add_Field
+                     (Current_Structure_Index, Name, Rec.Next_Offset, Width,
+                      Ty, Field_Structure)
+                  Rec.Set_Next_Offset (Rec.Next_Offset + Width)
+                  Rec.Note_Offset (Rec.Next_Offset)
+                  It.Next
+               end
+            end
+         end
+      end
+
+feature { None }
+
+   Names : detachable Aqua.Containers.Linked_List [String]
+
+   Ty : Integer
+
+   Field_Structure : Integer
+
+   Field_Width : Integer
+      --  Words this field occupies: another structure's Size, or one of the
+      --  four scalar widths
+      local
+         T        : Pascal.Checks.Types
+         Elem_Rec : Pascal.Checks.Structure
+      do
+         if T.Is_Structured (Ty) and then Field_Structure > 0 then
+            Elem_Rec := Current_Frame_Scope.Structure (Field_Structure)
+            Result := Elem_Rec.Size
+         else
+            Result := T.Width (Ty)
+         end
+      end
+
+end

@@ -13,9 +13,9 @@ create
 --  Ty and Structure are the same pair as on Pascal.Checks.Binding, and mean the
 --  same thing: Ty says WHAT KIND -- one of the four scalars, or
 --  Types.Structured_Type -- and Structure says WHICH record or array, as an
---  index into Pascal.Checks.Type_Table, or 0 for a scalar. A field selection
---  resolves to exactly this pair, which is what lets the selection chain
---  continue through a nested record (issue #125).
+--  index into Pascal.Checks.Scope's structure table, or 0 for a scalar. A
+--  field selection resolves to exactly this pair, which is what lets the
+--  selection chain continue through a nested record (issue #125).
 --
 --  Name is stored lower-cased, because Pascal is case-insensitive; compare it
 --  with String.Equal rather than '=', which is reference equality inside a

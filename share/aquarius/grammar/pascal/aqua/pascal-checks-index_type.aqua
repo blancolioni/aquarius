@@ -1,0 +1,34 @@
+class
+   Pascal.Checks.Index_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  index_type ::= ordinal_type
+--
+--  Records one dimension of the array Node.Current_Structure_Index names --
+--  the array_type most recently entered and not yet left (issue #124) --
+--  reading the bounds from ordinal_type (a subrange) or leaving them unknown
+--  (a bare type_identifier, e.g. an enumerated index type, which is not
+--  modelled). Self-contained: array_type does not need a hook on this node at
+--  all, since nothing has to relay back up through it.
+--
+--  Silently does nothing if Current_Structure_Index is 0: index_type only ever
+--  appears inside an array_type, so that should not happen.
+
+feature
+
+   After_Ordinal_Type (Child : Pascal.Checks.Ordinal_Type)
+      do
+         if Current_Structure_Index > 0 then
+            if Child.Is_Known then
+               Current_Frame_Scope.Add_Dimension
+                  (Current_Structure_Index, Child.Low, Child.High, Child.Ty)
+            else
+               Current_Frame_Scope.Add_Unknown_Dimension
+                  (Current_Structure_Index, Child.Ty)
+            end
+         end
+      end
+
+end
