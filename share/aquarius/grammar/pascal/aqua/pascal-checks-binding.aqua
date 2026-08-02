@@ -17,7 +17,10 @@ create
 --  A constant binds to a value rather than to storage (issue #103): it has no
 --  offset in either space, and a use of it generates the literal instead of a
 --  load. That is also why a constant works where a value is needed before the
---  program runs, as in array [1 .. maxpgm].
+--  program runs, as in array [1 .. maxpgm]. An enumerated type's values are
+--  constants too (issue #139): red, green and blue bind exactly this way, with
+--  Structure saying which enum they belong to, same as a structured constant
+--  would if this model had one.
 --
 --  Name is stored lower-cased, because Pascal is case-insensitive; compare it
 --  with String.Equal rather than '=', which is reference equality inside a
@@ -73,14 +76,16 @@ feature
          Structure := Structure_Index
       end
 
-   Make_Constant (Bound_Name : String
-                  Constant_Value : Integer
-                  Type_Code : Integer)
+   Make_Constant (Bound_Name      : String
+                  Constant_Value  : Integer
+                  Type_Code       : Integer
+                  Structure_Index : Integer)
       do
          Name := Bound_Name.To_Lower
          Value := Constant_Value
          Is_Constant := True
          Ty := Type_Code
+         Structure := Structure_Index
       end
 
    Make_Routine (Bound_Name : String; Routine : Pascal.Checks.Signature)
@@ -129,9 +134,9 @@ feature
 
    Structure : Integer
       --  Index into Pascal.Checks.Scope's structure table when Ty is
-      --  Structured_Type, and 0
-      --  otherwise (issue #124). Which record or array, as opposed to Ty, which
-      --  says only that it is one.
+      --  Structured_Type (issue #124) or Enumerated_Type (issue #139), and 0
+      --  otherwise. Which record, array or enum, as opposed to Ty, which says
+      --  only that it is one.
 
    Signature : detachable Pascal.Checks.Signature
       --  What the routine takes, when Is_Routine; Void otherwise

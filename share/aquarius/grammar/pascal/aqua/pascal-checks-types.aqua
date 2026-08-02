@@ -51,6 +51,20 @@ feature
       --  side is still reported. What the code buys is that a COMPONENT of it
       --  can now be resolved (issues #125, #126, #127).
 
+   Enumerated_Type : Integer do Result := 8 end
+      --  'type colour = (red, green, blue)' (issue #139). ONE code for every
+      --  enumerated type declared in the program, the same way Structured_Type
+      --  is one code for every record and array: which one is Structure_Index,
+      --  alongside Ty, on the binding a declared value or a variable of the
+      --  type gets. Unlike Structured_Type, it IS Is_Known and Is_Ordinal --
+      --  comparing and assigning whole enum VALUES is the entire point, where
+      --  it is not for a whole record -- so two DIFFERENT enumerated types
+      --  type-check as compatible with each other, since Assignable/Combine
+      --  only ever see this one shared code. Accepted as the same kind of
+      --  coarse, honest gap #124 left for records: telling two enums apart
+      --  needs Structure_Index threaded through every operator, which nothing
+      --  in this model does yet.
+
    Is_Structured (Code : Integer) : Boolean
       do
          Result := Code = Structured_Type
@@ -69,6 +83,8 @@ feature
             Result := "char"
          elsif Code = Structured_Type then
             Result := "record or array"
+         elsif Code = Enumerated_Type then
+            Result := "enumerated type"
          else
             Result := "unknown type"
          end
@@ -95,10 +111,12 @@ feature
       end
 
    Is_Known (Code : Integer) : Boolean
-      --  One of the four modelled types: worth checking, and worth reporting
-      --  about. Anything else has either not been typed or has been reported.
+      --  One of the four scalars, or an enumerated type (issue #139): worth
+      --  checking, and worth reporting about. Anything else has either not
+      --  been typed or has been reported.
       do
-         Result := Code >= Integer_Type and then Code <= Char_Type
+         Result := (Code >= Integer_Type and then Code <= Char_Type)
+            or else Code = Enumerated_Type
       end
 
    Is_Quiet (Code : Integer) : Boolean
@@ -115,10 +133,11 @@ feature
 
    Is_Ordinal (Code : Integer) : Boolean
       --  What a for-loop control variable and a case selector must be. Real is
-      --  the one modelled type that is not ordinal.
+      --  the one modelled scalar that is not ordinal; an enumerated type
+      --  (issue #139) is, same as the language.
       do
          Result := Code = Integer_Type or else Code = Boolean_Type
-            or else Code = Char_Type
+            or else Code = Char_Type or else Code = Enumerated_Type
       end
 
    Assignable (Target : Integer; Source : Integer) : Boolean

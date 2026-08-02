@@ -13,12 +13,13 @@ create
 --  common 'array [1 .. maxpgm] of ...' modellable rather than opaque.
 --
 --  Is_Known is False when a bound could not be evaluated, or when the index is
---  a type name rather than a subrange ('array [colour] of ...', an enumerated
---  index -- enumerated types are not modelled). Length is then 0, and the
---  enclosing array's Size is 0 with it. A dimension count is still recorded,
---  which is the part a subscript check actually needs (issue #126): how many
---  subscripts the array takes is known even when how many elements it has is
---  not.
+--  a type name that is neither a subrange nor an enumerated type (issue #139
+--  made the latter Is_Known too, via Pascal.Checks.Ordinal_Type -- 'array
+--  [colour] of ...' now has a real Length, colour's declared value count).
+--  When it IS False, Length is 0, and the enclosing array's Size is 0 with it.
+--  A dimension count is still recorded, which is the part a subscript check
+--  actually needs (issue #126): how many subscripts the array takes is known
+--  even when how many elements it has is not.
 --
 --  Index_Ty is what a subscript expression must be assignable to.
 --
