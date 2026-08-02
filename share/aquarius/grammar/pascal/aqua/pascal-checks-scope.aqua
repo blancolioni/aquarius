@@ -176,6 +176,20 @@ feature  --  declaring
          Bindings.Append (B)
       end
 
+   Declare_With (Name            : String
+                 Field_Offset    : Integer
+                 Type_Code       : Integer
+                 Structure_Index : Integer)
+      --  Bind Name in THIS scope to a field of a with statement's record
+      --  variable (issue #127). One call per field, into the scope
+      --  Pascal.Checks.With_Statement opens for that record variable.
+      local
+         B : Pascal.Checks.Binding
+      do
+         create B.Make_With (Name, Field_Offset, Type_Code, Structure_Index)
+         Bindings.Append (B)
+      end
+
    Add_Declaration (Declaration : Aquarius.Entities.Declaration)
       do
          Declarations.Append (Declaration)
@@ -319,6 +333,55 @@ feature  --  structures
                then
                   Result := It.Element
                   Found := True
+               end
+               It.Next
+            end
+         end
+      end
+
+   Field_Count (Owner_Index : Integer) : Integer
+      --  How many fields the record numbered Owner_Index has (issue #127 --
+      --  Pascal.Checks.With_Statement declares a with binding for each)
+      local
+         It : Aqua.Containers.Linked_List_Iterator [Pascal.Checks.Field]
+      do
+         if attached Parent as P then
+            Result := P.Field_Count (Owner_Index)
+         else
+            from
+               It := Fields.New_Cursor
+            until
+               It.After
+            loop
+               if It.Element.Owner = Owner_Index then
+                  Result := Result + 1
+               end
+               It.Next
+            end
+         end
+      end
+
+   Field_At (Owner_Index : Integer; Which : Integer) : Pascal.Checks.Field
+      --  The Which-th (1-based) field of the record numbered Owner_Index, in
+      --  declaration order (issue #127). The caller is expected to have
+      --  checked Which against Field_Count first.
+      local
+         It : Aqua.Containers.Linked_List_Iterator [Pascal.Checks.Field]
+         At : Integer
+      do
+         if attached Parent as P then
+            Result := P.Field_At (Owner_Index, Which)
+         else
+            from
+               It := Fields.New_Cursor
+            until
+               It.After or else At = Which
+            loop
+               if It.Element.Owner = Owner_Index then
+                  At := At + 1
+                  if At = Which then
+                     Result := It.Element
+                  end
                end
                It.Next
             end

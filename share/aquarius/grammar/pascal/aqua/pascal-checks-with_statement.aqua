@@ -1,0 +1,109 @@
+class
+   Pascal.Checks.With_Statement
+
+inherit
+   Pascal.Checks.Node
+
+--  with_statement ::= 'with' record_variable_list 'do' statement
+--
+--  Opens one nested scope per record variable, innermost last -- 'with a, b
+--  do' is 'with a do with b do' (issue #127) -- each populated with one with
+--  binding per field of that record, found via Scope.Field_Count / Field_At.
+--  A record variable that is not a record is reported and no scope is opened
+--  for it, rather than opening an empty one and then reporting every name the
+--  body uses as undeclared. Quietly skipped (no message) when its type is
+--  already poisoned -- a broken field selection or subscript in the record
+--  variable itself has already been reported once.
+--
+--  Timing matters here: record_variable_list's items are ordinary
+--  variable_access nodes and must be fully resolved -- offsets, fields,
+--  everything #125 and #126 do -- before any of THIS opens a scope, since
+--  they are read in the ENCLOSING scope, not the one they introduce
+--  ('with p do p := q' still means the outer p). That is exactly the order
+--  the tree gives for free: record_variable_list (and everything under it)
+--  finishes before After_Record_Variable_List fires, and the body statement
+--  is not visited until after that returns.
+
+feature
+
+   After_Record_Variable_List (Child : Pascal.Checks.Record_Variable_List)
+      local
+         Ty_It     : Aqua.Containers.Linked_List_Iterator [Integer]
+         Struct_It : Aqua.Containers.Linked_List_Iterator [Integer]
+         Text_It   : Aqua.Containers.Linked_List_Iterator [String]
+         T         : Pascal.Checks.Types
+         Ty        : Integer
+         Struct    : Integer
+         Text      : String
+         Rec       : Pascal.Checks.Structure
+         Is_Rec    : Boolean
+      do
+         from
+            Ty_It := Child.Types.New_Cursor
+            Struct_It := Child.Structures.New_Cursor
+            Text_It := Child.Texts.New_Cursor
+         until
+            Ty_It.After
+         loop
+            Ty := Ty_It.Element
+            Struct := Struct_It.Element
+            Text := Text_It.Element
+            Is_Rec := False
+            if T.Is_Structured (Ty) and then Struct > 0 then
+               Rec := Current_Frame_Scope.Structure (Struct)
+               Is_Rec := Rec.Is_Record
+            end
+            if Is_Rec then
+               Enter_With_Scope (Struct)
+               Opened := Opened + 1
+            elsif not T.Is_Quiet (Ty) then
+               Error ("with requires a record: " & Text & " is not a record")
+            end
+            Ty_It.Next
+            Struct_It.Next
+            Text_It.Next
+         end
+      end
+
+   After_Node
+      --  Pop exactly as many scopes as were opened: a record variable that
+      --  was not a record contributed none.
+      local
+         K : Integer
+      do
+         from
+            K := 1
+         until
+            K > Opened
+         loop
+            Leave_Scope
+            K := K + 1
+         end
+      end
+
+feature { None }
+
+   Opened : Integer
+
+   Enter_With_Scope (Structure_Index : Integer)
+      local
+         Entity_Scope : Aquarius.Entities.Scope
+         F            : Pascal.Checks.Field
+         Count        : Integer
+         N            : Integer
+      do
+         create Entity_Scope.Make
+         Enter_Scope (Entity_Scope)
+         Count := Current_Frame_Scope.Field_Count (Structure_Index)
+         from
+            N := 1
+         until
+            N > Count
+         loop
+            F := Current_Frame_Scope.Field_At (Structure_Index, N)
+            Current_Frame_Scope.Declare_With (F.Name, F.Offset, F.Ty, F.Structure)
+            N := N + 1
+         end
+      end
+
+end

@@ -1,0 +1,35 @@
+class
+   Pascal.Checks.Record_Variable_List
+
+inherit
+   Pascal.Checks.Node
+
+--  record_variable_list ::= < variable_access / ',' >
+--
+--  Collects each record variable's resolved type and structure, and its
+--  source text (for messages), in source order (issue #127).
+--  Pascal.Checks.With_Statement opens one nested scope per item once the
+--  whole list has been visited -- 'with a, b do' is 'with a do with b do', so
+--  the order here is the nesting order, innermost last.
+--
+--  Three parallel lists rather than one of tuples: 2-tuples are proven in
+--  this codebase (Aqua.Containers.List_Map's entries), 3-tuples are not, and
+--  this is exactly the shape Pascal.Checks.Indexed_Variable already uses for
+--  a comparable one-per-child collection (issue #126).
+
+feature
+
+   Types : Aqua.Containers.Linked_List [Integer]
+
+   Structures : Aqua.Containers.Linked_List [Integer]
+
+   Texts : Aqua.Containers.Linked_List [String]
+
+   After_Variable_Access (Child : Pascal.Checks.Variable_Access)
+      do
+         Types.Append (Child.Ty)
+         Structures.Append (Child.Structure_Index)
+         Texts.Append (Child.Concatenated_Image)
+      end
+
+end

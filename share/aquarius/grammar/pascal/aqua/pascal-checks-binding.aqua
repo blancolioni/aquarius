@@ -2,7 +2,7 @@ class
    Pascal.Checks.Binding
 
 create
-   Make_Local, Make_Argument, Make_Constant, Make_Routine, Make_Type
+   Make_Local, Make_Argument, Make_Constant, Make_Routine, Make_Type, Make_With
 
 --  One name bound to one slot of the enclosing routine's frame, held by
 --  Pascal.Checks.Scope (issue #81).
@@ -35,6 +35,16 @@ create
 --  Structure says WHICH, as an index into Pascal.Checks.Scope's structure
 --  table (Structure / New_Record / New_Array). It is zero for every scalar,
 --  which is the table's "no structure" index.
+--
+--  A with binding is the sixth kind (issue #127): one per field of a with
+--  statement's record variable, in the scope it opens. Ty and Structure are
+--  the field's own -- the same pair a plain Pascal.Checks.Field carries -- so
+--  a with-bound name that is itself a record chains into a further field
+--  selection exactly like an ordinary one. Offset is the field's offset
+--  within that record, in words: not a frame slot or an argument index (there
+--  is no storage for a with binding to call its own until the record
+--  variable's base address is), but recorded now so lowering it later is
+--  narrowing the representation, not rebuilding it.
 
 feature
 
@@ -90,11 +100,24 @@ feature
          Is_Type := True
       end
 
+   Make_With (Bound_Name      : String
+              Field_Offset    : Integer
+              Type_Code       : Integer
+              Structure_Index : Integer)
+      do
+         Name := Bound_Name.To_Lower
+         Offset := Field_Offset
+         Ty := Type_Code
+         Structure := Structure_Index
+         Is_With := True
+      end
+
    Name : String
 
    Offset : Integer
       --  Frame slot for a local, argument index for an argument; both 1-based.
-      --  Meaningless for a constant, which occupies no storage.
+      --  A field's own offset within the record, in words, for a with binding
+      --  (issue #127). Meaningless for a constant, which occupies no storage.
 
    Value : Integer
       --  The value of a constant; meaningless for anything else
@@ -120,6 +143,8 @@ feature
    Is_Routine : Boolean
 
    Is_Type : Boolean
+
+   Is_With : Boolean
 
    By_Reference : Boolean
 
