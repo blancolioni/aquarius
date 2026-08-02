@@ -257,6 +257,8 @@ feature
             Declare_Builtin ("odd",      "builtin-function")
             Declare_Builtin ("eof",      "builtin-function")
             Declare_Builtin ("eoln",     "builtin-function")
+            Declare_Builtin ("false",    "builtin-constant")
+            Declare_Builtin ("true",     "builtin-constant")
          end
       end
 
@@ -308,6 +310,24 @@ feature
          Current_Frame_Scope.Declare_Standard_Function ("odd")
          Current_Frame_Scope.Declare_Standard_Function ("eof")
          Current_Frame_Scope.Declare_Standard_Function ("eoln")
+      end
+
+   Declare_Builtin_Constants
+      --  Bind false and true (issue #88, reopened) as ordinary Boolean_Type
+      --  constants in the ROOT frame scope, the same way #103 binds a user
+      --  const and #139 binds an enum value -- Boolean is already its own
+      --  scalar type code with every rule (comparison, 'and'/'or'/'not', the
+      --  ordinal rules that give 'for' loops and ord/succ/pred) in place, so
+      --  nothing else needs to change for these to just work.
+      --
+      --  Re-declared for each program rather than once, same reason as
+      --  Declare_Builtin_Routines: the root scope is a once value that
+      --  Program.Before_Node resets.
+      local
+         T : Pascal.Checks.Types
+      do
+         Current_Frame_Scope.Declare_Constant ("false", 0, T.Boolean_Type, 0)
+         Current_Frame_Scope.Declare_Constant ("true", 1, T.Boolean_Type, 0)
       end
 
    Declare_Builtin (Name : String; Category : String)
