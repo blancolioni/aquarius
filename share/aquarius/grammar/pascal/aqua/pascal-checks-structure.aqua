@@ -3,7 +3,8 @@ class
 
 create
    Make_Record,
-   Make_Array
+   Make_Array,
+   Make_Enum
 
 --  One record type or one array type (issue #124). Held by the root
 --  Pascal.Checks.Scope and referred to everywhere else by its index there:
@@ -45,10 +46,16 @@ feature
          Kind := Array_Kind
       end
 
+   Make_Enum
+      do
+         Kind := Enum_Kind
+      end
+
 feature  --  kind
 
    Record_Kind : Integer do Result := 1 end
    Array_Kind  : Integer do Result := 2 end
+   Enum_Kind   : Integer do Result := 3 end
 
    Kind : Integer
 
@@ -60,6 +67,11 @@ feature  --  kind
    Is_Array : Boolean
       do
          Result := Kind = Array_Kind
+      end
+
+   Is_Enum : Boolean
+      do
+         Result := Kind = Enum_Kind
       end
 
 feature  --  building
@@ -87,7 +99,12 @@ feature  --  building
       --  WATER MARK of Next_Offset, not its current value, so that rewinding
       --  for a variant does not shrink the record: a record with variants is
       --  as big as its largest variant, which is what Pascal means by one.
-      --  For an array, set once the component type is known.
+      --  For an array, set once the component type is known. For an enum
+      --  (issue #139) this is repurposed as the number of declared values --
+      --  an enum occupies one word same as an integer, but Ordinal_Type needs
+      --  its VALUE COUNT to answer Low/High for 'array [colour] of ...', and
+      --  Kind already means the rest of these features go unused for it, the
+      --  same way the array-only features go unused for a record.
 
    Set_Size (Words : Integer)
       do

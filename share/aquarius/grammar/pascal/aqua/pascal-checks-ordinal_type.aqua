@@ -7,10 +7,12 @@ inherit
 --  ordinal_type ::= type_identifier | subrange_type
 --
 --  Publishes what an index_type or a base_type needs to know about its
---  ordinal (issue #124): its type, and, for a subrange, its bounds.
---  type_identifier alone (an enumerated type used as an index, e.g.
---  'array [colour] of ...') leaves Is_Known False: enumerated types are not
---  modelled, but the dimension still counts, which is what Is_Known
+--  ordinal (issue #124): its type, and its bounds, for a subrange or (issue
+--  #139) an enumerated type_identifier -- 'array [colour] of ...' now counts
+--  colour's declared values, giving Low 0 and High one less than how many
+--  there are, same as the language's own ordinal numbering. A type_identifier
+--  that names neither -- an integer/boolean/char alias, or an unmodelled type --
+--  leaves Is_Known False: the dimension still counts, which is what Is_Known
 --  distinguishes on Pascal.Checks.Bounds.
 
 feature
@@ -24,8 +26,17 @@ feature
    High : Integer
 
    After_Type_Identifier (Child : Pascal.Checks.Type_Identifier)
+      local
+         T     : Pascal.Checks.Types
+         Enum  : Pascal.Checks.Structure
       do
          Ty := Child.Ty
+         if Ty = T.Enumerated_Type and then Child.Structure_Index > 0 then
+            Enum := Current_Frame_Scope.Structure (Child.Structure_Index)
+            Is_Known := True
+            Low := 0
+            High := Enum.Size - 1
+         end
       end
 
    After_Subrange_Type (Child : Pascal.Checks.Subrange_Type)

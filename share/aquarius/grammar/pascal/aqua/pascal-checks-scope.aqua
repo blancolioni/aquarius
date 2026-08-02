@@ -152,13 +152,21 @@ feature  --  declaring
          end
       end
 
-   Declare_Constant (Name : String; Value : Integer; Type_Code : Integer)
+   Declare_Constant (Name            : String
+                     Value           : Integer
+                     Type_Code       : Integer
+                     Structure_Index : Integer)
       --  Bind Name in THIS scope to a value (issue #103). Nothing is allocated:
       --  a constant is not storage, so it takes no slot in either index space.
+      --  Structure_Index is 0 for an ordinary const, and which enumerated type
+      --  when Type_Code is Types.Enumerated_Type (issue #139) -- the same
+      --  (Type_Code, Structure_Index) pair every other declaring feature here
+      --  takes, so an enumerator's name is not a new kind of binding, just this
+      --  one filled in.
       local
          B : Pascal.Checks.Binding
       do
-         create B.Make_Constant (Name, Value, Type_Code)
+         create B.Make_Constant (Name, Value, Type_Code, Structure_Index)
          Bindings.Append (B)
       end
 
@@ -224,6 +232,21 @@ feature  --  structures
             Result := P.New_Array
          else
             create S.Make_Array
+            Structures.Append (S)
+            Structure_Count := Structure_Count + 1
+            Result := Structure_Count
+         end
+      end
+
+   New_Enum : Integer
+      --  As New_Record, for an enumerated type (issue #139)
+      local
+         S : Pascal.Checks.Structure
+      do
+         if attached Parent as P then
+            Result := P.New_Enum
+         else
+            create S.Make_Enum
             Structures.Append (S)
             Structure_Count := Structure_Count + 1
             Result := Structure_Count

@@ -1,0 +1,58 @@
+class
+   Pascal.Checks.Enumerated_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  enumerated_type ::= '(' identifier_list ')'
+--
+--  Allocates a fresh Pascal.Checks.Structure (issue #139, reusing #124's
+--  record/array model: Kind discriminates, and an enum's only used feature is
+--  Size, repurposed as its number of values) and binds each name in the
+--  CURRENT scope to its ordinal position -- 0 for the first identifier, rising
+--  by one -- the same scope an ordinary constant_definition binds into, since
+--  that is where Pascal makes an enumerator's name visible: 'type colour =
+--  (red, green, blue);' makes red, green and blue usable directly, not through
+--  colour.
+--
+--  No build-stack push/pop like Record_Type / Array_Type: the identifiers are
+--  flat, nothing nested can be built while this runs, so New_Enum and every
+--  Declare_Constant happen right here in one pass over identifier_list.
+
+feature
+
+   Ty : Integer
+
+   Structure_Index : Integer
+
+   After_Identifier_List (Child : Pascal.Checks.Identifier_List)
+      local
+         It    : Aqua.Containers.Linked_List_Iterator [String]
+         Name  : String
+         Value : Integer
+         T     : Pascal.Checks.Types
+         Enum  : Pascal.Checks.Structure
+      do
+         Structure_Index := Current_Frame_Scope.New_Enum
+         from
+            It := Child.Names.New_Cursor
+            Value := 0
+         until
+            It.After
+         loop
+            Name := It.Element
+            if Current_Frame_Scope.Is_Declared_Here (Name) then
+               Error ("duplicate declaration: " & Name)
+            else
+               Current_Frame_Scope.Declare_Constant
+                  (Name, Value, T.Enumerated_Type, Structure_Index)
+            end
+            Value := Value + 1
+            It.Next
+         end
+         Enum := Current_Frame_Scope.Structure (Structure_Index)
+         Enum.Set_Size (Value)
+         Ty := T.Enumerated_Type
+      end
+
+end

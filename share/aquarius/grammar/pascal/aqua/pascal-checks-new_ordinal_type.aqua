@@ -1,0 +1,33 @@
+class
+   Pascal.Checks.New_Ordinal_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  new_ordinal_type ::= enumerated_type | subrange_type
+--
+--  Relays an enumerated type up to Pascal.Checks.New_Type (issue #139), which
+--  is what makes 'type colour = (red, green, blue);' bind colour itself as a
+--  type, alongside red/green/blue's own values (bound by
+--  Pascal.Checks.Enumerated_Type as it builds the type).
+--
+--  subrange_type as a STANDALONE type ('type age = 0 .. 150;') fires no hook
+--  here and leaves Ty at No_Type, which Type_Denoter then reports as Unknown --
+--  the same "not modelled" gap New_Type's own comment already notes for
+--  new_pointer_type, left for its own issue rather than folded into this one.
+--  A subrange used as an INDEX type is unaffected: that path is
+--  Pascal.Checks.Ordinal_Type, reached through index_type, not through here.
+
+feature
+
+   Ty : Integer
+
+   Structure_Index : Integer
+
+   After_Enumerated_Type (Child : Pascal.Checks.Enumerated_Type)
+      do
+         Ty := Child.Ty
+         Structure_Index := Child.Structure_Index
+      end
+
+end
