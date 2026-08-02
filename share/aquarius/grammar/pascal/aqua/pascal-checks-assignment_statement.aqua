@@ -17,6 +17,16 @@ inherit
 --
 --  Both are copied out as Integer codes rather than the child visitors being
 --  kept, which is what #107 warns about and is unnecessary here.
+--
+--  A whole record or array copy -- Target and Source both Types.Structured_Type
+--  AND naming the SAME structure -- is the one place Structured_Type is a
+--  legal operand at all: it is otherwise excluded from Is_Known everywhere
+--  (an operator, a call argument, a for-loop bound), which stays unchanged.
+--  Structure_Index has to travel alongside Ty for this, so Pascal.Checks.
+--  Factor/Term/Simple_Expression/Expression each carry it now too, the same
+--  "0 unless Ty says structured" contract Variable_Access
+--  already keeps -- reset to 0 the moment an operator combines two operands,
+--  since no operator ever legally yields a structure.
 
 feature
 
@@ -28,32 +38,45 @@ feature
    After_Variable_Access (Child : Pascal.Checks.Variable_Access)
       do
          Target_Type := Child.Ty
+         Target_Structure := Child.Structure_Index
       end
 
    After_Expression (Child : Pascal.Checks.Expression)
       do
          Source_Type := Child.Ty
+         Source_Structure := Child.Structure_Index
       end
 
    After_Node
       local
-         T      : Pascal.Checks.Types
-         Target : Integer
-         Source : Integer
+         T        : Pascal.Checks.Types
+         Target   : Integer
+         Source   : Integer
+         Matched  : Boolean
       do
-         Target := Check_Known (Target_Type, "an assignment target")
-         Source := Check_Known (Source_Type, "an assigned value")
-         if not T.Assignable (Target, Source) then
-            --  Integer to real is Pascal's one implicit widening; the other
-            --  direction is what round and trunc are for.
-            Error ("cannot assign " & T.Name (Source) & " to "
-                   & T.Name (Target))
+         if T.Is_Structured (Target_Type) and then T.Is_Structured (Source_Type)
+         then
+            if Target_Structure = Source_Structure then
+               Matched := True
+            end
+         end
+         if not Matched then
+            Target := Check_Known (Target_Type, "an assignment target")
+            Source := Check_Known (Source_Type, "an assigned value")
+            if not T.Assignable (Target, Source) then
+               --  Integer to real is Pascal's one implicit widening; the
+               --  other direction is what round and trunc are for.
+               Error ("cannot assign " & T.Name (Source) & " to "
+                      & T.Name (Target))
+            end
          end
       end
 
 feature { None }
 
-   Target_Type : Integer
-   Source_Type : Integer
+   Target_Type      : Integer
+   Source_Type      : Integer
+   Target_Structure : Integer
+   Source_Structure : Integer
 
 end

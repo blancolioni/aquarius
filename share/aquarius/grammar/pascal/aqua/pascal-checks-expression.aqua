@@ -25,6 +25,13 @@ feature
 
    Ty : Integer
 
+   Structure_Index : Integer
+      --  As Pascal.Checks.Factor's, threaded up when this expression is one
+      --  bare simple_expression; 0 once a comparison has combined two, since
+      --  a comparison never legally yields a structure (issue #104) --
+      --  Assignment_Statement reads this to check a whole record or array
+      --  copy.
+
    After_Simple_Expression (Child : Pascal.Checks.Simple_Expression)
       local
          T : Pascal.Checks.Types
@@ -32,9 +39,11 @@ feature
          if Parts = 0 then
             Is_Variable := Child.Is_Variable
             Ty := Child.Ty
+            Structure_Index := Child.Structure_Index
          else
             Is_Variable := False
             Ty := Combine_Types (T.Compare_Op, Ty, Child.Ty)
+            Structure_Index := 0
          end
          Parts := Parts + 1
       end

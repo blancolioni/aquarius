@@ -18,6 +18,12 @@ feature
 
    Ty : Integer
 
+   Structure_Index : Integer
+      --  As Pascal.Checks.Factor's, threaded up when this simple_expression is
+      --  one bare term, unsigned; 0 for a signed or a combined one, since
+      --  neither a sign nor an operator ever legally yields a structure
+      --  (issue #104).
+
    After_Sign (Child : Pascal.Checks.Sign)
       do
          Signed := True
@@ -35,6 +41,7 @@ feature
          if Terms = 0 and then not Signed then
             Is_Variable := Child.Is_Variable
             Ty := Child.Ty
+            Structure_Index := Child.Structure_Index
          else
             Is_Variable := False
             if Terms = 0 then
@@ -45,8 +52,10 @@ feature
                          & T.Name (Ty))
                   Ty := T.Error_Type
                end
+               Structure_Index := 0
             else
                Ty := Combine_Types (Pending, Ty, Child.Ty)
+               Structure_Index := 0
             end
          end
          Terms := Terms + 1

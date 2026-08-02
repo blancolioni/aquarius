@@ -27,6 +27,11 @@ feature
 
    Ty : Integer
 
+   Structure_Index : Integer
+      --  Which record or array Ty names, when it is Structured_Type, and 0
+      --  otherwise (issue #104) -- the companion of Ty, threaded up from
+      --  Variable_Access so a whole-structure assignment can be checked.
+
    After_Unsigned_Constant (Child : Pascal.Checks.Unsigned_Constant)
       do
          Ty := Child.Ty
@@ -55,12 +60,14 @@ feature
          --  take that address is issue #104, and it says so there.
          Is_Variable := not Child.Is_Call
          Ty := Child.Ty
+         Structure_Index := Child.Structure_Index
       end
 
    After_Expression (Child : Pascal.Checks.Expression)
       do
          Is_Variable := Child.Is_Variable
          Ty := Child.Ty
+         Structure_Index := Child.Structure_Index
       end
 
 end

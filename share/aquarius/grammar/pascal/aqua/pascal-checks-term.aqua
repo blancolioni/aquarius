@@ -18,6 +18,11 @@ feature
 
    Ty : Integer
 
+   Structure_Index : Integer
+      --  As Pascal.Checks.Factor's, threaded up when this term is one bare
+      --  factor; 0 once an operator has combined two, since no operator ever
+      --  legally yields a structure (issue #104).
+
    After_Multiplying_Operator (Child : Pascal.Checks.Multiplying_Operator)
       do
          Pending := Child.Kind
@@ -28,9 +33,11 @@ feature
          if Factors = 0 then
             Is_Variable := Child.Is_Variable
             Ty := Child.Ty
+            Structure_Index := Child.Structure_Index
          else
             Is_Variable := False
             Ty := Combine_Types (Pending, Ty, Child.Ty)
+            Structure_Index := 0
          end
          Factors := Factors + 1
       end
