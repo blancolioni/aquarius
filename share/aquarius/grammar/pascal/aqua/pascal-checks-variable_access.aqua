@@ -67,6 +67,13 @@ feature
       --  stage receives by injection -- the type it will read to choose a
       --  float operator (issue #87).
 
+   Structure_Index : Integer
+      --  Which record or array Ty names, when it says it is one, and 0
+      --  otherwise (issue #127) -- the companion of Ty, same pair every other
+      --  structured-type-bearing class in this model publishes. What
+      --  Pascal.Checks.With_Statement reads to find the fields of a with
+      --  statement's record variable.
+
    Set_Target
       do
          Is_Target := True
@@ -135,6 +142,14 @@ feature
                   Is_Constant := Bnd.Is_Constant
                   Value := Bnd.Value
                   Ty := Current_Ty
+                  Structure_Index := Current_Structure
+                  if Bnd.Is_With then
+                     --  A with-bound name is a field of some record variable,
+                     --  not storage of its own -- the code stage must not
+                     --  emit a plain load any more than it may for a
+                     --  resolved field selection (issue #127).
+                     Is_Component := True
+                  end
                   if Is_Constant and then Is_Target then
                      Error ("cannot assign to a constant: " & N)
                   end
