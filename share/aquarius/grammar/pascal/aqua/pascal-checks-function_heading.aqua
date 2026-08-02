@@ -31,7 +31,7 @@ feature
          Sig := Declare_Routine (Name, True, False)
          create Func_Scope.Make
          Enter_Scope (Func_Scope)
-         Current_Frame_Scope.Set_Routine (Sig)
+         Current_Frame_Scope.Set_Routine (Name, Sig)
       end
 
    After_Result_Type (Child : Pascal.Checks.Result_Type)

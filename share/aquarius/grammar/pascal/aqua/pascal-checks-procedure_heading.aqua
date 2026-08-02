@@ -28,7 +28,7 @@ feature
          Sig := Declare_Routine (Name, False, False)
          create Proc_Scope.Make
          Enter_Scope (Proc_Scope)
-         Current_Frame_Scope.Set_Routine (Sig)
+         Current_Frame_Scope.Set_Routine (Name, Sig)
       end
 
 end
