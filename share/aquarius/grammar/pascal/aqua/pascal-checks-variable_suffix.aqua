@@ -29,10 +29,9 @@ feature
 
    Argument_Count : Integer
 
-   Variable_Mask : Integer
+   Argument_Variables : Aqua.Containers.Linked_List [Boolean]
 
-   Type_Mask : Integer
-      --  The argument types, three bits apiece (issue #88)
+   Argument_Types : Aqua.Containers.Linked_List [Integer]
 
    Is_Field : Boolean
 
@@ -48,8 +47,8 @@ feature
       do
          Is_Call := True
          Argument_Count := Child.Count
-         Variable_Mask := Child.Variable_Mask
-         Type_Mask := Child.Type_Mask
+         Argument_Variables := Child.Argument_Variables
+         Argument_Types := Child.Argument_Types
       end
 
    After_Field_Designator (Child : Pascal.Checks.Field_Designator)
