@@ -203,6 +203,19 @@ feature  --  declaring
          Declarations.Append (Declaration)
       end
 
+   Declare_Standard_Function (Name : String)
+      --  Bind Name in THIS scope as a standard function (issue #83): a
+      --  callable with no Signature, unlike a declared routine or
+      --  write/writeln/read/readln -- Pascal.Checks.Standard_Functions checks
+      --  its argument and computes its result type directly, since several of
+      --  these (abs, sqr, pred, succ) return whatever type they were given.
+      local
+         B : Pascal.Checks.Binding
+      do
+         create B.Make_Standard_Function (Name)
+         Bindings.Append (B)
+      end
+
 feature  --  structures
 
    New_Record : Integer

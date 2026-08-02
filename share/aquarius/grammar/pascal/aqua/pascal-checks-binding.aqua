@@ -2,7 +2,8 @@ class
    Pascal.Checks.Binding
 
 create
-   Make_Local, Make_Argument, Make_Constant, Make_Routine, Make_Type, Make_With
+   Make_Local, Make_Argument, Make_Constant, Make_Routine, Make_Type, Make_With,
+   Make_Standard_Function
 
 --  One name bound to one slot of the enclosing routine's frame, held by
 --  Pascal.Checks.Scope (issue #81).
@@ -48,6 +49,15 @@ create
 --  is no storage for a with binding to call its own until the record
 --  variable's base address is), but recorded now so lowering it later is
 --  narrowing the representation, not rebuilding it.
+--
+--  A standard function is the seventh kind (issue #83): abs, ord, sqrt and
+--  the rest of the Pascal-required built-ins. It IS a routine (Is_Routine, so
+--  it resolves as a call exactly like a user-declared one) but has no
+--  Signature: several of them (abs, sqr, pred, succ) return whatever type
+--  they were given rather than one fixed result type a Signature could name,
+--  so Pascal.Checks.Variable_Access.Check_Call asks
+--  Pascal.Checks.Standard_Functions instead, from the single argument's own
+--  type.
 
 feature
 
@@ -117,6 +127,13 @@ feature
          Is_With := True
       end
 
+   Make_Standard_Function (Bound_Name : String)
+      do
+         Name := Bound_Name.To_Lower
+         Is_Routine := True
+         Is_Standard := True
+      end
+
    Name : String
 
    Offset : Integer
@@ -150,6 +167,9 @@ feature
    Is_Type : Boolean
 
    Is_With : Boolean
+
+   Is_Standard : Boolean
+      --  A standard function (issue #83); meaningful only when Is_Routine
 
    By_Reference : Boolean
 
