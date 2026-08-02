@@ -1,0 +1,27 @@
+class
+   Pascal.Checks.New_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  new_type ::= new_ordinal_type | new_structured_type | new_pointer_type
+--
+--  Relays a record or an array up to Pascal.Checks.Type_Denoter (issue #124).
+--  new_ordinal_type (an enumerated or subrange type used as a whole type) and
+--  new_pointer_type fire no hook here and leave Ty at No_Type, which
+--  Type_Denoter then reports as Unknown -- neither is modelled, same as before
+--  this issue.
+
+feature
+
+   Ty : Integer
+
+   Structure_Index : Integer
+
+   After_New_Structured_Type (Child : Pascal.Checks.New_Structured_Type)
+      do
+         Ty := Child.Ty
+         Structure_Index := Child.Structure_Index
+      end
+
+end

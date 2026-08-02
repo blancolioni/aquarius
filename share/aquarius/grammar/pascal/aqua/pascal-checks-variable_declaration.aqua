@@ -33,6 +33,7 @@ feature
    After_Type_Denoter (Child : Pascal.Checks.Type_Denoter)
       do
          Ty := Child.Ty
+         Structure_Index := Child.Structure_Index
       end
 
    After_Node
@@ -52,7 +53,8 @@ feature
                if Current_Frame_Scope.Is_Declared_Here (Name) then
                   Error ("duplicate declaration: " & Name)
                else
-                  Ignore := Current_Frame_Scope.Declare_Local (Name, Ty)
+                  Ignore :=
+                     Current_Frame_Scope.Declare_Local (Name, Ty, Structure_Index)
                   --  Record the variable in the standard entity model, keyed
                   --  in the scope so a later access can resolve and refer to it.
                   create Decl.Make (Name, Name, "variable", Current)
@@ -72,5 +74,7 @@ feature { None }
    Names : detachable Aqua.Containers.Linked_List [String]
 
    Ty : Integer
+
+   Structure_Index : Integer
 
 end

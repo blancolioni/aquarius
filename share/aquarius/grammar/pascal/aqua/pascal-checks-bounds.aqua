@@ -1,0 +1,74 @@
+class
+   Pascal.Checks.Bounds
+
+create
+   Make,
+   Make_Unknown
+
+--  One dimension of an array type: its index range (issue #124).
+--
+--  Low and High come from a subrange_type's two constants, which are evaluated
+--  by Pascal.Checks.Constant -- so a bound written as a named constant works,
+--  because #103 made constant identifiers resolvable. That is what makes the
+--  common 'array [1 .. maxpgm] of ...' modellable rather than opaque.
+--
+--  Is_Known is False when a bound could not be evaluated, or when the index is
+--  a type name rather than a subrange ('array [colour] of ...', an enumerated
+--  index -- enumerated types are not modelled). Length is then 0, and the
+--  enclosing array's Size is 0 with it. A dimension count is still recorded,
+--  which is the part a subscript check actually needs (issue #126): how many
+--  subscripts the array takes is known even when how many elements it has is
+--  not.
+--
+--  Index_Ty is what a subscript expression must be assignable to.
+--
+--  As with Pascal.Checks.Field, every dimension of every array lives in one
+--  flat list on the root Pascal.Checks.Scope and names its Owner, and this
+--  class holds no containers. See the note on Pascal.Checks.Structure for why.
+--  Order within the list is declaration order, so filtering on Owner yields
+--  the dimensions of one array in the order they were written.
+
+feature
+
+   Make (Owner_Index : Integer
+         Lower       : Integer
+         Upper       : Integer
+         Index_Type  : Integer)
+      do
+         Owner := Owner_Index
+         Low := Lower
+         High := Upper
+         Ty := Index_Type
+         Is_Known := True
+      end
+
+   Make_Unknown (Owner_Index : Integer; Index_Type : Integer)
+      --  A dimension whose extent could not be evaluated. It still counts as a
+      --  dimension, and it still constrains the subscript's type.
+      do
+         Owner := Owner_Index
+         Ty := Index_Type
+      end
+
+   Owner : Integer
+      --  Index of the array this is a dimension of
+
+   Low : Integer
+
+   High : Integer
+
+   Ty : Integer
+
+   Is_Known : Boolean
+
+   Length : Integer
+      --  Elements in this dimension, or 0 if the extent is not known. An empty
+      --  range -- High below Low -- is also 0: Pascal forbids it, and the
+      --  report belongs to whoever declared it, not here.
+      do
+         if Is_Known and then High >= Low then
+            Result := High - Low + 1
+         end
+      end
+
+end

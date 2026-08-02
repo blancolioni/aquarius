@@ -38,8 +38,12 @@ feature
       do
          create Bindings
          create Declarations
+         create Structures
+         create Fields
+         create Dimensions
          Allocated := 0
          Allocated_Arguments := 0
+         Structure_Count := 0
       end
 
    Parent : detachable Pascal.Checks.Scope
@@ -66,14 +70,20 @@ feature
       do
          create Bindings
          create Declarations
+         create Structures
+         create Fields
+         create Dimensions
          Allocated := 0
          Allocated_Arguments := 0
+         Structure_Count := 0
          Parent := Void
       end
 
 feature  --  declaring
 
-   Declare_Local (Name : String; Type_Code : Integer) : Integer
+   Declare_Local (Name            : String
+                  Type_Code       : Integer
+                  Structure_Index : Integer) : Integer
       --  Bind Name in THIS scope to a freshly allocated frame slot, and return
       --  the slot. The caller is expected to have checked Find first: declaring
       --  the same name twice in one scope leaves both bindings, and Find will
@@ -84,17 +94,24 @@ feature  --  declaring
       --  register with its own prefix sum over Slot_Width, widening a slot that
       --  is pushed or popped as floating point to the pair it needs. A second
       --  prefix sum here would compose wrongly with that one.
+      --
+      --  A record or an array gets one slot here too, and that slot cannot hold
+      --  it: an aggregate needs as many words as its structure says, and on the
+      --  Aqua target a local is a register and has no address at all (issue
+      --  #129). Structure_Index records WHAT was declared; where it will live is
+      --  that issue's problem, and nothing generates code for one meanwhile.
       local
          B : Pascal.Checks.Binding
       do
          Result := Allocate
-         create B.Make_Local (Name, Result, Type_Code)
+         create B.Make_Local (Name, Result, Type_Code, Structure_Index)
          Bindings.Append (B)
       end
 
-   Declare_Argument (Name : String
-                     By_Reference : Boolean
-                     Type_Code : Integer) : Integer
+   Declare_Argument (Name            : String
+                     By_Reference    : Boolean
+                     Type_Code       : Integer
+                     Structure_Index : Integer) : Integer
       --  Bind Name in THIS scope to the next argument index of the routine this
       --  scope belongs to, and return the index. Same caller contract as
       --  Declare_Local: check Find first.
@@ -103,7 +120,8 @@ feature  --  declaring
       do
          Allocated_Arguments := Allocated_Arguments + 1
          Result := Allocated_Arguments
-         create B.Make_Argument (Name, Result, By_Reference, Type_Code)
+         create B.Make_Argument
+            (Name, Result, By_Reference, Type_Code, Structure_Index)
          Bindings.Append (B)
       end
 
@@ -144,20 +162,174 @@ feature  --  declaring
          Bindings.Append (B)
       end
 
-   Declare_Type (Name : String; Type_Code : Integer)
+   Declare_Type (Name            : String
+                 Type_Code       : Integer
+                 Structure_Index : Integer)
       --  Bind Name in THIS scope as the name of a type (issue #88). Used for
-      --  the four built-ins, declared into the root scope for each program, and
-      --  for a user alias of one of them.
+      --  the four built-ins, declared into the root scope for each program, for
+      --  a user alias of one of them, and -- since #124 -- for a record or an
+      --  array definition, where Structure_Index says which one.
       local
          B : Pascal.Checks.Binding
       do
-         create B.Make_Type (Name, Type_Code)
+         create B.Make_Type (Name, Type_Code, Structure_Index)
          Bindings.Append (B)
       end
 
    Add_Declaration (Declaration : Aquarius.Entities.Declaration)
       do
          Declarations.Append (Declaration)
+      end
+
+feature  --  structures
+
+   New_Record : Integer
+      --  Allocate a fresh record structure and return its index (issue #124).
+      --  Structure numbers are global to the program, like Allocate's frame
+      --  slots, so the table lives on the ROOT scope regardless of how deeply
+      --  nested the record_type that asked for one is.
+      local
+         S : Pascal.Checks.Structure
+      do
+         if attached Parent as P then
+            Result := P.New_Record
+         else
+            create S.Make_Record
+            Structures.Append (S)
+            Structure_Count := Structure_Count + 1
+            Result := Structure_Count
+         end
+      end
+
+   New_Array : Integer
+      --  As New_Record, for an array structure
+      local
+         S : Pascal.Checks.Structure
+      do
+         if attached Parent as P then
+            Result := P.New_Array
+         else
+            create S.Make_Array
+            Structures.Append (S)
+            Structure_Count := Structure_Count + 1
+            Result := Structure_Count
+         end
+      end
+
+   Structure (Index : Integer) : Pascal.Checks.Structure
+      --  The record or array built as Index, which New_Record / New_Array
+      --  returned earlier in the SAME pass. Linked_List has no indexed access,
+      --  so this scans -- correctness over speed, and the table only grows to
+      --  the number of structures in one program.
+      require
+         Index >= 1
+      local
+         It : Aqua.Containers.Linked_List_Iterator [Pascal.Checks.Structure]
+         At : Integer
+      do
+         if attached Parent as P then
+            Result := P.Structure (Index)
+         else
+            from
+               It := Structures.New_Cursor
+               At := 1
+            until
+               At = Index
+            loop
+               It.Next
+               At := At + 1
+            end
+            Result := It.Element
+         end
+      end
+
+   Add_Field (Owner_Index  : Integer
+              Field_Name   : String
+              Field_Offset : Integer
+              Field_Width  : Integer
+              Type_Code    : Integer
+              Structure_Index : Integer)
+      --  Record one field of the record numbered Owner_Index (issue #124).
+      --  Every field of every record lives in ONE flat list on the root scope
+      --  -- see the note on Pascal.Checks.Field for why.
+      local
+         F : Pascal.Checks.Field
+      do
+         if attached Parent as P then
+            P.Add_Field
+               (Owner_Index, Field_Name, Field_Offset, Field_Width, Type_Code,
+                Structure_Index)
+         else
+            create F.Make
+               (Owner_Index, Field_Name, Field_Offset, Field_Width, Type_Code,
+                Structure_Index)
+            Fields.Append (F)
+         end
+      end
+
+   Add_Dimension (Owner_Index : Integer
+                  Lower       : Integer
+                  Upper       : Integer
+                  Index_Ty    : Integer)
+      --  Record one KNOWN dimension of the array numbered Owner_Index
+      local
+         B : Pascal.Checks.Bounds
+      do
+         if attached Parent as P then
+            P.Add_Dimension (Owner_Index, Lower, Upper, Index_Ty)
+         else
+            create B.Make (Owner_Index, Lower, Upper, Index_Ty)
+            Dimensions.Append (B)
+         end
+      end
+
+   Add_Unknown_Dimension (Owner_Index : Integer; Index_Ty : Integer)
+      --  As Add_Dimension, when the extent could not be evaluated
+      local
+         B : Pascal.Checks.Bounds
+      do
+         if attached Parent as P then
+            P.Add_Unknown_Dimension (Owner_Index, Index_Ty)
+         else
+            create B.Make_Unknown (Owner_Index, Index_Ty)
+            Dimensions.Append (B)
+         end
+      end
+
+   Array_Size (Owner_Index : Integer; Element_Width : Integer) : Integer
+      --  Element_Width times the product of every dimension recorded for
+      --  Owner_Index, or 0 if there are none or any dimension's extent is
+      --  unknown (issue #124) -- Pascal.Checks.Structure.Size for an array.
+      local
+         It      : Aqua.Containers.Linked_List_Iterator [Pascal.Checks.Bounds]
+         Product : Integer
+         Found   : Boolean
+         Known   : Boolean
+      do
+         if attached Parent as P then
+            Result := P.Array_Size (Owner_Index, Element_Width)
+         else
+            Product := 1
+            Known := True
+            from
+               It := Dimensions.New_Cursor
+            until
+               It.After
+            loop
+               if It.Element.Owner = Owner_Index then
+                  Found := True
+                  if It.Element.Is_Known then
+                     Product := Product * It.Element.Length
+                  else
+                     Known := False
+                  end
+               end
+               It.Next
+            end
+            if Found and then Known then
+               Result := Product * Element_Width
+            end
+         end
       end
 
 feature  --  resolving
@@ -284,6 +456,36 @@ feature  --  resolving
          end
       end
 
+   Lookup_Type_Structure (Name : String) : Integer
+      --  Which record or array the innermost type name stands for, as an index
+      --  into this scope's structure table (Structure / New_Record /
+      --  New_Array), or 0 if it names a scalar or is not a type name at all
+      --  (issue #124). The companion of Lookup_Type: that answers WHAT KIND,
+      --  this answers WHICH.
+      local
+         B : detachable Pascal.Checks.Binding
+      do
+         B := Lookup (Name)
+         if attached B as Found then
+            if Found.Is_Type then
+               Result := Found.Structure
+            end
+         end
+      end
+
+   Lookup_Structure (Name : String) : Integer
+      --  Which record or array the innermost VARIABLE, argument or constant
+      --  Name has, as an index into this scope's structure table, or 0
+      --  (issue #124). What a component access resolves its base against.
+      local
+         B : detachable Pascal.Checks.Binding
+      do
+         B := Lookup (Name)
+         if attached B as Found then
+            Result := Found.Structure
+         end
+      end
+
 feature  --  frame
 
    Count : Integer
@@ -333,5 +535,21 @@ feature { None }
 
    Allocated_Arguments : Integer
       --  Arguments of this scope's own routine
+
+   Structures : Aqua.Containers.Linked_List [Pascal.Checks.Structure]
+      --  Every record and array in the program, indexed by New_Record /
+      --  New_Array; only the root's copy is used (issue #124)
+
+   Fields : Aqua.Containers.Linked_List [Pascal.Checks.Field]
+      --  Every field of every record in the program; only the root's copy is
+      --  used
+
+   Dimensions : Aqua.Containers.Linked_List [Pascal.Checks.Bounds]
+      --  Every dimension of every array in the program; only the root's copy
+      --  is used
+
+   Structure_Count : Integer
+      --  Structures allocated across the whole program; only the root's copy
+      --  is used
 
 end

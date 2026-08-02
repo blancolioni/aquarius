@@ -1,0 +1,54 @@
+class
+   Pascal.Checks.Subrange_Type
+
+inherit
+   Pascal.Checks.Node
+
+--  subrange_type ::= constant '..' constant
+--
+--  Evaluates both bounds, using Pascal.Checks.Constant the same way
+--  Pascal.Checks.Bounds' doc describes: a bound written as a named constant
+--  works, because issue #103 made constant identifiers resolvable. Is_Known is
+--  True only when BOTH constants evaluated; Ty is the first constant's type,
+--  which is what a subscript expression must be assignable to.
+--
+--  Two children of the SAME rule arrive through one hook, in source order --
+--  same shape as Pascal.Checks.Actual_Parameter's Expressions counter -- so
+--  Seen distinguishes the first (Low) from the second (High).
+
+feature
+
+   Ty : Integer
+
+   Is_Known : Boolean
+
+   Low : Integer
+
+   High : Integer
+
+   After_Constant (Child : Pascal.Checks.Constant)
+      do
+         if Seen then
+            if First_Known and then Child.Is_Known then
+               High := Child.Value
+            else
+               Is_Known := False
+            end
+         else
+            Seen := True
+            Ty := Child.Ty
+            First_Known := Child.Is_Known
+            if Child.Is_Known then
+               Low := Child.Value
+               Is_Known := True
+            end
+         end
+      end
+
+feature { None }
+
+   Seen : Boolean
+
+   First_Known : Boolean
+
+end

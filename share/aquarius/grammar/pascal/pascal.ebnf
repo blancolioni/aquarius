@@ -99,7 +99,7 @@ record_field ::= record_section | variant_part
 
 record_section ::= identifier_list ':' type_denoter
 
-variant_part ::= 'case' variant_selector 'of' variant { ';' [ variant ] }
+variant_part ::= 'case' variant_selector 'of' case_variant { ';' [ case_variant ] }
 
 variant_selector ::= tag_field [ ':' tag_type ]
 
@@ -107,7 +107,7 @@ tag_field ::= identifier
 
 tag_type ::= type_identifier
 
-variant ::= case_constant_list ':' '(' field_list ')'
+case_variant ::= case_constant_list ':' '(' field_list ')'
 
 set_type ::= 'set' 'of' base_type
 

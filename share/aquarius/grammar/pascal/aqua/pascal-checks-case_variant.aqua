@@ -1,0 +1,36 @@
+class
+   Pascal.Checks.Case_Variant
+
+inherit
+   Pascal.Checks.Node
+
+--  case_variant ::= case_constant_list ':' '(' field_list ')'
+--
+--  Named case_variant rather than the ISO grammar's bare "variant": that word
+--  is reserved in the aqua language itself (a loop's variant clause), so a
+--  class called Pascal.Checks.Variant cannot be declared -- pascal.ebnf's rule
+--  is renamed to match.
+--
+--  Rewinds the enclosing record to where its variant_part started (issue
+--  #124), so this variant's fields land at the same offsets as every other
+--  variant's -- a union, not a sequence. Pascal.Checks.Variant_Part saved that
+--  offset on the record itself (Structure.Variant_Start) when it was entered;
+--  this fires once per variant, before its nested field_list is visited, and
+--  needs no data FROM variant_part to do it.
+--
+--  case_constant_list is not modelled: this system does no exhaustiveness or
+--  overlap checking over variant tags, so there is nothing to resolve it for.
+
+feature
+
+   Before_Node
+      local
+         Rec : Pascal.Checks.Structure
+      do
+         if Current_Structure_Index > 0 then
+            Rec := Current_Frame_Scope.Structure (Current_Structure_Index)
+            Rec.Set_Next_Offset (Rec.Variant_Start)
+         end
+      end
+
+end
