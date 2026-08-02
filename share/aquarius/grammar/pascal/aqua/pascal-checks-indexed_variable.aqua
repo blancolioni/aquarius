@@ -1,0 +1,28 @@
+class
+   Pascal.Checks.Indexed_Variable
+
+inherit
+   Pascal.Checks.Node
+
+--  indexed_variable ::= '[' < index_expression / ',' > ']'
+--
+--  Collects the subscript expressions' types in source order (issue #126), for
+--  Pascal.Checks.Variable_Access to check against the array it applies to --
+--  both how many there are, and each one's type. A real Linked_List rather
+--  than a packed mask: the #107/#120 reasons for packing no longer hold once
+--  #131 (the actual cause) was fixed, and #124's own model already uses real
+--  lists for exactly this shape of data.
+
+feature
+
+   Count : Integer
+
+   Types : Aqua.Containers.Linked_List [Integer]
+
+   After_Index_Expression (Child : Pascal.Checks.Index_Expression)
+      do
+         Count := Count + 1
+         Types.Append (Child.Ty)
+      end
+
+end

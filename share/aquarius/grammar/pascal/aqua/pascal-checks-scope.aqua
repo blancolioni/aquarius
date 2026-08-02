@@ -325,6 +325,54 @@ feature  --  structures
          end
       end
 
+   Dimension_Count (Owner_Index : Integer) : Integer
+      --  How many dimensions the array numbered Owner_Index has (issue #126)
+      local
+         It : Aqua.Containers.Linked_List_Iterator [Pascal.Checks.Bounds]
+      do
+         if attached Parent as P then
+            Result := P.Dimension_Count (Owner_Index)
+         else
+            from
+               It := Dimensions.New_Cursor
+            until
+               It.After
+            loop
+               if It.Element.Owner = Owner_Index then
+                  Result := Result + 1
+               end
+               It.Next
+            end
+         end
+      end
+
+   Dimension (Owner_Index : Integer; Which : Integer) : Pascal.Checks.Bounds
+      --  The Which-th (1-based) dimension of the array numbered Owner_Index,
+      --  in declaration order (issue #126). The caller is expected to have
+      --  checked Which against Dimension_Count first.
+      local
+         It  : Aqua.Containers.Linked_List_Iterator [Pascal.Checks.Bounds]
+         At  : Integer
+      do
+         if attached Parent as P then
+            Result := P.Dimension (Owner_Index, Which)
+         else
+            from
+               It := Dimensions.New_Cursor
+            until
+               It.After or else At = Which
+            loop
+               if It.Element.Owner = Owner_Index then
+                  At := At + 1
+                  if At = Which then
+                     Result := It.Element
+                  end
+               end
+               It.Next
+            end
+         end
+      end
+
    Array_Size (Owner_Index : Integer; Element_Width : Integer) : Integer
       --  Element_Width times the product of every dimension recorded for
       --  Owner_Index, or 0 if there are none or any dimension's extent is

@@ -18,18 +18,20 @@ inherit
 --  set, so that the code stage does not treat the name as storage -- it has no
 --  offset, and emitting a load for it produced a store to local slot 0.
 --
---  A field selection is now resolved (issue #125): the binding is looked up as
---  soon as the name arrives, seeding a running (Ty, Structure) pair, and each
---  field_designator suffix -- in source order -- looks its name up in that
---  pair's record and carries on with the field's own (Ty, Structure). A
---  subscript or a pointer dereference is still unsupported, and a field
---  selection through a routine's result or an undeclared name is not attempted
---  either -- both fall back to the same generic refusal as before. Is_Component
---  is set for ANY of these, resolved or not: no code is generated for a
---  structured access yet either way (issue #129), so the code stage's refusal
---  is unaffected. What is new is that a RESOLVED chain publishes the right Ty,
---  so the expression built from it type-checks correctly, and a broken one is
---  reported precisely -- unknown field, or not a record -- instead of the one
+--  A field selection (issue #125) and a subscript (issue #126) are both
+--  resolved now: the binding is looked up as soon as the name arrives, seeding
+--  a running (Ty, Structure) pair, and each field_designator or
+--  indexed_variable suffix -- in source order -- resolves against that pair
+--  and carries on with the field's, or the element's, own (Ty, Structure). A
+--  pointer dereference is still unsupported (outside the model entirely), and
+--  a field/subscript through a routine's result or an undeclared name is not
+--  attempted either -- both fall back to the same generic refusal as before.
+--  Is_Component is set for ANY of these, resolved or not: no code is
+--  generated for a structured access yet either way (issue #129), so the code
+--  stage's refusal is unaffected. What is new is that a RESOLVED chain
+--  publishes the right Ty, so the expression built from it type-checks
+--  correctly, and a broken one is reported precisely -- unknown field, not a
+--  record, wrong number of subscripts, not an array -- instead of the one
 --  generic message every structured access used to get.
 
 feature
@@ -102,6 +104,10 @@ feature
             if Child.Is_Field then
                if attached Child.Field_Name as Name then
                   Apply_Field (Name)
+               end
+            elsif Child.Is_Index then
+               if attached Child.Index_Types as Types then
+                  Apply_Index (Child.Index_Count, Types)
                end
             else
                Poison_Component
@@ -228,10 +234,98 @@ feature { None }
          end
       end
 
+   Apply_Index (Given : Integer; Types : Aqua.Containers.Linked_List [Integer])
+      --  Resolve one indexed_variable against Current_Ty / Current_Structure,
+      --  advancing both to the array's element, or reporting why it cannot be
+      --  done (issue #126). Called only when Bound is attached and not a
+      --  routine. Given is how many subscript expressions were written;
+      --  Types is their types, in order.
+      local
+         T      : Pascal.Checks.Types
+         Arr    : Pascal.Checks.Structure
+         Is_Arr : Boolean
+         Dims   : Integer
+      do
+         Is_Component := True
+         if not Broken then
+            if attached Path as P then
+               if T.Is_Structured (Current_Ty) and then Current_Structure > 0 then
+                  Arr := Current_Frame_Scope.Structure (Current_Structure)
+                  Is_Arr := Arr.Is_Array
+               end
+               if Is_Arr then
+                  Dims := Current_Frame_Scope.Dimension_Count (Current_Structure)
+                  if Given < Dims then
+                     Error ("not enough subscripts for " & P & ": " & P
+                            & " needs " & Dims.To_String & ", found "
+                            & Given.To_String)
+                     Current_Ty := T.Error_Type
+                     Broken := True
+                  elsif Given > Dims then
+                     Error ("too many subscripts for " & P & ": " & P
+                            & " needs " & Dims.To_String & ", found "
+                            & Given.To_String)
+                     Current_Ty := T.Error_Type
+                     Broken := True
+                  else
+                     Check_Index_Types (P, Types)
+                     Current_Ty := Arr.Element_Ty
+                     Current_Structure := Arr.Element_Structure
+                     Path := P & "[]"
+                  end
+               else
+                  Error ("cannot subscript " & P & ": not an array")
+                  Current_Ty := T.Error_Type
+                  Broken := True
+               end
+            end
+         end
+      end
+
+   Check_Index_Types (P : String; Types : Aqua.Containers.Linked_List [Integer])
+      --  Each subscript expression must be ordinal, and assignable to its
+      --  dimension's index type (issue #126). Reported but not poisoned:
+      --  unlike a wrong subscript COUNT or a non-array base, a wrong index
+      --  TYPE does not stop the chain -- 'matrix[i].field' should still
+      --  resolve the field even if i's type is slightly off, the same way a
+      --  bad call argument does not stop Check_Argument_Types checking the
+      --  rest.
+      local
+         It      : Aqua.Containers.Linked_List_Iterator [Integer]
+         T       : Pascal.Checks.Types
+         Dim     : Pascal.Checks.Bounds
+         Expr_Ty : Integer
+         Which   : Integer
+      do
+         from
+            It := Types.New_Cursor
+         until
+            It.After
+         loop
+            Which := Which + 1
+            Expr_Ty := It.Element
+            if not T.Is_Quiet (Expr_Ty) then
+               if not T.Is_Ordinal (Expr_Ty) then
+                  Error ("subscript " & Which.To_String & " of " & P
+                         & " must be ordinal, but found " & T.Name (Expr_Ty))
+               else
+                  Dim := Current_Frame_Scope.Dimension (Current_Structure, Which)
+                  if T.Is_Known (Dim.Ty) and then not T.Assignable (Dim.Ty, Expr_Ty)
+                  then
+                     Error ("subscript " & Which.To_String & " of " & P
+                            & " is " & T.Name (Dim.Ty) & ", but "
+                            & T.Name (Expr_Ty) & " was given")
+                  end
+               end
+            end
+            It.Next
+         end
+      end
+
    Poison_Component
-      --  A subscript or a pointer dereference: still unsupported (#126, and a
-      --  pointer type outside the model entirely). Same message as every
-      --  structured access used to get, but now only once per broken chain.
+      --  A pointer dereference: outside the model entirely. Same message as
+      --  every structured access used to get, but now only once per broken
+      --  chain.
       --
       --  Current_Ty MUST be poisoned to Error_Type here, same as a failed
       --  field selection: otherwise After_Node publishes whatever real type

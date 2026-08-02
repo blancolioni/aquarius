@@ -7,19 +7,21 @@ inherit
 --  variable_suffix ::= indexed_variable | field_designator | identified_variable
 --                    | function_designator
 --
---  The call and field forms are understood. A function_designator makes the
---  enclosing variable_access a call rather than a load, and carries the number
---  of arguments and which of them are bare variables (issue #105). A
---  field_designator carries the field's name (issue #125), for
---  variable_access to resolve against the type it has reached so far. The
---  other two -- subscript and pointer dereference -- are structured access
---  not yet modelled (subscript is #126; a pointer type is out of the model
---  entirely) and are reported by variable_access as unsupported, same as
---  before this issue.
+--  The call, field and subscript forms are all understood now. A
+--  function_designator makes the enclosing variable_access a call rather than
+--  a load, and carries the number of arguments and which of them are bare
+--  variables (issue #105). A field_designator carries the field's name (issue
+--  #125). An indexed_variable carries how many subscript expressions were
+--  written and each one's type, in order (issue #126). variable_access
+--  resolves whichever of these against the type it has reached so far. The
+--  remaining alternative -- a pointer dereference -- is outside the model
+--  entirely and is reported by variable_access as unsupported, same as
+--  before either issue.
 --
---  The argument and field information is copied out as values rather than
---  kept as a reference to the child: a visitor holding a reference to another
---  plugin object corrupts the generated code (issue #107).
+--  The argument, field and subscript information is copied out as values
+--  rather than kept as a reference to the child: a visitor holding a
+--  reference to another plugin object corrupts the generated code (issue
+--  #107).
 
 feature
 
@@ -36,6 +38,12 @@ feature
 
    Field_Name : detachable String
 
+   Is_Index : Boolean
+
+   Index_Count : Integer
+
+   Index_Types : detachable Aqua.Containers.Linked_List [Integer]
+
    After_Function_Designator (Child : Pascal.Checks.Function_Designator)
       do
          Is_Call := True
@@ -48,6 +56,13 @@ feature
       do
          Is_Field := True
          Field_Name := Child.Name
+      end
+
+   After_Indexed_Variable (Child : Pascal.Checks.Indexed_Variable)
+      do
+         Is_Index := True
+         Index_Count := Child.Count
+         Index_Types := Child.Types
       end
 
 end

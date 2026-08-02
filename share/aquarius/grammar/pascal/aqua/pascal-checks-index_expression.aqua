@@ -1,0 +1,21 @@
+class
+   Pascal.Checks.Index_Expression
+
+inherit
+   Pascal.Checks.Node
+
+--  index_expression ::= expression
+--
+--  A pure relay (issue #126): publishes the subscript expression's type for
+--  Pascal.Checks.Indexed_Variable to collect, in source order.
+
+feature
+
+   Ty : Integer
+
+   After_Expression (Child : Pascal.Checks.Expression)
+      do
+         Ty := Child.Ty
+      end
+
+end
