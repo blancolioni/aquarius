@@ -363,35 +363,53 @@ feature { None }
       --  The name is a routine. Report what a call to it cannot do, and check
       --  the argument count and types against the signature -- or, for a
       --  standard function (issue #83), against Pascal.Checks.Standard_
-      --  Functions instead, since it has no Signature.
+      --  Functions instead, since it has no Signature -- UNLESS Name, used
+      --  bare with no call syntax at all, is the enclosing function's own
+      --  name: then it is the result variable (issue #84), not a call, and
+      --  neither Is_Call nor an error is set at all.
+      local
+         Own_Result : Boolean
       do
-         Is_Call := True
-         if Routine_Binding.Is_Standard then
-            Check_Standard_Call (Name)
-         else
-            if attached Routine_Binding.Signature as Called then
-               --  A call has the function's result type, whatever else is
-               --  wrong with it (issue #88)
-               Ty := Called.Result_Type
+         if not Has_Argument_List then
+            if attached Routine_Binding.Signature as Sig then
+               if Sig.Is_Function then
+                  if Current_Frame_Scope.Encloses_Routine (Name) then
+                     Own_Result := True
+                  end
+               end
             end
-            if Is_Target then
-               --  Assigning to a function name sets its result, which needs
-               --  the result slot: issue #84.
-               Error ("not supported yet: assignment to the result of "
-                      & Name)
-            elsif attached Routine_Binding.Signature as Sig then
-               if not Sig.Is_Function then
-                  Error ("a procedure has no value, so it cannot be used"
-                         & " here: " & Name)
-               elsif not Sig.Is_Variadic
-                 and then Given_Arguments /= Sig.Argument_Count
-               then
-                  Error ("wrong number of arguments for " & Name
-                         & ": expected " & Sig.Argument_Count.To_String
-                         & ", found " & Given_Arguments.To_String)
-               else
-                  Check_Var_Arguments (Name, Sig)
-                  Check_Argument_Types (Name, Sig, Argument_Types)
+         end
+         if Own_Result then
+            if attached Routine_Binding.Signature as Sig then
+               Ty := Sig.Result_Type
+            end
+         else
+            Is_Call := True
+            if Routine_Binding.Is_Standard then
+               Check_Standard_Call (Name)
+            else
+               if attached Routine_Binding.Signature as Called then
+                  --  A call has the function's result type, whatever else is
+                  --  wrong with it (issue #88)
+                  Ty := Called.Result_Type
+               end
+               if Is_Target then
+                  Error ("not supported yet: assignment to the result of "
+                         & Name)
+               elsif attached Routine_Binding.Signature as Sig then
+                  if not Sig.Is_Function then
+                     Error ("a procedure has no value, so it cannot be used"
+                            & " here: " & Name)
+                  elsif not Sig.Is_Variadic
+                    and then Given_Arguments /= Sig.Argument_Count
+                  then
+                     Error ("wrong number of arguments for " & Name
+                            & ": expected " & Sig.Argument_Count.To_String
+                            & ", found " & Given_Arguments.To_String)
+                  else
+                     Check_Var_Arguments (Name, Sig)
+                     Check_Argument_Types (Name, Sig, Argument_Types)
+                  end
                end
             end
          end

@@ -58,9 +58,16 @@ feature
       --  reducing into the scope can be added to it (issue #105). Void for the
       --  root and the program scope, which are not routines.
 
-   Set_Routine (Signature : Pascal.Checks.Signature)
+   Routine_Name : detachable String
+      --  Lower-cased name of Routine (issue #84): what a bare reference to it,
+      --  from inside its own body, is recognised against -- the function's own
+      --  name, used without a call suffix, is the result variable rather than
+      --  a call. Void exactly when Routine is.
+
+   Set_Routine (Name : String; Signature : Pascal.Checks.Signature)
       do
          Routine := Signature
+         Routine_Name := Name.To_Lower
       end
 
    Reset
@@ -541,6 +548,29 @@ feature  --  resolving
             Result := B
          elsif attached Parent as P then
             Result := P.Lookup (Name)
+         end
+      end
+
+   Encloses_Routine (Name : String) : Boolean
+      --  Whether Name is the routine this scope's body is inside, at any
+      --  nesting depth: this scope's own Routine_Name, or an enclosing one's,
+      --  so a nested procedure can still reach an outer function's own name
+      --  (issue #84). Name is compared case-insensitively, same as any other
+      --  Pascal identifier.
+      local
+         Key : String
+         Own : Boolean
+      do
+         Key := Name.To_Lower
+         if attached Routine_Name as R then
+            if R.Equal (Key) then
+               Own := True
+            end
+         end
+         if Own then
+            Result := True
+         elsif attached Parent as P then
+            Result := P.Encloses_Routine (Key)
          end
       end
 
