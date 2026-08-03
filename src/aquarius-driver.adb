@@ -12,7 +12,6 @@ with Aquarius.Grammars.Manager;
 with Aquarius.Library;
 with Aquarius.Reader;
 with Aquarius.Messages.Console;
-with Aquarius.Messages.Files;
 with Aquarius.Options;
 with Aquarius.Plugins.Manager;
 with Aquarius.Programs;
@@ -243,14 +242,12 @@ begin
                                 (Ada.Directories.Base_Name (Path)
                                  & "."
                                  & Ada.Directories.Extension (Path));
-                  Messages : Aquarius.Messages.Message_List;
                begin
                   Grammar.Run_Action_Trigger
                     (Program, Aquarius.Actions.Semantic_Trigger);
 
-                  Aquarius.Programs.Arrangements.Arrange (Program, Messages);
-                  Aquarius.Messages.Files.Save_Messages
-                    ("arrangement.log", Messages);
+                  Aquarius.Programs.Arrangements.Arrange_Via_Docs
+                    (Program, 30);
                   Aquarius.Programs.Arrangements.Render
                     (Program, Render);
 

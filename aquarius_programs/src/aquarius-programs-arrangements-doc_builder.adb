@@ -39,6 +39,29 @@ package body Aquarius.Programs.Arrangements.Doc_Builder is
    --  explicit soft-new-line rule (Wir's own ',' relies on exactly
    --  this: "no_space_before space_after", no soft-line marker).
 
+   type Spine_Rule_Kind is
+     (New_Line_Before_Rule, New_Line_After_Rule,
+      Soft_New_Line_Before_Rule, Soft_New_Line_After_Rule,
+      Closing_Rule);
+
+   function Spine_Enabled
+     (Item     : Program_Tree;
+      Leftward : Boolean;
+      Kind     : Spine_Rule_Kind)
+      return Boolean;
+   --  A rule such as ".format statement new_line_before" is attached to
+   --  a named rule (e.g. "statement"), but an EBNF repeat construct
+   --  such as "statement_list ::= { statement }" wraps each match in
+   --  an anonymous, unformatted repeat-element node -- so the Program_Tree
+   --  actually seen as a statement_list child is that wrapper, one level
+   --  above the "statement" node the rule was written for. Checking only
+   --  the immediate node's own Rules therefore misses it. This walks the
+   --  same spine the old imperative Arrange_Non_Terminal/Arrange_Terminal
+   --  walked (Leftward => first child repeatedly, down to the first
+   --  leaf; not Leftward => last child repeatedly, down to the last
+   --  leaf), where Context.Need_New_Line could be set by any ancestor
+   --  of the eventual terminal, not just the immediate one.
+
    function Want_Space
      (Left_After, Right_Before : Format_Rule) return Boolean;
    --  Ports Arrange_Terminal's Insert_Space decision
@@ -152,6 +175,51 @@ package body Aquarius.Programs.Arrangements.Doc_Builder is
                   or else Enabled (Rules.Soft_New_Line_After));
    end Is_Breakable_Separator;
 
+   -------------------
+   -- Spine_Enabled --
+   -------------------
+
+   function Spine_Enabled
+     (Item     : Program_Tree;
+      Leftward : Boolean;
+      Kind     : Spine_Rule_Kind)
+      return Boolean
+   is
+      Node  : Program_Tree := Item;
+      Rules : Immediate_Rules;
+   begin
+      loop
+         Rules := Node.Rules;
+         case Kind is
+            when New_Line_Before_Rule =>
+               if Enabled (Rules.New_Line_Before) then
+                  return True;
+               end if;
+            when New_Line_After_Rule =>
+               if Enabled (Rules.New_Line_After) then
+                  return True;
+               end if;
+            when Soft_New_Line_Before_Rule =>
+               if Enabled (Rules.Soft_New_Line_Before) then
+                  return True;
+               end if;
+            when Soft_New_Line_After_Rule =>
+               if Enabled (Rules.Soft_New_Line_After) then
+                  return True;
+               end if;
+            when Closing_Rule =>
+               if Enabled (Rules.Closing) then
+                  return True;
+               end if;
+         end case;
+         exit when Node.Child_Count = 0;
+         Node := (if Leftward
+                  then Node.Program_Child (1)
+                  else Node.Program_Child (Node.Child_Count));
+      end loop;
+      return False;
+   end Spine_Enabled;
+
    -----------------------
    -- Separator_Before --
    -----------------------
@@ -159,16 +227,14 @@ package body Aquarius.Programs.Arrangements.Doc_Builder is
    function Separator_Before
      (Previous : Program_Tree; Item : Program_Tree) return Doc
    is
-      Prev_Rules : constant Immediate_Rules := Previous.Rules;
-      Item_Rules : constant Immediate_Rules := Item.Rules;
    begin
-      if Enabled (Prev_Rules.New_Line_After)
-        or else Enabled (Item_Rules.New_Line_Before)
+      if Spine_Enabled (Previous, False, New_Line_After_Rule)
+        or else Spine_Enabled (Item, True, New_Line_Before_Rule)
       then
          return Break;
-      elsif Enabled (Prev_Rules.Soft_New_Line_After)
-        or else Enabled (Item_Rules.Soft_New_Line_Before)
-        or else Enabled (Item_Rules.Closing)
+      elsif Spine_Enabled (Previous, False, Soft_New_Line_After_Rule)
+        or else Spine_Enabled (Item, True, Soft_New_Line_Before_Rule)
+        or else Spine_Enabled (Item, True, Closing_Rule)
         or else Is_Breakable_Separator (Previous)
       then
          return Line;
