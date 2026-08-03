@@ -5,6 +5,7 @@ private with Aqua;
 private with WL.String_Maps;
 
 with Aquarius.Actions;
+with Aquarius.Docs;
 with Aquarius.Entries;
 with Aquarius.Formats;
 with Aquarius.Locations;
@@ -32,6 +33,7 @@ package Aquarius.Programs is
      and Aquarius.Actions.Actionable
      and Aquarius.Entries.Entry_Property_Interface
      and Aquarius.Types.Type_Property_Interface
+     and Aquarius.Docs.Terminal_Node
      with private;
 
    type Program_Tree is access all Program_Tree_Type'Class;
@@ -460,6 +462,7 @@ private
      and Aquarius.Actions.Actionable
      and Aquarius.Entries.Entry_Property_Interface
      and Aquarius.Types.Type_Property_Interface
+     and Aquarius.Docs.Terminal_Node
    with
       record
          Free              : Boolean;
@@ -541,6 +544,12 @@ private
    overriding procedure Update_Location
      (This : in out Program_Tree_Type;
       From : Aquarius.Locations.Location_Interface'Class);
+
+   overriding procedure Set_Position
+     (Item   : in out Program_Tree_Type;
+      Offset : Natural;
+      Line   : Positive;
+      Column : Positive);
 
    procedure Set_Property
      (Program  : in out Program_Tree_Type;

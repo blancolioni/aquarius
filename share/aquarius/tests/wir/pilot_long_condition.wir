@@ -1,0 +1,5 @@
+routine foo args 0 locals 0 is
+if (arg 1 = arg 2) then
+call bar ();
+end if;
+end

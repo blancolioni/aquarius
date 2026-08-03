@@ -1,0 +1,3 @@
+routine foo args 0 locals 0 is
+call bar ();
+end
