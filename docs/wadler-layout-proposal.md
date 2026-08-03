@@ -56,6 +56,7 @@ package Aquarius.Docs is
 
    procedure Set_Position
      (Item   : in out Terminal_Node;
+      Offset : Natural;
       Line   : Positive;
       Column : Positive) is abstract;
       --  Record where Layout placed this leaf.
@@ -75,6 +76,7 @@ package Aquarius.Docs is
    procedure Layout
      (D            : Doc;
       Width        : Positive;
+      Start_Offset : Natural  := 0;
       Start_Line   : Positive := 1;
       Start_Column : Positive := 1);
       --  Decides each Group's flat-vs-broken form via Text lengths,
@@ -85,7 +87,10 @@ end Aquarius.Docs;
 
 (`Start_Line` was missing from the first draft — without it every
 call would be forced to assume line 1, which is wrong for a subtree
-arranged mid-file.)
+arranged mid-file. `Offset`/`Start_Offset` were added once wiring
+`Program_Tree_Type` up as a real `Terminal_Node` turned up that
+`Aquarius.Programs` already tracks a third coordinate — a running
+character offset — alongside line/column; see below.)
 
 `Group` is the whole point: it tries to render its contents flat, and
 only breaks (turning every `Line` inside it into a newline, recursively
@@ -108,14 +113,28 @@ type Program_Tree_Type is
 ```
 
 `Text (Item : Program_Tree_Type) return String` already exists
-(`aquarius-programs.ads:162`) and satisfies the interface as-is; only
-`Set_Position` needs a small override that writes into the `Line`/
-`Column` fields `Arrange` already mutates.
+(`aquarius-programs.ads:162`) and satisfies the interface as-is.
+
+`Set_Position` is a thin forward to the existing `Update_Location`
+(`aquarius-programs.adb:1676-1701`), not a fresh field-writer: that
+procedure already derives `End_Offset`/`End_Column` from
+`Layout_Length` and bubbles the position up to a not-yet-positioned
+parent, and there's no reason to re-derive any of that. It's built
+from a `Location_Interface'Class` value via the existing
+`Aquarius.Locations.To_Location (Offset, Line, Column)`
+(`aquarius-locations.ads:68-72`), which is exactly why `Set_Position`
+needed the `Offset` parameter — `Update_Location` requires one.
+`Offset` here is a plain running character-count over whatever was
+most recently rendered (confirmed against `Arrangement_Context.
+Current_Position`, which restarts at 0 on every `Arrange` call) — not
+a position in the original source text, so `Aquarius.Docs`'s `Emit`
+can compute it as one more counter alongside line/column, no
+different in kind from what it already tracks.
 
 This restores full standalone testability for `Aquarius.Docs`: tests
 can define a trivial test-double type implementing `Terminal_Node`
-(a string field plus a captured `Line`/`Column`) with no grammar,
-parser, or `Program_Tree` involved at all.
+(a string field plus captured `Offset`/`Line`/`Column`) with no
+grammar, parser, or `Program_Tree` involved at all.
 
 ### Mapping the existing vocabulary onto the algebra
 

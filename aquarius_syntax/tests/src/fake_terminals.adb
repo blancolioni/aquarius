@@ -35,9 +35,19 @@ package body Fake_Terminals is
    begin
       return new Fake_Terminal'
         (Content => Ada.Strings.Unbounded.To_Unbounded_String (S),
+         Offset  => 0,
          Line    => 0,
          Column  => 0);
    end Make;
+
+   ------------
+   -- Offset --
+   ------------
+
+   function Offset (Item : Fake_Terminal) return Natural is
+   begin
+      return Item.Offset;
+   end Offset;
 
    ------------------
    -- Set_Position --
@@ -45,10 +55,12 @@ package body Fake_Terminals is
 
    overriding procedure Set_Position
      (Item   : in out Fake_Terminal;
+      Offset : Natural;
       Line   : Positive;
       Column : Positive)
    is
    begin
+      Item.Offset := Offset;
       Item.Line := Line;
       Item.Column := Column;
    end Set_Position;

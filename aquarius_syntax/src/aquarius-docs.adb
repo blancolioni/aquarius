@@ -31,6 +31,7 @@ package body Aquarius.Docs is
    procedure Emit
      (D            : Doc;
       Width        : Positive;
+      Start_Offset : Natural;
       Start_Line   : Positive;
       Start_Column : Positive);
    --  The real walk: decides each Group's flat-vs-broken form via
@@ -53,10 +54,12 @@ package body Aquarius.Docs is
    procedure Emit
      (D            : Doc;
       Width        : Positive;
+      Start_Offset : Natural;
       Start_Line   : Positive;
       Start_Column : Positive)
    is
       Stack      : Work_Vectors.Vector;
+      Cur_Offset : Natural  := Start_Offset;
       Cur_Line   : Positive := Start_Line;
       Cur_Column : Positive := Start_Column;
    begin
@@ -74,19 +77,24 @@ package body Aquarius.Docs is
                   null;
 
                when Leaf_Kind =>
-                  Node.Terminal.Set_Position (Cur_Line, Cur_Column);
+                  Node.Terminal.Set_Position
+                    (Cur_Offset, Cur_Line, Cur_Column);
+                  Cur_Offset := Cur_Offset + Node.Terminal.Text'Length;
                   Cur_Column := Cur_Column + Node.Terminal.Text'Length;
 
                when Line_Kind =>
                   case Item.Mode is
                      when Flat =>
+                        Cur_Offset := Cur_Offset + 1;
                         Cur_Column := Cur_Column + 1;
                      when Break =>
+                        Cur_Offset := Cur_Offset + 1 + Item.Indent;
                         Cur_Line := Cur_Line + 1;
                         Cur_Column := Item.Indent + 1;
                   end case;
 
                when Break_Kind =>
+                  Cur_Offset := Cur_Offset + 1 + Item.Indent;
                   Cur_Line := Cur_Line + 1;
                   Cur_Column := Item.Indent + 1;
 
@@ -235,11 +243,12 @@ package body Aquarius.Docs is
    procedure Layout
      (D            : Doc;
       Width        : Positive;
+      Start_Offset : Natural  := 0;
       Start_Line   : Positive := 1;
       Start_Column : Positive := 1)
    is
    begin
-      Emit (D, Width, Start_Line, Start_Column);
+      Emit (D, Width, Start_Offset, Start_Line, Start_Column);
    end Layout;
 
    ----------

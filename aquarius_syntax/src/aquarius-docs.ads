@@ -14,10 +14,12 @@ package Aquarius.Docs is
 
    procedure Set_Position
      (Item   : in out Terminal_Node;
+      Offset : Natural;
       Line   : Positive;
       Column : Positive)
       is abstract;
-   --  Record where Layout placed this leaf.
+   --  Record where Layout placed this leaf: Offset is a character
+   --  count from the start of the layout, Line/Column its row/column.
 
    type Terminal_Node_Access is access all Terminal_Node'Class;
 
@@ -50,6 +52,7 @@ package Aquarius.Docs is
    procedure Layout
      (D            : Doc;
       Width        : Positive;
+      Start_Offset : Natural  := 0;
       Start_Line   : Positive := 1;
       Start_Column : Positive := 1);
    --  Decides each Group's flat-vs-broken form and calls Set_Position

@@ -88,6 +88,11 @@ procedure Tests is
              Line (B.all) = 2);
       Check ("group overflows: column resets to the group's indent",
              Column (B.all) = 1);
+      Check ("group overflows: first leaf offset starts at 0",
+             Offset (A.all) = 0);
+      Check ("group overflows: second leaf offset accounts for the " &
+             "newline and indent (10 chars + 1 newline + 0 indent)",
+             Offset (B.all) = 11);
    end Group_Overflows;
 
    ------------------------------

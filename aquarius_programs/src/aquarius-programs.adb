@@ -1700,6 +1700,25 @@ package body Aquarius.Programs is
 
    end Update_Location;
 
+   ------------------
+   -- Set_Position --
+   ------------------
+
+   overriding procedure Set_Position
+     (Item   : in out Program_Tree_Type;
+      Offset : Natural;
+      Line   : Positive;
+      Column : Positive)
+   is
+   begin
+      Item.Update_Location
+        (Aquarius.Locations.To_Location
+           (Aquarius.Locations.Location_Offset (Offset),
+            Aquarius.Locations.Line_Index (Line),
+            Aquarius.Locations.Column_Index (Column)));
+      Item.Has_Position := True;
+   end Set_Position;
+
    -------------------------
    -- Set_New_Line_Before --
    -------------------------
