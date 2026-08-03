@@ -46,7 +46,7 @@ Aquarius.Docs`, not the reverse.
 ```ada
 package Aquarius.Docs is
 
-   type Terminal_Node is limited interface;
+   type Terminal_Node is interface;
    --  Everything Aquarius.Docs needs from a leaf. Nothing here
    --  mentions Program_Tree or grammars.
 
@@ -75,12 +75,17 @@ package Aquarius.Docs is
    procedure Layout
      (D            : Doc;
       Width        : Positive;
-      Start_Column : Positive);
+      Start_Line   : Positive := 1;
+      Start_Column : Positive := 1);
       --  Decides each Group's flat-vs-broken form via Text lengths,
       --  and calls Set_Position on every leaf it visits.
 
 end Aquarius.Docs;
 ```
+
+(`Start_Line` was missing from the first draft — without it every
+call would be forced to assume line 1, which is wrong for a subtree
+arranged mid-file.)
 
 `Group` is the whole point: it tries to render its contents flat, and
 only breaks (turning every `Line` inside it into a newline, recursively
