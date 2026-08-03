@@ -69,6 +69,7 @@ package Aquarius.Docs is
    function Leaf (Terminal : Terminal_Node_Access) return Doc;
    function Line return Doc;                              -- space when flat, newline when broken
    function Break return Doc;                             -- always a newline (old "New_Line")
+   function Space return Doc;                              -- exactly one space, never a line break
    function "&" (Left, Right : Doc) return Doc;            -- concatenation
    function Nest (Offset : Integer; D : Doc) return Doc;   -- indent while broken
    function Group (D : Doc) return Doc;                    -- try flat; break only if it doesn't fit
@@ -136,16 +137,33 @@ can define a trivial test-double type implementing `Terminal_Node`
 (a string field plus captured `Offset`/`Line`/`Column`) with no
 grammar, parser, or `Program_Tree` involved at all.
 
+**Fourth correction, found while actually building `Doc`s from real
+`Aquarius.Formats` rules (see below):** there was no way to represent
+a plain, non-breaking space between two real terminals. `Leaf`
+requires a real `Terminal_Node`, and `Line` is *conditionally*
+breakable — neither is "exactly one space, never a line break," which
+is what `Space_Always` (mandatory inter-token spacing, unrelated to
+line-breaking) needs. Added `Space` alongside `Line`/`Break`: always
+one column/offset, regardless of the enclosing `Group`'s flat-or-broken
+mode — the one primitive that ignores ambient mode entirely.
+
 ### Mapping the existing vocabulary onto the algebra
+
+Confirmed against the real consumers (`Aquarius.Programs.Arrangements`,
+`Arrangements.Reformatting` — the *only* consumers anywhere in the
+repo; nothing in the GTK UI, `.aqua` runtime, or doc tooling reads
+`Aquarius.Formats` directly):
 
 | Current (`Aquarius.Formats`)              | Becomes                                   |
 |---|---|
-| `Space_Always` / `Space_Never` / `Space_Sometimes` | adjacency choice between two `Text` docs — unchanged in spirit, no breaking involved |
+| `Space_Always` / `Space_Never` / `Space_Sometimes` (+ `Rule_Priority`) | adjacency choice between two `Leaf`s — unchanged, no breaking involved. `Rule_Priority` **stays** for this — it turned out to have a real, live job here, just never the line-breaking job its own doc comments claimed (confirmed: `Re_Arrange`'s break-candidate selection never actually reads it). |
 | `New_Line (Position)`                     | `Break` inserted at that point in the concatenation |
 | `Soft_New_Line (Position)`                | `Line` inserted at that point, inside the nearest enclosing `Group` |
+| a separator (e.g. `,`) with a plain `Space_After` and *no* explicit soft-line rule | **also** gets a `Line` after it — `Reformatting.Breakable_Separator` treats a trailing space alone as breakable (confirmed: Wir's own `,` format is `no_space_before space_after`, no soft-line marker at all, and still wraps today), so the `Doc`-builder has to replicate that predicate, not just look for an explicit soft-line flag |
 | `Indent_Child (Offset)`                   | `Nest (Offset, ...)` wrapped around the children |
-| `Opening` / `Closing`                     | mostly subsumed by `Group` itself: a production's own children are naturally one group, so the opening/closing terminal just sits at the group's boundary. Worth confirming there's no case `Group` doesn't cover before deleting the concept outright. |
-| `Rule_Priority`                            | removed; conflicts resolve via group nesting, and `Join`'s existing "Right supersedes Left" rule for same-position rules |
+| `Closing`                                 | confirmed real and exercised (forces e.g. `then`/`is`/`do` onto its own line when the construct it closes is reformatted) but fully subsumed by `Group`: a `Line` immediately before that terminal, inside the *same* `Group` as the rest of the construct, gets exactly the same effect for free — when that `Group` breaks, every `Line` in it breaks, not just one hand-picked candidate the way `Re_Arrange`'s backward walk works today |
+| `Opening`                                 | confirmed **dead** — `Immediate_Rules.Opening` is declared but never read anywhere. Dropped, not migrated. |
+| `Governed_By_Content_Soft` (operator-expression break governance, `reformatting.adb:45-83`) | not ported (yet) — no `Doc`-builder support for it exists. Confirmed irrelevant for the Wir pilot specifically (no `*_operator` node in `wir.ebnf` carries any format rule at all), but this is a real gap if the approach later extends to Ada/Pascal, where operators do carry soft-line rules. |
 
 Grammar-facing syntax barely changes — `.format` directives stay
 declarative and per-name — but a production that currently just
@@ -161,7 +179,7 @@ decorates its own terminals implicitly becomes a `Group`, and
 
 `Arrange_Non_Terminal` currently walks children, calling
 `Arrange_Terminal` per terminal and column-tracking as it goes; overflow
-triggers `Reformatting.Reformat`'s backward patch. Replace that with:
+triggers `Reformatting.Reformat`'s backward patch. The replacement:
 
 1. Build a `Doc` for the node, bottom-up, from its children's already-built
    `Doc`s plus its `Aquarius_Format` rules (this is a pure tree fold —
@@ -178,6 +196,58 @@ directly through the `Terminal_Node` interface as it decides positions.
 untouched either way — they only ever consumed line/column/text per
 terminal.
 
+**Landed as a separate entry point, not a swap.** `Arrange_Via_Docs`
+(new, `aquarius-programs-arrangements.ads`/`.adb`) builds a `Doc` via a
+new `Doc_Builder` child package and calls `Layout`; the existing
+`Arrange`/`Arrange_Terminal`/`Arrange_Non_Terminal`/`Reformatting` are
+**not modified at all**. Only code that explicitly calls
+`Arrange_Via_Docs` — currently just an internal Wir-only test harness
+(`src/aquarius-tests-wir.adb`) — exercises the new path; every other
+grammar keeps using the old engine exactly as before. This makes
+"pilot on one grammar" zero-risk rather than merely low-risk, at the
+cost of the two engines coexisting until the pilot is trusted enough
+to extend or replace the old one.
+
+**List-wrapping is a known simplification for now.** `Reformatting.
+Reformat` converts exactly one separator per call and relies on being
+re-invoked as arrangement continues — the net effect is "pack as many
+items per line as fit" (Wadler's `Fill` combinator), not all-or-nothing
+breaking. `Aquarius.Docs` doesn't have `Fill` yet, so the `Doc`-builder
+wraps separator-lists in a plain `Group` instead: a list either stays
+flat or breaks to one item per line. Adding `Fill` (and switching lists
+to it) is deferred, not designed yet.
+
+**Two bugs found and fixed while getting the Wir pilot's actual output
+right** (both would recur in any future `Doc_Builder`-style tree fold,
+worth knowing before extending this):
+
+1. **EBNF optionals that matched zero times still appear as a child.**
+   An absent `['public']`/`[content]`/`[else ...]` produces a real
+   node with no content of its own — treating it as an ordinary
+   neighbour for spacing purposes double-counts a separator on *both*
+   sides of it (`routine  foo` — two spaces — instead of one; a
+   spurious space before a following `,`/`)`; a phantom blank line
+   where an absent `else` branch would have gone). Fix: check
+   recursively whether a child's subtree contains any non-empty
+   terminal at all before letting it participate in a separator
+   decision or become the new "previous sibling."
+2. **A hard `Break` as the first thing inside a `Group` makes that
+   group's own fits check trivially succeed.** `Fits` treats reaching
+   a `Break` as "the rest doesn't matter, whatever follows starts a
+   fresh line" and returns `True` immediately — reasonable in general,
+   but if the break is the *entry point* into an indented block (e.g.
+   `is` before `statement_list`), folding it inside that block's own
+   `Group` (to get the indent right, per the point above) makes the
+   group's fits-check exit before ever measuring its real content,
+   forcing it — and everything nested inside it — flat regardless of
+   actual width. Fix: keep the leading separator inside the block's
+   `Nest` (so it gets the right indent when it fires) but *outside*
+   its `Group` (so it can't short-circuit that group's own decision).
+   Caught by comparing an isolated `Aquarius.Docs`-only unit test
+   (nested group correctly re-breaks on its own merits, passed) against
+   the real Wir output (didn't) — the discrepancy pointed straight at
+   `Doc_Builder`'s tree shape rather than the layout algorithm itself.
+
 ### Incrementality
 
 Out of scope for v1, as agreed — every `Arrange` call rebuilds the `Doc`
@@ -192,19 +262,28 @@ so a later incremental pass can restrict rebuild-and-relayout to the
 smallest enclosing `Group` of an edit, rather than the whole tree. Not
 needed to land v1.
 
-## Suggested delivery steps
+## Delivery steps
 
-1. `Aquarius.Docs`: the algebra + `Layout`, unit-tested standalone
-   against a throwaway `Terminal_Node` test double — no grammar,
-   parser, or `Program_Tree` involved.
-2. Add `Terminal_Node` as a progenitor of `Program_Tree_Type`, with a
-   `Set_Position` override; then Doc-building glue inside
-   `Arrangements` that folds a `Program_Tree` node + its
-   `Aquarius_Format` into a `Doc`, using the mapping above.
-3. Swap `Arrange_Non_Terminal`'s body to build-then-`Layout` instead of
-   `Arrange_Terminal` + `Reformat`, piloted on one grammar (Wir — it's
-   small and already has `.format` directives to migrate).
-4. Diff rendered output against existing Pascal/Wir test fixtures to
-   catch regressions before touching other grammars.
-5. Revisit incremental re-layout only if full-rebuild `Arrange` proves
+1. **Done.** `Aquarius.Docs`: the algebra + `Layout`, unit-tested
+   standalone against a throwaway `Terminal_Node` test double — no
+   grammar, parser, or `Program_Tree` involved.
+2. **Done.** `Terminal_Node` added as a progenitor of `Program_Tree_Type`,
+   with a `Set_Position` override forwarding to the existing
+   `Update_Location`.
+3. **Done, scoped to Wir.** `Doc_Builder` (new child package) folds a
+   `Program_Tree` node + its `Aquarius_Format` rules into a `Doc`; a new
+   `Arrange_Via_Docs` entry point calls it and `Layout`. Existing
+   `Arrange`/`Reformatting` untouched — this is a pilot living alongside
+   the old engine, not a replacement of it, verified via an internal
+   `--self-test` harness (`src/aquarius-tests-wir.adb`), not yet wired
+   into the GTK `Source_View` or any other grammar.
+4. Diff rendered output against existing Pascal/Wir test fixtures before
+   extending `Arrange_Via_Docs` to any other grammar.
+5. Design and add `Fill` to `Aquarius.Docs` if/when list-wrapping
+   fidelity (pack-as-many-per-line, not all-or-nothing) is needed —
+   deferred out of the Wir pilot.
+6. Port `Governed_By_Content_Soft` (operator-expression break
+   governance) if/when this extends to a grammar whose operators carry
+   soft-line rules (Ada/Pascal do; Wir doesn't).
+7. Revisit incremental re-layout only if full-rebuild `Arrange` proves
    too slow for GTK live editing in practice.

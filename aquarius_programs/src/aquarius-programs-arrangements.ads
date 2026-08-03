@@ -32,4 +32,13 @@ package Aquarius.Programs.Arrangements is
      (Program     : not null Program_Tree;
       Renderer    : in out Aquarius.Rendering.Root_Aquarius_Renderer'Class);
 
+   procedure Arrange_Via_Docs
+     (Item  : not null Program_Tree;
+      Width : Positive := 72);
+   --  Pilot alternative to Arrange: builds a Doc (Doc_Builder) and lays
+   --  it out (Aquarius.Docs.Layout) instead of the imperative walk +
+   --  Reformatting backward-patch. Does not touch Arrange/Reformatting
+   --  or anything they use -- only code that calls this explicitly
+   --  exercises the new path.
+
 end Aquarius.Programs.Arrangements;

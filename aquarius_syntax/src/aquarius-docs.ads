@@ -40,6 +40,9 @@ package Aquarius.Docs is
    function Break return Doc;
    --  Always a newline.
 
+   function Space return Doc;
+   --  Exactly one space; unlike Line, never becomes a line break.
+
    function "&" (Left, Right : Doc) return Doc;
    --  Concatenation.
 
@@ -62,7 +65,7 @@ package Aquarius.Docs is
 private
 
    type Doc_Kind is
-     (Nil_Kind, Leaf_Kind, Line_Kind, Break_Kind,
+     (Nil_Kind, Leaf_Kind, Line_Kind, Break_Kind, Space_Kind,
       Concat_Kind, Nest_Kind, Group_Kind);
 
    type Doc_Node;
@@ -70,7 +73,7 @@ private
 
    type Doc_Node (Kind : Doc_Kind := Nil_Kind) is record
       case Kind is
-         when Nil_Kind | Line_Kind | Break_Kind =>
+         when Nil_Kind | Line_Kind | Break_Kind | Space_Kind =>
             null;
          when Leaf_Kind =>
             Terminal : Terminal_Node_Access;

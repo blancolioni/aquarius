@@ -148,6 +148,55 @@ procedure Tests is
              Line (Y.all) = 2 and then Column (Y.all) = 6);
    end Nested_Group_In_Nest;
 
+   ----------------------------
+   -- Nested_Group_Also_Breaks --
+   ----------------------------
+
+   procedure Nested_Group_Also_Breaks is
+      --  Same shape as Nested_Group_In_Nest, but this time the inner
+      --  group is ALSO too wide to fit once the outer has broken and
+      --  reset the column -- it must independently decide to break
+      --  too, not stay flat just because it's nested.
+      Head : constant Fake_Terminal_Access := Make ("HEAD");
+      B    : constant Fake_Terminal_Access := Make ("bbbbbbbbbb");
+      C    : constant Fake_Terminal_Access := Make ("cccccccccc");
+   begin
+      Layout
+        (Group
+           (Leaf (Head)
+            & Nest (3, Line & Group (Leaf (B) & Line & Leaf (C)))),
+         Width => 8, Start_Line => 1, Start_Column => 1);
+      Check ("nested group also breaks: outer breaks", Line (B.all) = 2);
+      Check ("nested group also breaks: inner group also breaks",
+             Line (C.all) = 3);
+      Check ("nested group also breaks: inner indent applied both lines",
+             Column (B.all) = 4 and then Column (C.all) = 4);
+   end Nested_Group_Also_Breaks;
+
+   -------------------------
+   -- Space_Never_Breaks --
+   -------------------------
+
+   procedure Space_Never_Breaks is
+      --  A and B are joined by Space; C is joined by Line. The whole
+      --  group is far too wide to fit flat, forcing a break -- but
+      --  Space must still render as a single space (A and B stay on
+      --  the same line), unlike Line, which does break.
+      A : constant Fake_Terminal_Access := Make ("aa");
+      B : constant Fake_Terminal_Access := Make ("bb");
+      C : constant Fake_Terminal_Access := Make ("cccccccccc");
+   begin
+      Layout
+        (Group (Leaf (A) & Space & Leaf (B) & Line & Leaf (C)),
+         Width => 6, Start_Line => 1, Start_Column => 1);
+      Check ("space never breaks: A and B stay on the same line",
+             Line (A.all) = 1 and then Line (B.all) = 1);
+      Check ("space never breaks: B follows A by exactly one space",
+             Column (B.all) = 4);
+      Check ("space never breaks: the Line after B still breaks",
+             Line (C.all) = 2);
+   end Space_Never_Breaks;
+
 begin
    Leaf_Alone;
    Concat_Leaves;
@@ -155,6 +204,8 @@ begin
    Group_Overflows;
    Group_Breaks_For_Tail;
    Nested_Group_In_Nest;
+   Nested_Group_Also_Breaks;
+   Space_Never_Breaks;
 
    Ada.Text_IO.Put_Line ("failures:" & Failures'Image);
    if Failures > 0 then

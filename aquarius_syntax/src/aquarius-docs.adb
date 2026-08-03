@@ -98,6 +98,10 @@ package body Aquarius.Docs is
                   Cur_Line := Cur_Line + 1;
                   Cur_Column := Item.Indent + 1;
 
+               when Space_Kind =>
+                  Cur_Offset := Cur_Offset + 1;
+                  Cur_Column := Cur_Column + 1;
+
                when Concat_Kind =>
                   --  push Right first so Left ends up on top (the
                   --  stack is popped from the end, so the last thing
@@ -193,6 +197,9 @@ package body Aquarius.Docs is
                when Break_Kind =>
                   return True;
 
+               when Space_Kind =>
+                  Remaining := Remaining - 1;
+
                when Concat_Kind =>
                   Local.Append
                     (Work_Item'(Item.Indent, Item.Mode, Item.D.Right));
@@ -277,6 +284,15 @@ package body Aquarius.Docs is
    begin
       return new Doc_Node'(Kind => Nil_Kind);
    end Nil;
+
+   -----------
+   -- Space --
+   -----------
+
+   function Space return Doc is
+   begin
+      return new Doc_Node'(Kind => Space_Kind);
+   end Space;
 
    ---------
    -- "&" --

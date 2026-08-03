@@ -3,6 +3,7 @@ with Ada.Text_IO;
 with Aquarius.Tests.Editor;
 with Aquarius.Tests.Grammar;
 with Aquarius.Tests.Streams;
+with Aquarius.Tests.Wir;
 
 with WL.Unit;
 
@@ -45,6 +46,7 @@ package body Aquarius.Tests is
       Editor.Load (Suite);
       Grammar.Load (Suite);
       Streams.Load (Suite);
+      Wir.Load (Suite);
       Suite.Run_Tests (Success, Failure, Error, Not_Run);
       Ada.Text_IO.Put_Line
         ("Tests: successful" & Success'Image

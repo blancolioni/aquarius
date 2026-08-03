@@ -1,10 +1,12 @@
 with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 
+with Aquarius.Docs;
 with Aquarius.Formats;
 with Aquarius.Messages;
 
 with Aquarius.Programs.Arrangements.Contexts;
+with Aquarius.Programs.Arrangements.Doc_Builder;
 with Aquarius.Programs.Arrangements.Logging;
 with Aquarius.Programs.Arrangements.Reformatting;
 
@@ -1047,5 +1049,17 @@ package body Aquarius.Programs.Arrangements is
       Context.Current_Position :=
         Context.Current_Position + Location_Offset (Count);
    end Skip;
+
+   ----------------------
+   -- Arrange_Via_Docs --
+   ----------------------
+
+   procedure Arrange_Via_Docs
+     (Item  : not null Program_Tree;
+      Width : Positive := 72)
+   is
+   begin
+      Aquarius.Docs.Layout (Doc_Builder.Build (Item), Width);
+   end Arrange_Via_Docs;
 
 end Aquarius.Programs.Arrangements;
