@@ -11,12 +11,13 @@ inherit
 --  type, alongside red/green/blue's own values (bound by
 --  Pascal.Checks.Enumerated_Type as it builds the type).
 --
---  subrange_type as a STANDALONE type ('type age = 0 .. 150;') fires no hook
---  here and leaves Ty at No_Type, which Type_Denoter then reports as Unknown --
---  the same "not modelled" gap New_Type's own comment already notes for
---  new_pointer_type, left for its own issue rather than folded into this one.
---  A subrange used as an INDEX type is unaffected: that path is
---  Pascal.Checks.Ordinal_Type, reached through index_type, not through here.
+--  subrange_type as a STANDALONE type ('type age = 0 .. 150;') relays the
+--  same way: Ty becomes the base type of the bounds (Integer_Type for
+--  '0 .. 150', Char_Type for ''a' .. 'z''), same as Pascal.Checks.Ordinal_Type
+--  already does for a subrange used as an INDEX type (reached through
+--  index_type, not through here). The bounds themselves (Low/High/Is_Known)
+--  are not relayed further: nothing above New_Type/Type_Denoter has a place
+--  to keep them for a standalone type, only for an index or a for-loop range.
 
 feature
 
@@ -28,6 +29,11 @@ feature
       do
          Ty := Child.Ty
          Structure_Index := Child.Structure_Index
+      end
+
+   After_Subrange_Type (Child : Pascal.Checks.Subrange_Type)
+      do
+         Ty := Child.Ty
       end
 
 end

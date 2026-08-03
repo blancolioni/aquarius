@@ -7,11 +7,11 @@ inherit
 --  new_type ::= new_ordinal_type | new_structured_type | new_pointer_type
 --
 --  Relays a record or an array up to Pascal.Checks.Type_Denoter (issue #124),
---  and an enumerated type the same way (issue #139, via
---  Pascal.Checks.New_Ordinal_Type). A standalone subrange type ('type age =
---  0 .. 150;') and new_pointer_type fire no hook here and leave Ty at No_Type,
---  which Type_Denoter then reports as Unknown -- neither is modelled, same as
---  before this issue.
+--  an enumerated type the same way (issue #139), and a standalone subrange
+--  type's base type the same way again, all via
+--  Pascal.Checks.New_Ordinal_Type. new_pointer_type fires no hook here and
+--  leaves Ty at No_Type, which Type_Denoter then reports as Unknown -- not
+--  modelled, same as before this issue.
 
 feature
 
