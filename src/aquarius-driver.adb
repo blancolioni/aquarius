@@ -19,6 +19,7 @@ with Aquarius.Programs.Arrangements;
 with Aquarius.Rendering.Text;
 with Aquarius.Sources.Files;
 with Aquarius.Streams.Files;
+with Aquarius.Streams.Strings;
 with Aquarius.Tests;
 
 procedure Aquarius.Driver is
@@ -228,6 +229,7 @@ begin
                end if;
 
                declare
+                  use type Aquarius.Messages.Message_Level;
                   Source : constant Aquarius.Sources.Source_Reference :=
                              Aquarius.Sources.Files.File_Source (Path);
                   Stream : constant Aquarius.Streams.Reader_Reference :=
@@ -237,23 +239,35 @@ begin
                                 (Grammar =>  Grammar,
                                  Source  =>  Source,
                                  Stream  =>  Stream);
+                  Writer  : constant Aquarius.Streams.Writer_Reference :=
+                              Aquarius.Streams.Strings.String_Writer;
                   Render  : Aquarius.Rendering.Root_Aquarius_Renderer'Class :=
-                              Aquarius.Rendering.Text.File_Renderer
-                                (Ada.Directories.Base_Name (Path)
-                                 & "."
-                                 & Ada.Directories.Extension (Path));
+                              Aquarius.Rendering.Text.Stream_Renderer
+                                (Writer);
+                  Messages : Aquarius.Messages.Message_List;
                begin
                   Grammar.Run_Action_Trigger
                     (Program, Aquarius.Actions.Semantic_Trigger);
 
-                  Aquarius.Programs.Arrangements.Arrange_Via_Docs
-                    (Program, 30);
-                  Aquarius.Programs.Arrangements.Render
-                    (Program, Render);
+                  Program.Get_Messages (Messages);
+                  Aquarius.Messages.Console.Show_Messages (Messages);
 
-                  if Aquarius.Options.Code_Trigger then
-                     Grammar.Run_Action_Trigger
-                       (Program, Aquarius.Actions.Code_Trigger);
+                  if Aquarius.Messages.Highest_Level (Messages)
+                    > Aquarius.Messages.Warning
+                  then
+                     Ada.Command_Line.Set_Exit_Status (1);
+                  else
+                     Aquarius.Programs.Arrangements.Arrange_Via_Docs
+                       (Program, 30);
+                     Aquarius.Programs.Arrangements.Render
+                       (Program, Render);
+
+                     Ada.Text_IO.Put_Line (Writer.To_String);
+
+                     if Aquarius.Options.Code_Trigger then
+                        Grammar.Run_Action_Trigger
+                          (Program, Aquarius.Actions.Code_Trigger);
+                     end if;
                   end if;
                end;
             else
