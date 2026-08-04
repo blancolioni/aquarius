@@ -650,7 +650,6 @@ package body Aquarius.Programs.Arrangements is
       function Governed_By_Content_Soft (S : Program_Tree) return Boolean;
 
       function Governed_By_Content_Soft (S : Program_Tree) return Boolean is
-         use type Aquarius.Trees.Tree;
          Node : Program_Tree := S;
       begin
          while Node /= null and then Node /= Item loop
@@ -676,7 +675,6 @@ package body Aquarius.Programs.Arrangements is
       function Inside_Separated_List (P : Program_Tree) return Boolean;
 
       function Inside_Separated_List (P : Program_Tree) return Boolean is
-         use type Aquarius.Trees.Tree;
          Node   : Program_Tree := P;
          Parent : Program_Tree;
       begin
@@ -776,7 +774,6 @@ package body Aquarius.Programs.Arrangements is
                      --  ancestor (bounded by the re-arrangement root) that
                      --  actually carries the soft-new-line rule.
                      declare
-                        use type Aquarius.Trees.Tree;
                         Container : Program_Tree :=
                           Program_Tree (Program.Parent);
                      begin

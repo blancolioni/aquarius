@@ -33,6 +33,19 @@ package Aquarius.Options is
    --  when files are read or written, report action
    --  on standard output
 
+   function Pretty_Print return Boolean;
+   --  apply format rules the input files, and write to
+   --  either standard_output or a specific path.
+
+   function Line_Length return Natural;
+   --  maximum line length for pretty printing.
+
+   function Output_Path return String;
+   --  Output files are written to this directory.
+
+   function Verbose return Boolean;
+   --  Extra informational output
+
    function Tagatha_Trace_P_Code return Boolean;
    function Tagatha_Trace_Transfers return Boolean;
    function Tagatha_Trace_Improvements return Boolean;

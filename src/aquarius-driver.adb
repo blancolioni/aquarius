@@ -12,7 +12,6 @@ with Aquarius.Grammars.Manager;
 with Aquarius.Library;
 with Aquarius.Reader;
 with Aquarius.Messages.Console;
-with Aquarius.Messages.Files;
 with Aquarius.Options;
 with Aquarius.Plugins.Manager;
 with Aquarius.Programs;
@@ -20,6 +19,7 @@ with Aquarius.Programs.Arrangements;
 with Aquarius.Rendering.Text;
 with Aquarius.Sources.Files;
 with Aquarius.Streams.Files;
+with Aquarius.Streams.Strings;
 with Aquarius.Tests;
 
 procedure Aquarius.Driver is
@@ -216,12 +216,35 @@ begin
    if Aquarius.Options.Source_File_Count > 0 then
       for I in 1 .. Aquarius.Options.Source_File_Count loop
          declare
+            use all type Ada.Directories.File_Kind;
             use type Aquarius.Grammars.Aquarius_Grammar;
             Path : constant String := Aquarius.Options.Source_File (I);
             Grammar : constant Aquarius.Grammars.Aquarius_Grammar :=
                         Aquarius.Grammars.Manager.Get_Grammar_For_File
                           (File_Name => Path);
+            Output_Path : constant String :=
+                            Aquarius.Options.Output_Path;
          begin
+
+            if Output_Path /= "" then
+               if not Ada.Directories.Exists (Output_Path) then
+                  Ada.Text_IO.Put_Line
+                    (Ada.Text_IO.Standard_Error,
+                     Output_Path & ": no such directory");
+                  Ada.Command_Line.Set_Exit_Status (1);
+                  return;
+               end if;
+               if Ada.Directories.Kind (Output_Path)
+                 /= Directory
+               then
+                  Ada.Text_IO.Put_Line
+                    (Ada.Text_IO.Standard_Error,
+                     Output_Path & ": not a directory");
+                  Ada.Command_Line.Set_Exit_Status (1);
+                  return;
+               end if;
+            end if;
+
             if Grammar /= null then
                if not Aquarius.Plugins.Manager.Load (Grammar) then
                   Ada.Command_Line.Set_Exit_Status (1);
@@ -229,6 +252,7 @@ begin
                end if;
 
                declare
+                  use type Aquarius.Messages.Message_Level;
                   Source : constant Aquarius.Sources.Source_Reference :=
                              Aquarius.Sources.Files.File_Source (Path);
                   Stream : constant Aquarius.Streams.Reader_Reference :=
@@ -238,25 +262,58 @@ begin
                                 (Grammar =>  Grammar,
                                  Source  =>  Source,
                                  Stream  =>  Stream);
+                  Writer  : constant Aquarius.Streams.Writer_Reference :=
+                              Aquarius.Streams.Strings.String_Writer;
                   Render  : Aquarius.Rendering.Root_Aquarius_Renderer'Class :=
-                              Aquarius.Rendering.Text.File_Renderer
-                                (Ada.Directories.Base_Name (Path)
-                                 & "."
-                                 & Ada.Directories.Extension (Path));
+                              Aquarius.Rendering.Text.Stream_Renderer
+                                (Writer);
                   Messages : Aquarius.Messages.Message_List;
                begin
                   Grammar.Run_Action_Trigger
                     (Program, Aquarius.Actions.Semantic_Trigger);
 
-                  Aquarius.Programs.Arrangements.Arrange (Program, Messages);
-                  Aquarius.Messages.Files.Save_Messages
-                    ("arrangement.log", Messages);
-                  Aquarius.Programs.Arrangements.Render
-                    (Program, Render);
+                  Program.Get_Messages (Messages);
+                  Aquarius.Messages.Console.Show_Messages (Messages);
 
-                  if Aquarius.Options.Code_Trigger then
-                     Grammar.Run_Action_Trigger
-                       (Program, Aquarius.Actions.Code_Trigger);
+                  if Aquarius.Messages.Highest_Level (Messages)
+                    > Aquarius.Messages.Warning
+                  then
+                     Ada.Command_Line.Set_Exit_Status (1);
+                  else
+                     Aquarius.Programs.Arrangements.Arrange_Via_Docs
+                       (Program, 30);
+                     Aquarius.Programs.Arrangements.Render
+                       (Program, Render);
+
+                     if Aquarius.Options.Pretty_Print then
+                        if Output_Path = "" then
+                           Ada.Text_IO.Put_Line (Writer.To_String);
+                        else
+                           declare
+                              use Ada.Directories, Ada.Text_IO;
+                              File      : File_Type;
+                              Full_Path : constant String :=
+                                            Compose (Output_Path,
+                                                     Simple_Name (Path));
+                           begin
+                              Create (File, Out_File, Full_Path);
+                              Put_Line (File, Writer.To_String);
+                              Close (File);
+                           exception
+                              when Ada.Text_IO.Name_Error =>
+                                 Ada.Text_IO.Put_Line
+                                   (Compose (Output_Path,
+                                    Simple_Name (Path))
+                                    & ": cannot open for writing");
+                                 Ada.Command_Line.Set_Exit_Status (1);
+                           end;
+                        end if;
+                     end if;
+
+                     if Aquarius.Options.Code_Trigger then
+                        Grammar.Run_Action_Trigger
+                          (Program, Aquarius.Actions.Code_Trigger);
+                     end if;
                   end if;
                end;
             else

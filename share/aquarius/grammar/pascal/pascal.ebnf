@@ -15,13 +15,17 @@ block_comment_end_2   = "}"
 .format ';' no_space_before new_line_after
 .format '(' space_before no_space_after
 .format ')' no_space_before space_after
+.format '[' no_space_before no_space_after
+.format ']' no_space_before space_after
 .format ',' no_space_before space_after
 .format '.' no_space_before no_space_after
+--  .format 'do' new_line_after
 
 .format constant_definition indented_child
 .format type_definition indented_child
 .format variable_declaration indented_child
-.format statement indented_child
+.format statement_sequence indented_child
+.format 'begin' new_line_after
 .format 'end' new_line_before
 
 program ::= program_heading ';' program_block '.'

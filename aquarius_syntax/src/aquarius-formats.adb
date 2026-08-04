@@ -434,15 +434,7 @@ package body Aquarius.Formats is
         Ada.Characters.Handling.To_Lower (Text);
    begin
       if S = "indented_child" then
-         declare
-            Rules : constant Array_Of_Rules :=
-              [New_Line (Aquarius.Before),
-               New_Line (Aquarius.After),
-               Indent (Aquarius.Before, 3),
-               Indent (Aquarius.After, -3)];
-         begin
-            return Make_Format (Rules);
-         end;
+         return Make_Format (Indent_Child (3));
       else
          return Make_Format (To_Rule (S));
       end if;
