@@ -1,5 +1,4 @@
 with Ada.Text_IO;
-with Aqua.Images;
 
 package body Aquarius.Devices.Meta is
 
@@ -90,11 +89,6 @@ package body Aquarius.Devices.Meta is
          Bound  : constant Address_Type :=
                     This.Top + Word_32 (Device.Word_Count * 4);
       begin
-         Ada.Text_IO.Put_Line
-           ("installing: " & Id
-            & " at " & Aqua.Images.Hex_Image (Base)
-            & ":" & Aqua.Images.Hex_Image (Bound));
-
          This.Server.Install_Device
            (Base, Bound, Aqua.Devices.Reference (Device));
 

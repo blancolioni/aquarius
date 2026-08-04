@@ -122,9 +122,6 @@ package body Aquarius.Library is
          raise Configuration_Error;
       end if;
 
-      Ada.Text_IO.Put_Line
-        ("Reading config from " & Config_Path);
-
       Kosei.Json.Add_Json_Config
         (Ada.Directories.Compose
            (Config_Path, "aquarius.json"));

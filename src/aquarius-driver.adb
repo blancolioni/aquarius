@@ -50,7 +50,8 @@ begin
                 (Aquarius.Library.Configuration_Path
                  & "/aqua_vm/aqua.config",
                  Aquarius.Library.Configuration_Path
-                 & "/tmp/obj");
+                 & "/tmp/obj",
+                 Quiet => not Aquarius.Options.Verbose);
             Base_Name : constant String :=
                           Ada.Directories.Base_Name (Start_Class);
             Object_Path : constant String :=

@@ -80,7 +80,8 @@ package body Aquarius.Plugins.Aqua_Plugin is
       return Server : constant Aqua.Server.Reference :=
            Aqua.Server.Create
           (Aquarius.Configuration.Aqua_Configuration_Path,
-           Aquarius.Configuration.Object_Path)
+           Aquarius.Configuration.Object_Path,
+           Quiet => not Aquarius.Options.Verbose)
       do
          Server.Install_Device
            (Base   => 16#FFFF_F200#,
@@ -175,8 +176,6 @@ package body Aquarius.Plugins.Aqua_Plugin is
         Aquarius.Names.To_Aquarius_Name
           (Kosei.Get (Kosei_Path & "/version"));
 
-      Ada.Text_IO.Put_Line ("Loaded " & Name & " version "
-                            & Aquarius.Names.To_String (This.Version));
       Ada.Text_IO.Put_Line (Aquarius.Names.To_String (This.Description));
 
       This.Server := Create_Server;
@@ -220,11 +219,6 @@ package body Aquarius.Plugins.Aqua_Plugin is
                                 & "action_bindings";
                Loaded : Boolean;
             begin
-               --  pragma Unreferenced (Group);
-               Ada.Text_IO.Put_Line
-                 ("new action group: "
-                  & Aquarius.Actions.Action_Group_Name (Group)
-                  & ": " & Trigger'Image);
                Loaded :=
                  Ack.Bindings.Load_Ack_Binding
                    (Binding_File_Path =>

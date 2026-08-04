@@ -301,8 +301,6 @@ package body Ack.Compile is
                  or else Modification_Time (Object_Path)
                  < Source_Modification_Time
                then
-                  Ada.Text_IO.Put_Line
-                    ("generating " & Base_Name);
                   Ack.Generate.Generate_Class_Declaration
                     (Loaded_Classes.Element (Base_Name), Root);
 
