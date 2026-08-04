@@ -216,12 +216,35 @@ begin
    if Aquarius.Options.Source_File_Count > 0 then
       for I in 1 .. Aquarius.Options.Source_File_Count loop
          declare
+            use all type Ada.Directories.File_Kind;
             use type Aquarius.Grammars.Aquarius_Grammar;
             Path : constant String := Aquarius.Options.Source_File (I);
             Grammar : constant Aquarius.Grammars.Aquarius_Grammar :=
                         Aquarius.Grammars.Manager.Get_Grammar_For_File
                           (File_Name => Path);
+            Output_Path : constant String :=
+                            Aquarius.Options.Output_Path;
          begin
+
+            if Output_Path /= "" then
+               if not Ada.Directories.Exists (Output_Path) then
+                  Ada.Text_IO.Put_Line
+                    (Ada.Text_IO.Standard_Error,
+                     Output_Path & ": no such directory");
+                  Ada.Command_Line.Set_Exit_Status (1);
+                  return;
+               end if;
+               if Ada.Directories.Kind (Output_Path)
+                 /= Directory
+               then
+                  Ada.Text_IO.Put_Line
+                    (Ada.Text_IO.Standard_Error,
+                     Output_Path & ": not a directory");
+                  Ada.Command_Line.Set_Exit_Status (1);
+                  return;
+               end if;
+            end if;
+
             if Grammar /= null then
                if not Aquarius.Plugins.Manager.Load (Grammar) then
                   Ada.Command_Line.Set_Exit_Status (1);
@@ -262,7 +285,30 @@ begin
                      Aquarius.Programs.Arrangements.Render
                        (Program, Render);
 
-                     Ada.Text_IO.Put_Line (Writer.To_String);
+                     if Aquarius.Options.Pretty_Print then
+                        if Output_Path = "" then
+                           Ada.Text_IO.Put_Line (Writer.To_String);
+                        else
+                           declare
+                              use Ada.Directories, Ada.Text_IO;
+                              File      : File_Type;
+                              Full_Path : constant String :=
+                                            Compose (Output_Path,
+                                                     Simple_Name (Path));
+                           begin
+                              Create (File, Out_File, Full_Path);
+                              Put_Line (File, Writer.To_String);
+                              Close (File);
+                           exception
+                              when Ada.Text_IO.Name_Error =>
+                                 Ada.Text_IO.Put_Line
+                                   (Compose (Output_Path,
+                                    Simple_Name (Path))
+                                    & ": cannot open for writing");
+                                 Ada.Command_Line.Set_Exit_Status (1);
+                           end;
+                        end if;
+                     end if;
 
                      if Aquarius.Options.Code_Trigger then
                         Grammar.Run_Action_Trigger

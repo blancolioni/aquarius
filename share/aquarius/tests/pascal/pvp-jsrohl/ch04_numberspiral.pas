@@ -1,5 +1,5 @@
 program numberspiral(input, output);
-    var n, r, x, i : integer;
+    var n, r, x, y, i : integer;
 begin
     read(n);
     r := trunc((sqrt(n)+1)/2);
