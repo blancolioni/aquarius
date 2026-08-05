@@ -1,5 +1,5 @@
-name = "aquarius_ui_gtk"
-description = "GtkAda code-bubbles frontend for aquarius"
+name = "aquarius_library"
+description = "Aquarius core library: configuration, bootstrap, CLI dispatch"
 version = "0.1.0-dev"
 
 authors = ["Fraser Wilson"]
@@ -7,29 +7,32 @@ maintainers = ["Fraser Wilson <fraser@thewhitelion.eu>"]
 maintainers-logins = ["blancolioni"]
 licenses = "GPL-3.0-or-later"
 website = ""
-tags = ["ui", "gtk"]
-
-executables = ["aquarius-gtk"]
+tags = []
 
 [build-profiles]
 "*" = "development"
 
 [[depends-on]]
-gtkada = "*"
-aquarius_library = "*"
-aquarius_ui = "*"
+tagatha = "*"
+aqua_vm = "*"
+aquarius_ack = "*"
 aquarius_base = "*"
+aquarius_devices = "*"
 aquarius_io = "*"
-aquarius_programs = "*"
 aquarius_plugins = "*"
+aquarius_syntax = "*"
+aquarius_programs = "*"
 
 [[pins]]
-aquarius_library = { path = "../aquarius_library" }
-aquarius_ui = { path = "../aquarius_ui" }
+tagatha = { path = "../tagatha" }
+aqua_vm = { path = "../aqua_vm" }
+aquarius_ack = { path = "../aquarius_ack" }
 aquarius_base = { path = "../aquarius_base" }
+aquarius_devices = { path = "../aquarius_devices" }
 aquarius_io = { path = "../aquarius_io" }
-aquarius_programs = { path = "../aquarius_programs" }
 aquarius_plugins = { path = "../aquarius_plugins" }
+aquarius_syntax = { path = "../aquarius_syntax" }
+aquarius_programs = { path = "../aquarius_programs" }
 
 [build-switches]
 "*".ada_version = "ada2022"
@@ -37,3 +40,6 @@ Development.Runtime_Checks = "Everything"
 "*".Style_Checks = "yes"
 development.contracts = "yes"
 "*".compile_checks = "errors"
+
+[[depends-on]]
+resources = "~0.1.0"

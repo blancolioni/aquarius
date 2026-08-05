@@ -1,25 +1,20 @@
 with "config/aquarius_ui_gtk_config.gpr";
 project Aquarius_Ui_Gtk is
 
-   for Library_Name use "Aquarius_Ui_Gtk";
-   for Library_Version use
-     Project'Library_Name & ".so." & Aquarius_Ui_Gtk_Config.Crate_Version;
-
    for Source_Dirs use ("src/", "config/");
    for Object_Dir use "obj/" & Aquarius_Ui_Gtk_Config.Build_Profile;
    for Create_Missing_Dirs use "True";
-   for Library_Dir use "lib";
-
-   type Library_Type_Type is ("relocatable", "static", "static-pic");
-   Library_Type : Library_Type_Type :=
-     external ("AQUARIUS_UI_GTK_LIBRARY_TYPE",
-               external ("LIBRARY_TYPE", "static"));
-   for Library_Kind use Library_Type;
+   for Exec_Dir use "../bin";
+   for Main use ("aquarius-ui-gtk_driver.adb");
 
    package Compiler is
       for Default_Switches ("Ada")
         use Aquarius_Ui_Gtk_Config.Ada_Compiler_Switches;
    end Compiler;
+
+   package Builder is
+      for Executable ("aquarius-ui-gtk_driver.adb") use "aquarius-gtk";
+   end Builder;
 
    package Binder is
       for Switches ("Ada") use ("-Es"); --  Symbolic traceback
