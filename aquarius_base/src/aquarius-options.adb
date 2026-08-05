@@ -46,7 +46,6 @@ package body Aquarius.Options is
    Line_Length_Option  : constant String := "line length";
    Output_Path_Option  : constant String := "output path";
    Pretty_Print_Option : constant String := "pretty print";
-   Self_Test_Option    : constant String := "self test";
    Start_Class_Option  : constant String := "start class";
    Test_File_Option    : constant String := "test file";
    Verbose_Option      : constant String := "verbose";
@@ -234,8 +233,6 @@ package body Aquarius.Options is
                   "Write output files to this directory", Str_Kind);
       Add_Option (Line_Length_Option, "line-length",
                   "Maximum line length when pretty printing", Str_Kind);
-      Add_Option (Self_Test_Option, "self-test",
-                  "Run unit tests", Bool_Kind);
       Add_Option (Clear_Cache_Option, "clear-cache",
                   "Empty the temporary folder before continuing", Bool_Kind);
       Add_Option (Arch_Option, "arch",
@@ -355,15 +352,6 @@ package body Aquarius.Options is
    begin
       return Bool_Values (Report_Files_Option);
    end Report_Files;
-
-   ---------------
-   -- Self_Test --
-   ---------------
-
-   function Self_Test return Boolean is
-   begin
-      return Bool_Values (Self_Test_Option);
-   end Self_Test;
 
    --------------------
    -- Show_Full_Path --

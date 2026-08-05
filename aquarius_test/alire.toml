@@ -1,5 +1,5 @@
-name = "aquarius"
-description = "An EBNF compiler"
+name = "aquarius_test"
+description = "Aquarius internal unit-test suite"
 version = "0.1.0-dev"
 
 authors = ["Fraser Wilson"]
@@ -7,18 +7,22 @@ maintainers = ["Fraser Wilson <fraser@thewhitelion.eu>"]
 maintainers-logins = ["blancolioni"]
 licenses = "GPL-3.0-or-later"
 website = ""
-tags = ["editor", "compiler", "ebnf", "parser"]
+tags = []
 
-executables = ["aquarius-driver"]
+executables = ["tests"]
 
 [build-profiles]
 "*" = "development"
 
 [[depends-on]]
 aquarius_library = "*"
+aquarius_ui = "*"
+wl_lib = "*"
 
 [[pins]]
-aquarius_library = { path = "./aquarius_library" }
+aquarius_library = { path = "../aquarius_library" }
+aquarius_ui = { path = "../aquarius_ui" }
+wl_lib = { path = "../wl_lib" }
 
 [build-switches]
 "*".ada_version = "ada2022"

@@ -15,8 +15,6 @@ package Aquarius.Options is
    function Code_Trigger return Boolean;
    function Aqua_Trace return Boolean;
 
-   function Self_Test return Boolean;
-
    function Clear_Cache return Boolean;
    --  when set, empty the temporary (cache) folder before continuing
 

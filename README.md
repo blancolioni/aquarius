@@ -44,7 +44,8 @@ The `aquarius-driver` executable (`bin/aquarius`) dispatches on its options:
 | `aquarius --check <file>` | Load/parse a grammar or source file, report errors, exit (no render) |
 | `aquarius --test <file>` | Parse a file and run its grammar's `test` actions |
 | `aquarius <file>` | Parse, arrange and re-render a source file under its grammar |
-| `aquarius --self-test` | Run the internal test suite |
+
+Run the internal test suite with `(cd aquarius_test && alr build && ../bin/tests)`.
 
 ## Crate layout
 
@@ -52,7 +53,9 @@ Aquarius is an Alire workspace of several crates, pinned locally:
 
 | Crate | Role |
 |-------|------|
-| `aquarius` | Top-level: driver, library, test harness |
+| `aquarius` | Top-level: minimal CLI driver |
+| `aquarius_library` | Core library: configuration, plugin/device bootstrap, CLI command dispatch |
+| `aquarius_test` | Internal unit-test suite (executable `tests`) |
 | `aquarius_base` | Base packages |
 | `aquarius_trees` | Generic tree infrastructure |
 | `aquarius_syntax` | Syntax trees |
@@ -62,7 +65,7 @@ Aquarius is an Alire workspace of several crates, pinned locally:
 | `aquarius_devices` | Aqua VM devices |
 | `aquarius_io` | IO operations |
 | `aquarius_ui` | Abstract UI |
-| `aquarius_ui_gtk` | GtkAda code-bubbles frontend (currently disabled in the driver) |
+| `aquarius_ui_gtk` | GtkAda code-bubbles frontend (standalone executable `aquarius-gtk`) |
 | `tagatha`, `aqua_vm`, `aqua_as`, `wl_lib` | Backend IR, VM, assembler, support library |
 
 ## Build
